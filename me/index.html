@@ -28,7 +28,7 @@
 .sec h2 { font-size: clamp(28px, 5.4vw, 38px); line-height: 1.08; margin-bottom: 6px; }
 .sec > .sub { color: var(--warm); font-size: 15px; margin-bottom: 16px; max-width: 36em; }
 .sec .hand { margin-bottom: 2px; }
-.rep { position: relative; background: var(--card); border-radius: 18px; padding: 22px; box-shadow: var(--lift); display: grid; gap: 12px; }
+.rep { position: relative; background: var(--card); border-radius: 18px; padding: 22px; box-shadow: var(--lift); display: grid; gap: 12px; margin-top: 22px; }
 .rep > .tape { top: -12px; left: 26px; --w: 84px; }
 .rep h3 { font-family: var(--serif); font-weight: 400; font-size: 25px; line-height: 1.15; }
 .rep p { color: var(--warm); font-size: 15px; }
@@ -141,7 +141,7 @@
 		if (p.profile_picture_url) { var img = new Image(); img.alt = ''; img.referrerPolicy = 'no-referrer'; img.onload = function () { $('pic').textContent = ''; $('pic').appendChild(img); }; img.src = p.profile_picture_url; }
 		var camps = (d.dm && d.dm.campaigns) || [], live = camps.filter(function (c) { return c.active; }).length;
 		var sent = ((d.dm && d.dm.log) || []).filter(function (e) { return e.dm === 'ok'; }).length;
-		$('stats').innerHTML = '<div class="stat"><b>' + n(p.followers_count) + '</b><span>followers</span>' + spark(d.followers || []) + '</div><div class="stat"><b>' + n(p.media_count) + '</b><span>posts</span></div><div class="stat"><b>' + (d.dm && d.dm.can_dm ? live + ' on' : 'Off') + '</b><span>auto-replies · ' + sent + ' DMs sent</span></div>';
+		$('stats').innerHTML = '<div class="stat"><b>' + n(p.followers_count) + '</b><span>followers</span>' + spark(d.followers || []) + '</div><div class="stat"><b>' + n(p.media_count) + '</b><span>posts</span></div><div class="stat"><b>' + (d.dm && d.dm.can_dm ? live + ' on' : 'Off') + '</b><span>auto-replies · ' + sent + (sent === 1 ? ' DM' : ' DMs') + ' sent</span></div>';
 
 		$('report').innerHTML = d.report ?
 			'<h3>Your Instagram audit is ready</h3><p>Who follows you, when they’re online, which posts worked and your 90-day plan. Open it any time; use “Save as PDF” at the top to keep a copy.</p><div class="row"><a class="btn red" href="' + esc(d.report.url) + '" target="_blank" rel="noopener">Open my report</a></div>' :

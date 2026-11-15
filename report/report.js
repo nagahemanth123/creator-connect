@@ -5,7 +5,7 @@
   'use strict';
 
   // Contact rule (owner, 15 Nov): business name "Busy Fox Marketing", email only, no phone numbers, no town.
-  var AGENCY = { name: 'Busy Fox Marketing', email: 'busyfoxconsultancy@gmail.com' };
+  var AGENCY = { name: 'Busy Fox Marketing', email: 'admin@busyfox.in' };
   // Strawberry Mocha tokens (../assets/cc.css). Chart roles: cocoa = data, cherry = the one thing to look at.
   var C = {
     ink: '#2B1A17', ink2: '#53332D', mute: '#6E5551', mute2: '#866C67', stone: '#D9BFB8', stone2: '#F3DEDA',

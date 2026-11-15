@@ -54,7 +54,7 @@
     .then(function (r) { return r.json(); })
     .then(function (x) {
       if (x.deleted) { t.textContent = 'Your data has been deleted'; d.textContent = 'Busy Fox has removed your Instagram access key, saved stories, snapshots and form answers.'; }
-      else { t.textContent = 'We could not find that request'; d.textContent = 'Please email busyfoxconsultancy@gmail.com with the code below and we will check by hand.'; }
+      else { t.textContent = 'We could not find that request'; d.textContent = 'Please email admin@busyfox.in with the code below and we will check by hand.'; }
     })
     .catch(function () { t.textContent = 'Could not check right now'; d.textContent = 'Please try again in a minute.'; });
 })();

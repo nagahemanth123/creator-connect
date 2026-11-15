@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visits | Busy Fox</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F7E6E3">
+<link rel="icon" type="image/png" href="../../assets/fox.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../assets/cc.css">
+<link rel="stylesheet" href="../../assets/visits.css">
+<link rel="stylesheet" href="../../assets/visits-page.css">
+</head>
+<body>
+<div class="wrap">
+	<header class="head">
+		<a class="logo" href="../" aria-label="Busy Fox"><span class="mast">Busy<em>Fox</em></span><span class="sub" aria-hidden="true"><span>C</span><span>R</span><span>E</span><span>A</span><span>T</span><span>O</span><span>R</span><span>&nbsp;</span><span>C</span><span>O</span><span>N</span><span>N</span><span>E</span><span>C</span><span>T</span></span></a>
+		<div class="head-r"><a class="btn line" href="../">Creators</a></div>
+	</header>
+
+	<section class="vm-gate" id="gate" hidden>
+		<div class="card">
+			<span class="tape" style="top:-12px;left:30px"></span>
+			<p class="hand">busy fox team only</p>
+			<h2>Open the <em>visits</em> page</h2>
+			<p>Paste the Busy Fox admin key. It stays on this device only.</p>
+			<input id="key" type="password" autocomplete="off" placeholder="Admin key">
+			<button class="btn red" id="open" type="button">Open</button>
+			<p class="msg" id="gmsg"></p>
+		</div>
+	</section>
+
+	<main id="app" hidden>
+		<div class="vm-top">
+			<div><p class="hand">who opened what, from where, for how long</p><h1>Visits <em>monitor</em></h1></div>
+			<div class="vm-tools">
+				<span class="vm-live" id="live"><i></i><span id="liveTxt">Updating every 30 seconds</span></span>
+				<button class="btn line vm-s" id="csv" type="button">Download as a sheet</button>
+				<button class="btn red vm-s" id="refresh" type="button">Refresh</button>
+			</div>
+		</div>
+		<div class="vm-filters" id="filters"></div>
+		<div id="now"></div>
+		<div class="vs-tiles vm-tiles" id="tiles"></div>
+		<div class="vm-two">
+			<section class="vm-box"><h3>Visits <em>each day</em></h3><div id="days"></div></section>
+			<section class="vm-box"><h3>Time of day <em>they open it</em></h3><div id="hours"></div></section>
+		</div>
+		<section class="vm-sec"><h2>By <em>creator</em></h2><div id="creators"></div></section>
+		<section class="vm-sec"><h2>By <em>IP address</em></h2><p class="vs-fine">One IP is one internet connection, not always one person: the same creator on Wi-Fi and on mobile data shows as two. Tap an IP to see only its visits.</p><div class="vs-ips" id="ips"></div></section>
+		<div class="vm-two">
+			<section class="vm-box"><h3>What they <em>looked at</em></h3><div id="parts"></div></section>
+			<section class="vm-box"><h3>What they <em>tapped</em></h3><div id="taps"></div></section>
+		</div>
+		<section class="vm-sec"><h2>Every <em>visit</em></h2><div class="vs-list" id="list"></div><p class="vs-fine">Time counts only while the page is in front and being used (it stops after a minute without a touch or scroll). Place is an estimate from the IP address. Visits are kept for 120 days.</p></section>
+	</main>
+
+	<footer class="foot"><span><b>Busy Fox Marketing</b></span><span><a href="../">Creators</a></span></footer>
+</div>
+<div class="vm-toast" id="toast"></div>
+<script src="../../assets/config.js"></script>
+<script src="../../assets/visits-page.js"></script>
+</body>
+</html>

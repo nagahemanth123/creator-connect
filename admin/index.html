@@ -100,6 +100,7 @@
 			<div><p class="hand">who has connected</p><h1>Your <em>creators</em></h1></div>
 			<div class="tools">
 				<input class="search" id="q" type="search" placeholder="Search name or handle">
+				<a class="btn line small" href="visits/">Visits monitor</a>
 				<button class="btn line small" id="copylink" type="button">Copy connect link</button>
 				<button class="btn red small" id="refresh" type="button">Refresh</button>
 			</div>
@@ -260,7 +261,7 @@
 	}
 	function openVisits(who) {
 		var q = '?id=' + encodeURIComponent(who);
-		$('dm').innerHTML = '<button class="x" type="button" data-dmclose aria-label="Close">×</button><p class="hand">who opened it, from where, for how long</p><h2>Visits for <em>@' + esc(who) + '</em></h2><div class="dm-stack" id="dmMount"></div>';
+		$('dm').innerHTML = '<button class="x" type="button" data-dmclose aria-label="Close">×</button><p class="hand">who opened it, from where, for how long</p><h2>Visits for <em>@' + esc(who) + '</em></h2><p><a class="btn line small" href="visits/?id=' + encodeURIComponent(who) + '">Open the full visits page</a></p><div class="dm-stack" id="dmMount"></div>';
 		$('dmBack').classList.add('on');
 		window.Visits.mount($('dmMount'), {
 			who: who, toast: toast,

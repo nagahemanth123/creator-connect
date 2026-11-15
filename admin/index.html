@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="../assets/cc.css">
 <link rel="stylesheet" href="../assets/autodm.css">
+<link rel="stylesheet" href="../assets/planner.css">
 <style>
 .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin: 18px 0 26px; }
 .top h1 { font-size: clamp(40px, 5vw, 64px); }
@@ -113,6 +114,7 @@
 <div class="toast" id="toast"></div>
 <script src="../assets/config.js"></script>
 <script src="../assets/autodm.js"></script>
+<script src="../assets/planner.js"></script>
 <script>
 (function () {
 	var cc = window.CC || {};
@@ -173,6 +175,7 @@
 				'<div class="tags">' + tags + '</div>' +
 				'<div class="picks">' + picks + '</div>' +
 				'<div class="acts">' + (a.report ? '<a class="btn red" href="' + esc(a.report.url) + '" target="_blank" rel="noopener">Open report</a><button class="btn line" data-copy="' + esc(a.report.url) + '" data-msg="Report link copied" type="button">Copy report link</button>' : '<span class="none">No report yet</span>') +
+					'<button class="btn line" data-plan="' + esc(a.username) + '" type="button">Content plan</button>' +
 					'<button class="btn line" data-dm="' + esc(a.username) + '" type="button">Auto-DM</button>' +
 					'<button class="btn line" data-portal="' + esc(a.username) + '" type="button">Copy her dashboard link</button>' +
 				'</div></article>';
@@ -229,10 +232,26 @@
 			subscribe: function () { return api('/admin/subscribe' + q, {method: 'POST'}); }
 		});
 	}
+	function openPlan(who) {
+		var q = 'id=' + encodeURIComponent(who);
+		$('dm').innerHTML = '<button class="x" type="button" data-dmclose aria-label="Close">×</button><p class="hand">plan, her yes, posting</p><h2>Content plan for <em>@' + esc(who) + '</em></h2><div class="dm-stack" id="dmMount"></div>';
+		$('dmBack').classList.add('on');
+		window.Planner.mount($('dmMount'), {
+			voice: 'team', who: who, toast: toast,
+			postConnect: connectBase + '?mode=post&for=' + encodeURIComponent(who),
+			req: function (sub, o) {
+				o = o || {};
+				var opt = {method: o.method || 'GET'};
+				if (o.json) { opt.headers = {'content-type': 'application/json'}; opt.body = JSON.stringify(o.json); } else if (o.body) opt.body = o.body;
+				return api('/admin/' + sub + '?' + q + (o.query ? '&' + o.query : ''), opt);
+			}
+		});
+	}
 	function closeDm() { $('dmBack').classList.remove('on'); $('dm').innerHTML = ''; }
 	document.addEventListener('click', function (e) {
-		var t = e.target.closest('[data-dm],[data-dmclose],[data-portal]');
+		var t = e.target.closest('[data-dm],[data-dmclose],[data-portal],[data-plan]');
 		if (!t) { if (e.target === $('dmBack')) closeDm(); return; }
+		if (t.hasAttribute('data-plan')) return openPlan(t.getAttribute('data-plan'));
 		if (t.hasAttribute('data-dm')) return openDm(t.getAttribute('data-dm'));
 		if (t.hasAttribute('data-dmclose')) return closeDm();
 		if (t.hasAttribute('data-portal')) {
@@ -240,7 +259,7 @@
 			return api('/admin/portal?id=' + encodeURIComponent(who), {method: 'POST'}).then(function (r) { if (r && r.url) copy(r.url, 'Her dashboard link copied'); else toast('Could not make the link'); });
 		}
 	});
-	document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('dmBack').classList.contains('on')) closeDm(); });
+	document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('dmBack').classList.contains('on') && !document.documentElement.classList.contains('pl-lock')) closeDm(); });
 
 	$('open').addEventListener('click', function () { var v = $('key').value.trim(); if (!v) return; setKey(v); $('key').value = ''; $('gmsg').classList.remove('show'); load(); });
 	$('key').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('open').click(); });

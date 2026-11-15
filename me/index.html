@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="../assets/cc.css">
 <link rel="stylesheet" href="../assets/autodm.css">
+<link rel="stylesheet" href="../assets/planner.css">
 <style>
 /* cc.css gives every <section> 96px of padding for the marketing pages; a dashboard needs a tight, even rhythm */
 .page section { padding-block: 0; }
@@ -80,6 +81,12 @@
 
 		<div class="col">
 			<section class="sec">
+				<div class="hd"><p class="hand">planned, edited, posted</p><h2>Your <em>content plan</em></h2></div>
+				<p class="sub">Every post for the month, with its date and time. Nothing goes live without your yes.</p>
+				<div id="planner"></div>
+			</section>
+
+			<section class="sec">
 				<div class="hd"><p class="hand">from Busy Fox</p><h2>Your <em>audit report</em></h2></div>
 				<div class="rep"><span class="tape"></span><div id="report"></div></div>
 			</section>
@@ -117,6 +124,7 @@
 <div class="toast" id="toast"></div>
 <script src="../assets/config.js"></script>
 <script src="../assets/autodm.js"></script>
+<script src="../assets/planner.js"></script>
 <script>
 (function () {
 	'use strict';
@@ -177,6 +185,17 @@
 				$('choices').innerHTML = groups.map(function (g) { return '<div><p>' + g[0] + '</p><ul>' + g[1].map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>'; }).join('');
 			}
 		}
+
+		window.Planner.mount($('planner'), {
+			voice: 'creator', who: p.username, toast: toast,
+			postConnect: (d.links && d.links.post_connect) || '../?mode=post',
+			req: function (sub, o) {
+				o = o || {};
+				var opt = {method: o.method || 'GET'};
+				if (o.json) { opt.headers = {'content-type': 'application/json'}; opt.body = JSON.stringify(o.json); } else if (o.body) opt.body = o.body;
+				return api('/me/' + sub + (o.query ? '?' + o.query : ''), opt);
+			}
+		});
 
 		window.AutoDM.mount($('autodm'), {
 			voice: 'creator', who: p.username, toast: toast,

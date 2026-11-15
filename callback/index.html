@@ -230,7 +230,7 @@ textarea.input { height: auto; min-height: 104px; padding: 13px 16px; resize: ve
 		$('ufoll').textContent = d.followers_count != null ? Number(d.followers_count).toLocaleString('en-IN') + ' followers' : '';
 		$('ph').textContent = (d.username || 'B').charAt(0).toUpperCase();
 		if (d.profile_picture_url) { var img = new Image(); img.alt = ''; img.referrerPolicy = 'no-referrer'; img.onload = function () { $('ph').textContent = ''; $('ph').appendChild(img); }; img.src = d.profile_picture_url; }
-		if (d.missing && d.missing.length) { $('missing').textContent = 'You switched off part of the access, so we can’t see your insights yet. Please go back, tap Continue with Instagram again and leave every switch on.'; $('missing').classList.add('show'); }
+		if (d.missing && d.missing.length) { $('missing').textContent = d.mode === 'dm' && d.missing.every(function (p) { return /comments|messages/.test(p); }) ? 'Comment auto-replies need access to your comments and messages. Please go back, tap Continue with Instagram again and leave every switch on.' : 'You switched off part of the access, so we can’t see your insights yet. Please go back, tap Continue with Instagram again and leave every switch on.'; $('missing').classList.add('show'); }
 		fill(d.prefs);
 		document.title = 'Connected | Busy Fox';
 		show('v-done');

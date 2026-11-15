@@ -484,6 +484,7 @@
 	// connect
 	var q = new URLSearchParams(location.search);
 	var ref = (q.get('ref') || q.get('for') || '').slice(0, 60);
+	var mode = /^(dm|post)$/.test(q.get('mode') || '') ? q.get('mode') : ''; // ?mode=dm adds comment auto-replies, ?mode=post adds posting
 	var label = new Map();
 	function say(btn, text) {
 		var box = btn.closest('[data-cta]'), m = box && box.querySelector('.msg');
@@ -496,7 +497,7 @@
 			$$('.msg').forEach(function (m) { m.classList.remove('show'); });
 			if (!btn.closest('[data-cta]')) { document.querySelector('.ticket .js-connect').click(); return; }
 			btn.disabled = true; btn.textContent = 'Opening Instagram…';
-			fetch(cc.api + '/start?ref=' + encodeURIComponent(ref))
+			fetch(cc.api + '/start?ref=' + encodeURIComponent(ref) + (mode ? '&mode=' + mode : ''))
 				.then(function (r) { return r.json(); })
 				.then(function (d) {
 					if (d.ok && d.url) { location.href = d.url; return; }

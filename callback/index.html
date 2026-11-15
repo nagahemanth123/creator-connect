@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connecting | Busy Fox</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light">
+<link rel="icon" type="image/png" href="../assets/fox.png">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;border:0}
+  .chips legend,.field legend{padding:0;margin:0 0 12px;font-weight:600;font-size:16px;color:var(--ink)}
+  .chip{position:relative}
+  .chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+  .chip span{display:inline-flex;align-items:center;min-height:42px;padding:9px 16px;border:1px solid var(--line);border-radius:999px;font-size:15px;color:var(--ink-2);background:#fff;transition:border-color .15s,background .15s,color .15s}
+  .chip input:checked + span{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chip input:focus-visible + span{outline:2px solid var(--fox);outline-offset:2px}
+  .field{margin:0 0 26px;padding:0;border:0;min-width:0}
+  .field label.lbl{display:block;font-weight:600;font-size:16px;margin:0 0 10px}
+  .field .sub{display:block;font-weight:400;font-size:14px;color:var(--mute);margin-top:2px}
+  input[type=text],textarea{width:100%;font:16px/1.4 var(--sans);color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:4px;padding:12px 14px}
+  input[type=text]:focus,textarea:focus{outline:2px solid var(--fox);outline-offset:1px;border-color:transparent}
+  textarea{min-height:88px;resize:vertical}
+  .other{margin-top:10px}
+  .warn{border-left-color:var(--fox-t)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="mark" href="https://busyfox.in"><img src="../assets/fox.png" alt=""><span>Busy Fox</span></a>
+
+  <!-- 1. working -->
+  <section id="v-working">
+    <p class="eyebrow">Creator Connect</p>
+    <h1>Connecting your account…</h1>
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="lead">This takes a few seconds. Please keep this page open.</p>
+  </section>
+
+  <!-- 2. problem -->
+  <section id="v-error" hidden>
+    <p class="eyebrow">Creator Connect</p>
+    <h1 id="err-title">That didn't work</h1>
+    <p class="lead" id="err-text">Something went wrong while connecting.</p>
+    <a class="btn" id="retry" href="../">Try again</a>
+    <p class="small" style="margin-top:14px">Still stuck? <a id="wa1" href="https://wa.me/919182983314" target="_blank" rel="noopener">Message Busy Fox on WhatsApp</a>.</p>
+  </section>
+
+  <!-- 3. connected + preferences -->
+  <section id="v-done" hidden>
+    <p class="eyebrow">Connected</p>
+    <h1 id="hello">You're connected.</h1>
+    <div class="who"><img id="pic" alt="" hidden><div><b id="uname"></b><span id="ufoll"></span></div></div>
+    <p class="msg warn" id="missing"></p>
+
+    <form id="prefs" novalidate>
+      <h2 style="margin-top:8px">One last thing: what do you enjoy making?</h2>
+      <p class="lead" style="font-size:16px;margin-bottom:28px">We'll build your growth plan around content you're happy to create. It takes about a minute, and you can skip anything.</p>
+
+      <fieldset class="field chips" data-name="formats">
+        <legend>Formats you're happy to make</legend>
+      </fieldset>
+
+      <fieldset class="field chips" data-name="topics">
+        <legend>Topics you love</legend>
+      </fieldset>
+      <input class="other" type="text" id="topics_other" placeholder="Other topics, e.g. temple travel, millet recipes" maxlength="120" aria-label="Other topics">
+
+      <fieldset class="field chips" data-name="posts_per_week" data-single style="margin-top:26px">
+        <legend>How many posts a week can you make?</legend>
+      </fieldset>
+
+      <fieldset class="field chips" data-name="face" data-single>
+        <legend>Showing your face on camera</legend>
+      </fieldset>
+
+      <fieldset class="field chips" data-name="languages">
+        <legend>Languages you post in</legend>
+      </fieldset>
+
+      <fieldset class="field chips" data-name="goal" data-single>
+        <legend>Your main goal right now</legend>
+      </fieldset>
+
+      <div class="field">
+        <label class="lbl" for="brands">Brands or categories you'd love to work with<span class="sub">Optional</span></label>
+        <input type="text" id="brands" maxlength="300" placeholder="e.g. kitchen appliances, cafés, saree brands">
+      </div>
+      <div class="field">
+        <label class="lbl" for="wont_do">Anything you won't do?<span class="sub">Optional</span></label>
+        <input type="text" id="wont_do" maxlength="300" placeholder="e.g. no dance trends, no alcohol brands">
+      </div>
+      <div class="field">
+        <label class="lbl" for="notes">Anything else we should know?<span class="sub">Optional</span></label>
+        <textarea id="notes" maxlength="1000" placeholder="Your dreams for the page, what you've tried, what worries you"></textarea>
+      </div>
+
+      <button class="btn" id="save" type="submit">Save my choices</button>
+      <p class="msg" id="pmsg" role="status" aria-live="polite"></p>
+    </form>
+
+    <div id="thanks" hidden>
+      <h2 style="margin-top:8px">Thank you!</h2>
+      <p class="lead" style="font-size:16px">Busy Fox will share your report and growth plan soon. You can close this page.</p>
+      <button class="btn ghost" id="edit" type="button">Change my choices</button>
+    </div>
+  </section>
+
+  <footer>
+    <span>Busy Fox · Busyfox Marketing LLP · Kadapa</span>
+    <a href="../privacy/">Privacy</a>
+    <a id="wa2" href="https://wa.me/919182983314" target="_blank" rel="noopener">WhatsApp us</a>
+  </footer>
+</main>
+<script src="../assets/config.js"></script>
+<script>
+(function () {
+  var cc = window.CC || {};
+  var OPTIONS = {
+    formats: ['Reels talking to camera', 'Reels without talking (b-roll/music)', 'Photo posts', 'Photo carousels', 'Text/educational carousels', 'Daily stories', 'Lives', 'Collabs with other creators'],
+    topics: ['Food & recipes', 'Fashion & outfits', 'Beauty & makeup', 'Day-in-my-life', 'Travel', 'Fitness & health', 'Comedy & skits', 'Education & tips', 'Tech & gadgets', 'Parenting & family', 'Home & decor', 'Business & money', 'Motivation', 'Dance & music', 'Art & DIY', 'Pets'],
+    posts_per_week: ['1-2', '3-4', '5-7', 'Daily or more'],
+    face: ['comfortable', 'sometimes', 'prefer not'],
+    languages: ['Telugu', 'English', 'Hindi', 'Tamil', 'Kannada', 'Malayalam'],
+    goal: ['Grow followers', 'Brand deals', 'Sell my own product/service', 'Build a community']
+  };
+  var LABEL = {comfortable: 'Comfortable', sometimes: 'Sometimes', 'prefer not': 'Prefer not to'};
+  var $ = function (id) { return document.getElementById(id); };
+  if (cc.whatsapp) { $('wa1').href = cc.whatsapp; $('wa2').href = cc.whatsapp; }
+
+  function show(id) { ['v-working', 'v-error', 'v-done'].forEach(function (v) { $(v).hidden = v !== id; }); }
+  function fail(title, text) { $('err-title').textContent = title; $('err-text').textContent = text; show('v-error'); }
+
+  // build chip groups
+  document.querySelectorAll('fieldset.chips').forEach(function (fs) {
+    var name = fs.dataset.name, single = fs.hasAttribute('data-single');
+    OPTIONS[name].forEach(function (opt, i) {
+      var id = name + '_' + i;
+      var lab = document.createElement('label'); lab.className = 'chip';
+      var inp = document.createElement('input'); inp.type = single ? 'radio' : 'checkbox'; inp.name = name; inp.value = opt; inp.id = id;
+      var sp = document.createElement('span'); sp.textContent = LABEL[opt] || opt;
+      lab.appendChild(inp); lab.appendChild(sp); fs.appendChild(lab);
+    });
+  });
+  function fill(p) {
+    if (!p) return;
+    Object.keys(OPTIONS).forEach(function (name) {
+      var vals = [].concat(p[name] || []);
+      document.querySelectorAll('input[name="' + name + '"]').forEach(function (i) { i.checked = vals.indexOf(i.value) >= 0; });
+    });
+    var extra = (p.topics || []).filter(function (t) { return OPTIONS.topics.indexOf(t) < 0; }).map(function (t) { return t.replace(/^Other: /, ''); });
+    $('topics_other').value = extra.join(', ');
+    ['brands', 'wont_do', 'notes'].forEach(function (k) { $(k).value = p[k] || ''; });
+  }
+  function collect() {
+    var p = {};
+    Object.keys(OPTIONS).forEach(function (name) {
+      var picked = [].map.call(document.querySelectorAll('input[name="' + name + '"]:checked'), function (i) { return i.value; });
+      p[name] = document.querySelector('fieldset[data-name="' + name + '"]').hasAttribute('data-single') ? (picked[0] || '') : picked;
+    });
+    var other = $('topics_other').value.trim();
+    if (other) other.split(',').forEach(function (t) { t = t.trim(); if (t) p.topics.push('Other: ' + t); });
+    ['brands', 'wont_do', 'notes'].forEach(function (k) { p[k] = $(k).value.trim(); });
+    return p;
+  }
+
+  function connected(d) {
+    var first = (d.name || '').split(' ')[0];
+    $('hello').textContent = first ? 'You’re connected, ' + first + '.' : 'You’re connected.';
+    $('uname').textContent = '@' + d.username;
+    $('ufoll').textContent = d.followers_count != null ? Number(d.followers_count).toLocaleString('en-IN') + ' followers' : '';
+    if (d.profile_picture_url) { $('pic').src = d.profile_picture_url; $('pic').hidden = false; }
+    if (d.missing && d.missing.length) {
+      $('missing').textContent = 'You switched off part of the access, so we can’t see your insights. Please tap Try again on the first page and leave every switch on.';
+      $('missing').classList.add('show');
+    }
+    fill(d.prefs);
+    document.title = 'Connected | Busy Fox';
+    show('v-done');
+  }
+
+  // form
+  $('prefs').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var saved = JSON.parse(sessionStorage.getItem('cc_result') || 'null');
+    if (!saved || !saved.prefs_token) { $('pmsg').textContent = 'This page has expired. Please tap the connect link again.'; $('pmsg').classList.add('show'); return; }
+    var btn = $('save'); btn.disabled = true; btn.textContent = 'Saving…';
+    var prefs = collect();
+    fetch(cc.api + '/prefs', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({token: saved.prefs_token, prefs: prefs})})
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        btn.disabled = false; btn.textContent = 'Save my choices';
+        if (!d.ok) { $('pmsg').textContent = d.message || 'We could not save that. Please try again.'; $('pmsg').classList.add('show'); return; }
+        saved.prefs = prefs; sessionStorage.setItem('cc_result', JSON.stringify(saved));
+        $('prefs').hidden = true; $('thanks').hidden = false; $('pmsg').classList.remove('show');
+        window.scrollTo({top: 0, behavior: 'smooth'});
+      })
+      .catch(function () { btn.disabled = false; btn.textContent = 'Save my choices'; $('pmsg').textContent = 'No connection. Please try again.'; $('pmsg').classList.add('show'); });
+  });
+  $('edit').addEventListener('click', function () { $('thanks').hidden = true; $('prefs').hidden = false; });
+
+  // flow
+  var q = new URLSearchParams(location.search);
+  if (q.get('error')) {
+    if (q.get('error_reason') === 'user_denied' || q.get('error') === 'access_denied') fail('No problem', 'You cancelled, so nothing was shared. You can connect whenever you’re ready.');
+    else fail('That didn’t work', q.get('error_description') || 'Instagram could not finish the connection.');
+    return;
+  }
+  var code = q.get('code'), state = q.get('state');
+  if (!code) {
+    var kept = JSON.parse(sessionStorage.getItem('cc_result') || 'null');
+    if (kept) { connected(kept); return; }
+    fail('Nothing to connect', 'Please start from the Busy Fox connect link.');
+    return;
+  }
+  history.replaceState(null, '', location.pathname); // drop the one-time code from the address bar
+  fetch(cc.api + '/callback', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({code: code, state: state})})
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.ok) { sessionStorage.setItem('cc_result', JSON.stringify(d)); connected(d); return; }
+      if (d.error === 'link_expired') fail('This link has expired', 'Please go back and tap Continue with Instagram again.');
+      else if (d.error === 'not_configured') fail('Not switched on yet', 'This link is not ready. Busy Fox will message you when it is.');
+      else fail('That didn’t work', 'Instagram said: ' + (d.message || 'unknown error') + '. Please try again.');
+    })
+    .catch(function () { fail('No connection', 'Check your internet and try again.'); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data deletion | Busy Fox</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light">
+<link rel="icon" type="image/png" href="../assets/fox.png">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="mark" href="../"><img src="../assets/fox.png" alt=""><span>Busy Fox</span></a>
+  <p class="eyebrow">Creator Connect</p>
+  <h1 id="t">Checking your request…</h1>
+  <p class="lead" id="d"></p>
+  <p class="small" id="c"></p>
+  <footer>
+    <span>Busy Fox · Busyfox Marketing LLP · Kadapa</span>
+    <a href="../privacy/">Privacy</a>
+  </footer>
+</main>
+<script src="../assets/config.js"></script>
+<script>
+(function () {
+  var code = new URLSearchParams(location.search).get('code') || '';
+  var t = document.getElementById('t'), d = document.getElementById('d'), c = document.getElementById('c');
+  if (!code) { t.textContent = 'No request code'; d.textContent = 'Open this page from the link Instagram gave you.'; return; }
+  c.textContent = 'Confirmation code: ' + code;
+  fetch(window.CC.api + '/deletion-status?code=' + encodeURIComponent(code))
+    .then(function (r) { return r.json(); })
+    .then(function (x) {
+      if (x.deleted) { t.textContent = 'Your data has been deleted'; d.textContent = 'Busy Fox has removed your Instagram access key, saved stories, snapshots and form answers.'; }
+      else { t.textContent = 'We could not find that request'; d.textContent = 'Please message Busy Fox on WhatsApp with the code below and we will check by hand.'; }
+    })
+    .catch(function () { t.textContent = 'Could not check right now'; d.textContent = 'Please try again in a minute.'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect your Instagram | Busy Fox</title>
+<meta name="description" content="Share your Instagram insights with Busy Fox for your audit and growth plan. Your password stays with Instagram.">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light">
+<meta property="og:title" content="Connect your Instagram | Busy Fox">
+<meta property="og:description" content="Share your Instagram insights for your audit and growth plan. Your password stays with Instagram.">
+<link rel="icon" type="image/png" href="assets/fox.png">
+<link rel="preload" href="assets/fonts/BodoniModa-normal-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<main class="wrap">
+  <a class="mark" href="https://busyfox.in"><img src="assets/fox.png" alt=""><span>Busy Fox</span></a>
+
+  <p class="eyebrow">Creator Connect</p>
+  <h1>Share your Instagram insights with <em>Busy&nbsp;Fox</em></h1>
+  <p class="lead">We're preparing your Instagram audit and growth plan. This page shares your account's numbers straight from Instagram. Your password stays with Instagram. We never see it.</p>
+
+  <div class="two">
+    <section class="card">
+      <h2>What we'll see</h2>
+      <ul class="ticks">
+        <li>Who follows you: age, gender, cities and countries</li>
+        <li>Your reach and views, from followers and new people</li>
+        <li>How every post, reel and story performed</li>
+        <li>When your followers are online</li>
+      </ul>
+    </section>
+    <section class="card">
+      <h2>What we can't do</h2>
+      <ul class="cross">
+        <li>Post, comment or reply as you</li>
+        <li>Read your messages</li>
+        <li>See or change your password</li>
+      </ul>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Three quick steps</h2>
+    <ol class="steps">
+      <li><strong>Use a Creator or Business account.</strong>
+        <span class="hint">Instagram → Settings → Account type and tools → Switch to professional account. It's free.</span></li>
+      <li id="tester-step"><strong>Accept our invite.</strong>
+        <span class="hint">Busy Fox has sent an invite to your Instagram. Open Apps and websites, go to <em>Tester invites</em> and tap Accept.</span>
+        <a class="btn ghost" style="margin-top:12px" href="https://www.instagram.com/accounts/manage_access/" target="_blank" rel="noopener">Open my invites</a></li>
+      <li><strong>Tap Continue with Instagram,</strong> check it's your account, and tap Allow.</li>
+    </ol>
+  </section>
+
+  <div class="cta">
+    <button class="btn" id="go" type="button">Continue with Instagram</button>
+    <p class="msg" id="msg" role="status" aria-live="polite"></p>
+  </div>
+  <p class="small">You can remove access any time in Instagram → Settings → Apps and websites. <a href="privacy/">Privacy notice</a></p>
+
+  <footer>
+    <span>Busy Fox · Busyfox Marketing LLP · Kadapa</span>
+    <a href="privacy/">Privacy</a>
+    <a id="wa" href="https://wa.me/919182983314" target="_blank" rel="noopener">WhatsApp us</a>
+  </footer>
+</main>
+<script src="assets/config.js"></script>
+<script>
+(function () {
+  var cc = window.CC || {};
+  if (cc.testerStep === false) document.getElementById('tester-step').hidden = true;
+  if (cc.whatsapp) document.getElementById('wa').href = cc.whatsapp;
+  var btn = document.getElementById('go'), msg = document.getElementById('msg');
+  var q = new URLSearchParams(location.search);
+  var ref = (q.get('ref') || q.get('for') || '').slice(0, 60);
+  function say(text) { msg.textContent = text; msg.classList.add('show'); }
+  btn.addEventListener('click', function () {
+    btn.disabled = true; btn.textContent = 'Opening Instagram…'; msg.classList.remove('show');
+    fetch(cc.api + '/start?ref=' + encodeURIComponent(ref))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.ok && d.url) { location.href = d.url; return; }
+        if (d.error === 'not_configured') say('This link is not switched on yet. Busy Fox will message you when it is ready.');
+        else say('We could not open Instagram. Please try again in a minute.');
+        btn.disabled = false; btn.textContent = 'Continue with Instagram';
+      })
+      .catch(function () {
+        say('No connection. Check your internet and try again.');
+        btn.disabled = false; btn.textContent = 'Continue with Instagram';
+      });
+  });
+})();
+</script>
+</body>
+</html>

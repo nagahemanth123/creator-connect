@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Creators | Busy Fox</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F7E6E3">
+<link rel="icon" type="image/png" href="../assets/fox.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin: 18px 0 26px; }
+.top h1 { font-size: clamp(40px, 5vw, 64px); }
+.top .tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.search { height: 46px; width: 240px; max-width: 100%; border: 1px solid var(--field-line); background: var(--field); border-radius: 999px; padding: 0 18px; font: 400 15px var(--sans); color: var(--ink); }
+.search:focus { outline: 2px solid var(--cherry); border-color: transparent; }
+.btn.small { height: 46px; padding: 0 18px; font-size: 14.5px; }
+.sum { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0 0 26px; color: var(--warm); font-size: 14.5px; }
+.sum b { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 30px; color: var(--cherry); margin-right: 6px; }
+.list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; padding-bottom: 64px; }
+@media (max-width: 900px) { .list { grid-template-columns: minmax(0, 1fr); } }
+.cr { position: relative; background: var(--card); border-radius: 18px; padding: 22px; box-shadow: var(--lift); display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cr > .tape { top: -12px; left: 26px; --w: 80px; }
+.cr:nth-child(even) > .tape { left: auto; right: 26px; --r: 6deg; }
+.who { display: flex; gap: 14px; align-items: center; min-width: 0; }
+.pic { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 50%; overflow: hidden; background: var(--pink-soft); display: grid; place-items: center; font: italic 500 28px/1 var(--serif); color: var(--cherry); }
+.pic img { width: 100%; height: 100%; object-fit: cover; }
+.who .t { min-width: 0; }
+.who h2 { font-size: 24px; line-height: 1.15; overflow-wrap: anywhere; }
+.who h2 a { text-decoration: none; }
+.who p { font-size: 13.5px; color: var(--warm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--tint); color: var(--ink-2, var(--warm)); }
+.tag.ok { background: var(--pink-soft); color: var(--cherry-dark); }
+.tag.post { background: var(--butter); color: var(--ink); }
+.tag.bad { background: var(--cocoa); color: var(--cream); }
+.picks { border-top: 1.5px dashed var(--line); padding-top: 14px; display: grid; gap: 10px; }
+.row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; font-size: 14px; align-items: baseline; }
+.row > span:first-child { color: var(--hint); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+.row .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.row .chips i { font-style: normal; font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--field); box-shadow: inset 0 0 0 1.5px var(--field-line); }
+.none { color: var(--hint); font-size: 14px; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1.5px dashed var(--line); padding-top: 14px; }
+.acts .btn { height: 40px; padding: 0 16px; font-size: 13.5px; }
+.gate { max-width: 520px; margin: 40px auto 80px; }
+.gate .card { display: flex; flex-direction: column; gap: 14px; }
+.gate input { height: 52px; border: 1px solid var(--field-line); background: var(--field); border-radius: 12px; padding: 0 16px; font: 400 16px var(--sans); }
+.gate input:focus { outline: 2px solid var(--cherry); border-color: transparent; }
+.empty { text-align: center; padding: 60px 0 90px; color: var(--warm); }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--cocoa); color: var(--cream); padding: 10px 18px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<header class="head">
+		<a class="logo" href="../" aria-label="Busy Fox"><span class="mast">Busy<em>Fox</em></span><span class="sub" aria-hidden="true"><span>C</span><span>R</span><span>E</span><span>A</span><span>T</span><span>O</span><span>R</span><span>&nbsp;</span><span>C</span><span>O</span><span>N</span><span>N</span><span>E</span><span>C</span><span>T</span></span></a>
+		<div class="head-r"><button class="btn line small" id="lock" type="button" hidden>Lock</button></div>
+	</header>
+
+	<section class="gate" id="gate" hidden>
+		<div class="card">
+			<span class="tape" style="top:-12px;left:30px"></span>
+			<p class="hand">busy fox team only</p>
+			<h2>Open the <em>creators</em> list</h2>
+			<p class="body">Paste the Busy Fox admin key. It stays on this device only.</p>
+			<input id="key" type="password" autocomplete="off" placeholder="Admin key">
+			<button class="btn red" id="open" type="button">Open</button>
+			<p class="msg" id="gmsg"></p>
+		</div>
+	</section>
+
+	<main id="app" hidden>
+		<div class="top">
+			<div><p class="hand">who has connected</p><h1>Your <em>creators</em></h1></div>
+			<div class="tools">
+				<input class="search" id="q" type="search" placeholder="Search name or handle">
+				<button class="btn line small" id="copylink" type="button">Copy connect link</button>
+				<button class="btn red small" id="refresh" type="button">Refresh</button>
+			</div>
+		</div>
+		<div class="sum" id="sum"></div>
+		<div class="list" id="list"></div>
+	</main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../assets/config.js"></script>
+<script>
+(function () {
+	var cc = window.CC || {};
+	var $ = function (id) { return document.getElementById(id); };
+	var KEY = 'cc_admin_key', data = [];
+	var LABEL = {comfortable: 'Comfortable on camera', sometimes: 'On camera sometimes', 'prefer not': 'Prefers not on camera'};
+	function getKey() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+	function setKey(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} }
+	function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('on'); setTimeout(function () { el.classList.remove('on'); }, 1800); }
+	function copy(t, msg) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { toast(msg || 'Copied'); }, function () { prompt('Copy this:', t); }); }
+	function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]; }); }
+	function fmtDate(s) { if (!s) return ''; var d = new Date(s); return d.toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}); }
+	var connectBase = location.origin + location.pathname.replace(/admin\/?$/, '');
+
+	function gate(msg) { $('app').hidden = true; $('lock').hidden = true; $('gate').hidden = false; if (msg) { $('gmsg').textContent = msg; $('gmsg').classList.add('show'); } $('key').focus(); }
+	function load() {
+		var k = getKey();
+		if (!k) return gate();
+		$('refresh').disabled = true; $('refresh').textContent = 'Loading…';
+		fetch(cc.api + '/admin/accounts', {headers: {Authorization: 'Bearer ' + k}, cache: 'no-store'})
+			.then(function (r) { return r.json().then(function (d) { return {s: r.status, d: d}; }); })
+			.then(function (x) {
+				$('refresh').disabled = false; $('refresh').textContent = 'Refresh';
+				if (x.s === 401) { setKey(''); return gate('That key didn’t work.'); }
+				if (!x.d.ok) return gate('Could not load: ' + (x.d.error || 'error'));
+				data = x.d.accounts.sort(function (a, b) { return (b.connected_at || '').localeCompare(a.connected_at || ''); });
+				$('gate').hidden = true; $('app').hidden = false; $('lock').hidden = false;
+				render();
+			})
+			.catch(function () { $('refresh').disabled = false; $('refresh').textContent = 'Refresh'; toast('No connection'); });
+	}
+	function chips(arr) { return (arr || []).map(function (v) { return '<i>' + esc(String(v).replace(/^Other: /, '')) + '</i>'; }).join(''); }
+	function row(label, html) { return html ? '<div class="row"><span>' + label + '</span><div class="chips">' + html + '</div></div>' : ''; }
+	function text(v) { return v ? '<i>' + esc(v) + '</i>' : ''; }
+	function render() {
+		var q = $('q').value.trim().toLowerCase();
+		var list = data.filter(function (a) { return !q || (a.username + ' ' + (a.name || '')).toLowerCase().indexOf(q) >= 0; });
+		var withPrefs = data.filter(function (a) { return a.prefs; }).length, withRep = data.filter(function (a) { return a.report; }).length;
+		$('sum').innerHTML = '<span><b>' + data.length + '</b>connected</span><span><b>' + withPrefs + '</b>shared their choices</span><span><b>' + withRep + '</b>have a report</span>';
+		if (!list.length) { $('list').innerHTML = '<p class="empty">' + (data.length ? 'No match.' : 'Nobody has connected yet. Send creators the connect link.') + '</p>'; return; }
+		$('list').innerHTML = list.map(function (a) {
+			var p = a.prefs || {};
+			var tags = '<span class="tag ' + (a.status === 'ok' ? 'ok' : 'bad') + '">' + (a.status === 'ok' ? 'Connected' : 'Needs reconnect') + '</span>' +
+				(a.can_post ? '<span class="tag post">Can post</span>' : '<span class="tag">Read-only</span>') +
+				(a.followers_count != null ? '<span class="tag">' + Number(a.followers_count).toLocaleString('en-IN') + ' followers</span>' : '') +
+				'<span class="tag">Since ' + fmtDate(a.connected_at) + '</span>' + (a.ref ? '<span class="tag">Link: ' + esc(a.ref) + '</span>' : '');
+			var picks = a.prefs ? (
+				row('Formats', chips(p.formats)) + row('Topics', chips(p.topics)) + row('Posts / week', text(p.posts_per_week)) +
+				row('Camera', text(LABEL[p.face] || p.face)) + row('Languages', chips(p.languages)) + row('Goal', text(p.goal)) +
+				row('Brands', text(p.brands)) + row('Won’t do', text(p.wont_do)) + row('Notes', text(p.notes)) +
+				'<div class="row"><span>Saved</span><div class="none">' + fmtDate(p.saved_at) + '</div></div>'
+			) : '<p class="none">No choices saved yet.</p>';
+			var initial = esc((a.username || '?').charAt(0).toUpperCase());
+			return '<article class="cr"><span class="tape"></span>' +
+				'<div class="who"><div class="pic" data-src="' + esc(a.profile_picture_url || '') + '">' + initial + '</div><div class="t"><h2><a href="https://www.instagram.com/' + esc(a.username) + '/" target="_blank" rel="noopener">@' + esc(a.username) + '</a></h2><p title="' + esc(a.name) + '">' + esc(a.name || '') + '</p></div></div>' +
+				'<div class="tags">' + tags + '</div>' +
+				'<div class="picks">' + picks + '</div>' +
+				'<div class="acts">' + (a.report ? '<a class="btn red" href="' + esc(a.report.url) + '" target="_blank" rel="noopener">Open report</a><button class="btn line" data-copy="' + esc(a.report.url) + '" data-msg="Report link copied" type="button">Copy report link</button>' : '<span class="none">No report yet</span>') +
+				'</div></article>';
+		}).join('');
+		[].forEach.call(document.querySelectorAll('.pic[data-src]'), function (el) {
+			var src = el.getAttribute('data-src'); if (!src) return;
+			var img = new Image(); img.alt = ''; img.referrerPolicy = 'no-referrer';
+			img.onload = function () { el.textContent = ''; el.appendChild(img); }; img.src = src;
+		});
+	}
+
+	$('open').addEventListener('click', function () { var v = $('key').value.trim(); if (!v) return; setKey(v); $('key').value = ''; $('gmsg').classList.remove('show'); load(); });
+	$('key').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('open').click(); });
+	$('refresh').addEventListener('click', load);
+	$('lock').addEventListener('click', function () { setKey(''); data = []; $('list').innerHTML = ''; gate(); });
+	$('q').addEventListener('input', render);
+	$('copylink').addEventListener('click', function () { copy(connectBase, 'Connect link copied'); });
+	document.addEventListener('click', function (e) { var b = e.target.closest('[data-copy]'); if (b) copy(b.getAttribute('data-copy'), b.getAttribute('data-msg')); });
+	load();
+})();
+</script>
+</body>
+</html>

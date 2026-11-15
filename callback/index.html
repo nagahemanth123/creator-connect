@@ -221,7 +221,9 @@ textarea.input { height: auto; min-height: 104px; padding: 13px 16px; resize: ve
 	}
 
 	function connected(d, celebrate) {
-		var first = (d.name || '').split(' ')[0];
+		// first name only when it looks like a person's name, not a brand ("The Little Gallery | Fine art ...")
+		var nm = (d.name || '').split('|')[0].trim(), words = nm.split(/\s+/).filter(Boolean);
+		var first = (words.length && words.length <= 3 && words[0].length >= 3 && !/^(the|a|an|my|our|by|team|official)$/i.test(words[0]) && !/[0-9@&]/.test(nm) && !/(studio|photograph|official|store|shop|gallery|media|films?|events?|kitchen|foods?|fashion|boutique)/i.test(nm)) ? words[0] : '';
 		$('hello').innerHTML = first ? 'You’re <em>connected,</em> ' + first.replace(/[<>&]/g, '') + '.' : 'You’re <em>connected.</em>';
 		$('thx-name').textContent = first ? ', ' + first : '';
 		$('uname').textContent = '@' + d.username;

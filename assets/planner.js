@@ -25,7 +25,7 @@
 	function mount(root, o) {
 		var me = o.voice !== 'team', toast = o.toast || function () {};
 		var now0 = ist(Date.now());
-		var st = {d: null, y: now0.y, m: now0.m, open: null, form: null, ask: false, busy: false, up: null};
+		var st = {d: null, y: now0.y, m: now0.m, open: null, form: null, ask: false, busy: false, up: null, ig: {}, fresh: true};
 		var LABEL = me ?
 			{idea: 'Planned', review: 'Waiting for your yes', changes: 'Change asked', approved: 'Approved', posting: 'Going live', posted: 'Posted', failed: 'Didn’t post', due: 'Post it now', missed: 'Time passed'} :
 			{idea: 'Idea', review: 'Waiting for her yes', changes: 'She asked for a change', approved: 'Approved', posting: 'Going live', posted: 'Posted', failed: 'Failed', due: 'Due: she posts it', missed: 'Missed its time'};
@@ -41,8 +41,40 @@
 		function load() {
 			return o.req('posts').then(function (d) {
 				if (!d || !d.ok) throw new Error((d && d.error) || 'error');
-				st.d = d; render();
+				st.d = d; render(); loadIg();
 			}).catch(function () { if (!st.d) root.innerHTML = '<p class="pl-none">Could not load the plan. Check your connection and try again.</p>'; else toast('Could not refresh'); });
+		}
+		// what is already on Instagram this month (so past dates show the real reel or photo)
+		function mKey() { return st.y + '-' + pad(st.m + 1); }
+		function loadIg() {
+			var k = mKey();
+			if (st.ig[k]) return;
+			st.ig[k] = 'wait';
+			o.req('ig', {query: 'month=' + k}).then(function (r) {
+				st.ig[k] = (r && r.ok && r.media) || [];
+				if (k === mKey() && !st.form && !st.open) { st.fresh = true; render(); }
+			}, function () { delete st.ig[k]; });
+		}
+		function igAll() { var out = []; Object.keys(st.ig).forEach(function (k) { if (st.ig[k] !== 'wait') out = out.concat(st.ig[k]); }); return out; }
+		function igOf(p) { return p.ig_media_id ? igAll().filter(function (x) { return x.id === p.ig_media_id; })[0] : null; }
+		function igOnly() { // Instagram posts that are not already a post in this plan
+			var mine = {}, list = st.ig[mKey()];
+			posts().forEach(function (p) { if (p.ig_media_id) mine[p.ig_media_id] = 1; });
+			return (list && list !== 'wait' ? list : []).filter(function (x) { return !mine[x.id]; });
+		}
+		function pic(p) { // the picture that stands for a planned post: its cover, a photo, the posted version, or the video's first frame
+			var c = p.cover || (p.media || []).filter(function (m) { return m.kind === 'image'; })[0];
+			if (c) return '<img src="' + esc(url(c)) + '" alt="" loading="lazy">';
+			var g = igOf(p);
+			if (g && g.thumb) return '<img src="' + esc(g.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer">';
+			var v = (p.media || []).filter(function (m) { return m.kind === 'video'; })[0];
+			return v ? '<video src="' + esc(url(v)) + '#t=0.1" muted playsinline preload="metadata" tabindex="-1"></video>' : '';
+		}
+		function igPic(x) { return x.thumb ? '<img src="' + esc(x.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : ''; }
+		function igRow(x) {
+			var t = Date.parse(x.at), nums = [x.likes != null ? n(x.likes) + ' likes' : '', x.comments != null ? n(x.comments) + ' comments' : ''].filter(Boolean).join(' · ');
+			return '<a class="pl-row" href="' + esc(x.permalink) + '" target="_blank" rel="noopener"><span class="pl-th">' + (igPic(x) || esc(TYPE[x.type])) + '</span>' +
+				'<span class="pl-rt"><b>' + esc(x.caption || TYPE[x.type]) + '</b><small>' + time(t) + ' · ' + TYPE[x.type] + (nums ? ' · ' + nums : '') + '</small></span><span class="pl-tag s-posted">On Instagram</span></a>';
 		}
 		function call(sub, opt, okMsg) {
 			if (st.busy) return Promise.resolve(null);
@@ -58,8 +90,7 @@
 
 		// ---------- pieces ----------
 		function thumb(p) {
-			var c = p.cover || (p.media || []).filter(function (m) { return m.kind === 'image'; })[0];
-			return '<span class="pl-th">' + (c ? '<img src="' + esc(url(c)) + '" alt="" loading="lazy">' : esc(TYPE[p.type])) + '</span>';
+			return '<span class="pl-th">' + (pic(p) || esc(TYPE[p.type])) + '</span>';
 		}
 		function tag(p) { var s = look(p); return '<span class="pl-tag s-' + s + '">' + LABEL[s] + '</span>'; }
 		function how(p) {
@@ -83,25 +114,34 @@
 			var first = Date.UTC(st.y, st.m, 1) - IST, lead = ist(first).dow, days = new Date(Date.UTC(st.y, st.m + 1, 0)).getUTCDate();
 			var today = dayKey(Date.now()), by = {};
 			posts().forEach(function (p) { var k = dayKey(Date.parse(p.at)); (by[k] = by[k] || []).push(p); });
+			var live = {}, fresh = st.fresh, seq = 0;
+			st.fresh = false;
+			igOnly().forEach(function (x) { var k = dayKey(Date.parse(x.at)); (live[k] = live[k] || []).push(x); });
 			var cells = DOW.map(function (d) { return '<span class="pl-dow">' + d.charAt(0) + '<i>' + d.slice(1) + '</i></span>'; }).join('');
 			for (var i = 0; i < lead; i++) cells += '<span class="pl-cell off"></span>';
 			for (var d = 1; d <= days; d++) {
-				var k = st.y + '-' + pad(st.m + 1) + '-' + pad(d), list = by[k] || [];
-				var dots = list.slice(0, 4).map(function (p) { return '<i class="s-' + look(p) + '"></i>'; }).join('');
-				var say = list.length ? list.length + (list.length === 1 ? ' post' : ' posts') : 'add a post';
-				cells += '<button type="button" class="pl-cell' + (k === today ? ' today' : '') + (list.length ? ' has' : '') + '" data-a="day" data-id="' + k + '" aria-label="' + d + ' ' + MONTHS[st.m] + ', ' + say + '"><b>' + d + '</b><span>' + dots + '</span></button>';
+				var k = st.y + '-' + pad(st.m + 1) + '-' + pad(d), list = by[k] || [], on = live[k] || [], all = list.length + on.length;
+				var dots = list.slice(0, 4).map(function (p) { return '<i class="s-' + look(p) + '"></i>'; }).join('') + (list.length < 4 && on.length ? '<i class="s-posted"></i>' : '');
+				var say = all ? all + (all === 1 ? ' post' : ' posts') : 'add a post';
+				var shot = '';
+				for (var j = 0; j < list.length && !shot; j++) shot = pic(list[j]);
+				for (j = 0; j < on.length && !shot; j++) shot = igPic(on[j]);
+				cells += '<button type="button" class="pl-cell' + (k === today ? ' today' : '') + (all ? ' has' : '') + (shot ? ' pic' : '') + '"' + (all ? ' style="--i:' + (seq++) + '"' : '') + ' data-a="day" data-id="' + k + '" aria-label="' + d + ' ' + MONTHS[st.m] + ', ' + say + '">' +
+					(shot ? '<span class="pl-shot">' + shot + '</span>' : '') + '<b>' + d + '</b><span class="pl-dots">' + (shot && !list.length ? '' : dots) + '</span>' + (shot && all > 1 ? '<em>' + all + '</em>' : '') + '</button>';
 			}
-			return '<div class="pl-cal"><div class="pl-calhd"><button type="button" class="pl-nav" data-a="prev" aria-label="Previous month">‹</button><h3>' + MONTHS[st.m] + ' <em>' + st.y + '</em></h3><button type="button" class="pl-nav" data-a="next" aria-label="Next month">›</button></div><div class="pl-grid">' + cells + '</div>' +
+			return '<div class="pl-cal' + (fresh ? ' pl-fresh' : '') + '"><div class="pl-calhd"><button type="button" class="pl-nav" data-a="prev" aria-label="Previous month">‹</button><h3>' + MONTHS[st.m] + ' <em>' + st.y + '</em></h3><button type="button" class="pl-nav" data-a="next" aria-label="Next month">›</button></div><div class="pl-grid">' + cells + '</div>' +
 				'<p class="pl-key"><span><i class="s-idea"></i>Planned</span><span><i class="s-review"></i>' + (me ? 'Needs your yes' : 'Needs her yes') + '</span><span><i class="s-approved"></i>Approved</span><span><i class="s-posted"></i>Posted</span></p></div>';
 		}
 		function agenda() {
-			var list = posts().filter(function (p) { var t = ist(Date.parse(p.at)); return t.y === st.y && t.m === st.m; });
+			var list = posts().filter(function (p) { var t = ist(Date.parse(p.at)); return t.y === st.y && t.m === st.m; })
+				.concat(igOnly().map(function (x) { return {ig: x, at: x.at}; }))
+				.sort(function (x, y) { return Date.parse(x.at) - Date.parse(y.at); });
 			if (!list.length) return '<p class="pl-none">' + (me ? 'Nothing is planned for ' + MONTHS[st.m] + ' yet. Your team adds the month’s posts here, and you can add your own.' : 'Nothing planned for ' + MONTHS[st.m] + '. Add a post, or fill the month from her audit plan.') + '</p>';
 			var out = '', last = '';
 			list.forEach(function (p) {
 				var t = Date.parse(p.at), k = dayKey(t);
 				if (k !== last) { out += (last ? '</div>' : '') + '<div class="pl-day" id="pl-d-' + k + '"><p class="pl-dl">' + dayLong(t) + '</p>'; last = k; }
-				out += row(p);
+				out += p.ig ? igRow(p.ig) : row(p);
 			});
 			return '<div class="pl-agenda">' + out + '</div></div>';
 		}
@@ -264,7 +304,7 @@
 			var b = e.target.closest('[data-a]');
 			if (!b || !root.contains(b)) return;
 			var a = b.getAttribute('data-a'), id = b.getAttribute('data-id'), p = st.open ? byId(st.open) : null;
-			if (a === 'prev' || a === 'next') { st.m += a === 'next' ? 1 : -1; if (st.m > 11) { st.m = 0; st.y++; } if (st.m < 0) { st.m = 11; st.y--; } return render(); }
+			if (a === 'prev' || a === 'next') { st.m += a === 'next' ? 1 : -1; if (st.m > 11) { st.m = 0; st.y++; } if (st.m < 0) { st.m = 11; st.y--; } st.fresh = true; render(); return loadIg(); }
 			if (a === 'day') {
 				var el = root.querySelector('#pl-d-' + id);
 				if (el) return el.scrollIntoView({behavior: 'smooth', block: 'center'});
@@ -282,9 +322,9 @@
 			if (a === 'retry') return submit({retry: true});
 			if (a === 'ask') { st.ask = true; render(); var ta = root.querySelector('#pl-ask'); if (ta) ta.focus(); return; }
 			if (a === 'noask') { st.ask = false; return render(); }
-			if (a === 'approve' && p) return call('post-approve', {method: 'POST', query: 'pid=' + p.id}, 'Approved').then(function (r) { if (r) { st.open = null; render(); } });
+			if (a === 'approve' && p) return call('post-approve', {method: 'POST', query: 'pid=' + p.id}, 'Approved').then(function (r) { if (r) { if (window.Fun) window.Fun.confetti(); st.open = null; render(); } });
 			if (a === 'sendask' && p) { var txt = (root.querySelector('#pl-ask') || {}).value || ''; if (!txt.trim()) return toast('Write what should change'); return call('post-change', {method: 'POST', query: 'pid=' + p.id, json: {text: txt}}, 'Sent to your team').then(function (r) { if (r) { st.open = null; st.ask = false; render(); } }); }
-			if (a === 'done' && p) return call('post-done', {method: 'POST', query: 'pid=' + p.id}, 'Marked as posted').then(function (r) { if (r) render(); });
+			if (a === 'done' && p) return call('post-done', {method: 'POST', query: 'pid=' + p.id}, 'Marked as posted').then(function (r) { if (r) { if (window.Fun) window.Fun.confetti(); render(); } });
 			if (a === 'del' && p) { if (!window.confirm('Delete this post from the plan? Its files are removed too.')) return; return call('post-delete', {method: 'POST', query: 'pid=' + p.id}, 'Deleted').then(function (r) { if (r) { st.open = null; render(); } }); }
 			if (a === 'copycap' && p) return (navigator.clipboard ? navigator.clipboard.writeText(p.caption) : Promise.reject()).then(function () { toast('Caption copied'); }, function () { window.prompt('Copy the caption:', p.caption); });
 			if (a === 'copyconnect') { e.preventDefault(); return (navigator.clipboard ? navigator.clipboard.writeText(o.postConnect) : Promise.reject()).then(function () { toast('Posting link copied'); }, function () { window.prompt('Copy this:', o.postConnect); }); }

@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="../assets/cc.css">
 <link rel="stylesheet" href="../assets/autodm.css">
 <link rel="stylesheet" href="../assets/planner.css">
+<link rel="stylesheet" href="../assets/fun.css">
 <style>
 .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin: 18px 0 26px; }
 .top h1 { font-size: clamp(40px, 5vw, 64px); }
@@ -114,6 +115,7 @@
 <div class="toast" id="toast"></div>
 <script src="../assets/config.js"></script>
 <script src="../assets/autodm.js"></script>
+<script src="../assets/fun.js"></script>
 <script src="../assets/planner.js"></script>
 <script>
 (function () {
@@ -143,6 +145,12 @@
 				data = x.d.accounts.sort(function (a, b) { return (b.connected_at || '').localeCompare(a.connected_at || ''); });
 				$('gate').hidden = true; $('app').hidden = false; $('lock').hidden = false;
 				render();
+				if (window.Fun && !$('app').dataset.fun) {
+					$('app').dataset.fun = '1';
+					window.Fun.doodles(document.querySelector('#app .top > div'), 'side');
+					window.Fun.arrive('#sum span'); window.Fun.count('#sum b'); window.Fun.arrive('#list > *');
+					window.Fun.onScroll('#act');
+				}
 				loadEvents(k);
 			})
 			.catch(function () { $('refresh').disabled = false; $('refresh').textContent = 'Refresh'; toast('No connection'); });

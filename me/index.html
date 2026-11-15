@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="../assets/cc.css">
 <link rel="stylesheet" href="../assets/autodm.css">
 <link rel="stylesheet" href="../assets/planner.css">
+<link rel="stylesheet" href="../assets/fun.css">
 <style>
 /* cc.css gives every <section> 96px of padding for the marketing pages; a dashboard needs a tight, even rhythm */
 .page section { padding-block: 0; }
@@ -124,6 +125,7 @@
 <div class="toast" id="toast"></div>
 <script src="../assets/config.js"></script>
 <script src="../assets/autodm.js"></script>
+<script src="../assets/fun.js"></script>
 <script src="../assets/planner.js"></script>
 <script>
 (function () {
@@ -170,6 +172,16 @@
 		var camps = (d.dm && d.dm.campaigns) || [], live = camps.filter(function (c) { return c.active; }).length;
 		var sent = ((d.dm && d.dm.log) || []).filter(function (e) { return e.dm === 'ok'; }).length;
 		$('stats').innerHTML = '<div class="stat"><b>' + n(p.followers_count) + '</b><span>followers</span>' + spark(d.followers || []) + '</div><div class="stat"><b>' + n(p.media_count) + '</b><span>posts</span></div><div class="stat"><b>' + (d.dm && d.dm.can_dm ? live + ' on' : 'Off') + '</b><span>auto-replies</span><small>' + sent + (sent === 1 ? ' DM' : ' DMs') + ' sent</small></div>';
+
+		if (window.Fun && !$('page').dataset.fun) { // the playful layer: doodles, turning ring, scrolling line, drop-ins, count-ups
+			$('page').dataset.fun = '1';
+			window.Fun.doodles(document.querySelector('.hello'));
+			$('pic').classList.add('fun-ring');
+			$('stats').parentNode.insertBefore(window.Fun.ticker(['plan it', 'shoot it', 'post it', 'watch it grow', 'do it again']), $('stats').nextSibling);
+			window.Fun.arrive('#stats .stat');
+			window.Fun.count('#stats .stat b');
+			window.Fun.onScroll('.sec');
+		}
 
 		$('report').innerHTML = d.report ?
 			'<h3>Your Instagram audit is ready</h3><p>Who follows you, when they’re online, which posts worked and your 90-day plan. Open it any time; use “Save as PDF” at the top to keep a copy.</p><div class="row"><a class="btn red" href="' + esc(d.report.url) + '" target="_blank" rel="noopener">Open my report</a></div>' :

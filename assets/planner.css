@@ -35,13 +35,27 @@
 .pl-cell.has b { font-weight: 700; }
 .pl-cell.today { box-shadow: inset 0 0 0 2px var(--cherry); }
 .pl-cell:hover:not(.off) { background: var(--pink-soft); }
-.pl-cell span { display: flex; gap: 3px; height: 7px; }
-.pl-cell span i { width: 7px; height: 7px; border-radius: 50%; }
+.pl-cell .pl-dots { display: flex; gap: 3px; height: 7px; }
+.pl-cell .pl-dots i { width: 7px; height: 7px; border-radius: 50%; }
+/* a day with a reel or photo: the picture fills the cell, the date sits on a small cream chip */
+.pl-cell { position: relative; overflow: hidden; aspect-ratio: 4 / 5; }
+.pl-cell.pic { justify-content: space-between; align-items: flex-start; padding: 4px; background: var(--pink-soft); }
+.pl-shot { position: absolute; inset: 0; display: block; }
+.pl-shot img, .pl-shot video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.pl-cell.pic b { position: relative; min-width: 22px; padding: 2px 5px; border-radius: 7px; background: var(--card); font-size: 12.5px; font-weight: 700; line-height: 1.3; text-align: center; }
+.pl-cell.pic .pl-dots { position: relative; padding: 3px 4px; border-radius: 999px; background: var(--card); height: auto; }
+.pl-cell.pic .pl-dots:empty { display: none; }
+.pl-cell.pic em { position: absolute; right: 4px; top: 4px; min-width: 20px; padding: 2px 5px; border-radius: 7px; background: var(--cocoa); color: var(--cream); font: 700 11.5px/1.3 var(--sans); text-align: center; }
+.pl-cell.pic:hover { background: var(--pink-soft); }
+.pl-cell.pic:hover .pl-shot { opacity: .88; }
+.pl-cell.pic.today { box-shadow: 0 0 0 2px var(--cherry); }
+.pl-th video { width: 100%; height: 100%; object-fit: cover; display: block; }
+a.pl-row { text-decoration: none; }
 .pl-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 12.5px; color: var(--warm); }
 .pl-key span { display: inline-flex; align-items: center; gap: 6px; }
 .pl-key i { width: 8px; height: 8px; border-radius: 50%; }
 @media (max-width: 480px) { .pl-dow i { display: none; } .pl-cal { padding: 16px 10px 12px; } .pl-grid { gap: 2px; } }
-@media (min-width: 700px) { .pl-cell { aspect-ratio: auto; height: 62px; } }
+
 
 .pl-agenda { display: grid; gap: 14px; }
 .pl-day { display: grid; gap: 2px; scroll-margin-top: 90px; }
@@ -116,3 +130,22 @@ html.pl-lock { overflow: hidden; }
 .pl-prog i { position: absolute; inset: 0; background: var(--pink); transform-origin: left; transform: scaleX(var(--p, 0)); transition: transform .2s ease-out; }
 .pl-prog span { position: relative; }
 @media (prefers-reduced-motion: reduce) { .pl-prog i { transition: none; } }
+
+/* motion: days with posts pop in one after another, pictures drift slowly, today's ring breathes */
+@media (prefers-reduced-motion: no-preference) {
+	.pl-fresh .pl-cell.has { animation: pl-pop .55s cubic-bezier(.2, .9, .3, 1.35) both; animation-delay: calc(var(--i, 0) * 55ms); }
+	@keyframes pl-pop { from { opacity: 0; transform: scale(.6) rotate(-6deg); } to { opacity: 1; transform: none; } }
+	.pl-shot img, .pl-shot video { animation: pl-drift 9s ease-in-out calc(var(--i, 0) * -1.3s) infinite alternate; }
+	@keyframes pl-drift { from { transform: scale(1.02) translateY(0); } to { transform: scale(1.16) translateY(-3%); } }
+	.pl-cell { transition: transform .2s cubic-bezier(.3, 1.6, .5, 1); }
+	.pl-cell.has:hover { transform: scale(1.06) rotate(-2deg); z-index: 2; }
+	.pl-cell.today::after { content: ''; position: absolute; inset: 0; border-radius: 12px; box-shadow: inset 0 0 0 2px var(--cherry); animation: pl-breathe 2.200s ease-in-out infinite; pointer-events: none; }
+	@keyframes pl-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+	.pl-dots i { animation: pl-dot 1.800s ease-in-out infinite; }
+	.pl-dots i:nth-child(2) { animation-delay: .2s; } .pl-dots i:nth-child(3) { animation-delay: .4s; } .pl-dots i:nth-child(4) { animation-delay: .6s; }
+	@keyframes pl-dot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+	.pl-row .pl-th { transition: transform .2s cubic-bezier(.3, 1.6, .5, 1); }
+	.pl-row:hover .pl-th { transform: rotate(-4deg) scale(1.08); }
+	.pl-sheet { animation: pl-rise .35s cubic-bezier(.2, .9, .3, 1.1); }
+	@keyframes pl-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+}

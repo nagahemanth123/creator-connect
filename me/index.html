@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My dashboard | Busy Fox</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F7E6E3">
+<link rel="icon" type="image/png" href="../assets/fox.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/cc.css">
+<link rel="stylesheet" href="../assets/autodm.css">
+<style>
+.page { max-width: 780px; margin: 0 auto; padding-bottom: 56px; display: flex; flex-direction: column; gap: 34px; }
+.hello { display: flex; gap: 18px; align-items: center; margin-top: 8px; }
+.hello .pic { flex: 0 0 76px; width: 76px; height: 76px; border-radius: 50%; overflow: hidden; background: var(--pink-soft); display: grid; place-items: center; font: italic 500 32px/1 var(--serif); color: var(--cherry); box-shadow: 0 0 0 4px var(--card), var(--soft); }
+.hello .pic img { width: 100%; height: 100%; object-fit: cover; }
+.hello h1 { font-size: clamp(34px, 7vw, 52px); line-height: 1.02; }
+.hello h1 em { overflow-wrap: anywhere; }
+.hello p { color: var(--warm); font-size: 14.5px; margin-top: 4px; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--card); border-radius: 16px; padding: 14px 16px; box-shadow: var(--soft); }
+.stat b { display: block; font-family: var(--serif); font-weight: 400; font-style: italic; font-size: clamp(24px, 5vw, 32px); color: var(--cherry); line-height: 1.1; }
+.stat span { font-size: 12.5px; color: var(--warm); }
+.sec h2 { font-size: clamp(28px, 5.4vw, 38px); line-height: 1.08; margin-bottom: 6px; }
+.sec > .sub { color: var(--warm); font-size: 15px; margin-bottom: 16px; max-width: 36em; }
+.sec .hand { margin-bottom: 2px; }
+.rep { position: relative; background: var(--card); border-radius: 18px; padding: 22px; box-shadow: var(--lift); display: grid; gap: 12px; }
+.rep > .tape { top: -12px; left: 26px; --w: 84px; }
+.rep h3 { font-family: var(--serif); font-weight: 400; font-size: 25px; line-height: 1.15; }
+.rep p { color: var(--warm); font-size: 15px; }
+.rep .row { display: flex; flex-wrap: wrap; gap: 10px; }
+.spark { width: 100%; height: 64px; display: block; margin-top: 6px; }
+.choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.choices i { font-style: normal; font-size: 13px; font-weight: 600; padding: 5px 11px; border-radius: 999px; background: var(--card); box-shadow: inset 0 0 0 1.5px var(--field-line); }
+.adm-stack { display: flex; flex-direction: column; gap: 14px; }
+.err { max-width: 560px; margin: 40px auto 90px; }
+.err .card { display: grid; gap: 12px; }
+.out { color: var(--warm); font-size: 14px; line-height: 1.55; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--cocoa); color: var(--cream); padding: 10px 18px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; }
+.toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<header class="head">
+		<a class="logo" href="../" aria-label="Busy Fox"><span class="mast">Busy<em>Fox</em></span><span class="sub" aria-hidden="true"><span>C</span><span>R</span><span>E</span><span>A</span><span>T</span><span>O</span><span>R</span><span>&nbsp;</span><span>C</span><span>O</span><span>N</span><span>N</span><span>E</span><span>C</span><span>T</span></span></a>
+	</header>
+
+	<main class="page" id="page" hidden>
+		<section class="hello">
+			<div class="pic" id="pic"></div>
+			<div><p class="hand">your dashboard</p><h1>Hi, <em id="hiName">there</em></h1><p id="handle"></p></div>
+		</section>
+
+		<div class="stats" id="stats"></div>
+
+		<section class="sec">
+			<p class="hand">from Busy Fox</p>
+			<h2>Your <em>audit report</em></h2>
+			<div class="rep"><span class="tape"></span><div id="report"></div></div>
+		</section>
+
+		<section class="sec">
+			<p class="hand">comment → DM</p>
+			<h2>Comment <em>auto-replies</em></h2>
+			<p class="sub">Pick a post and a word like <b>LINK</b>. When someone comments that word, they get your link in their DMs automatically.</p>
+			<div class="adm-stack" id="autodm"></div>
+		</section>
+
+		<section class="sec" id="choicesSec" hidden>
+			<p class="hand">what you love making</p>
+			<h2>Your <em>choices</em></h2>
+			<div class="choices" id="choices"></div>
+		</section>
+
+		<p class="out">Keep this link private: anyone with it can see this page. To disconnect, open Instagram → Settings → Apps and websites → Busy Fox Insights → Remove. Questions? Write to <a href="mailto:admin@busyfox.in">admin@busyfox.in</a>.</p>
+	</main>
+
+	<section class="err" id="err" hidden>
+		<div class="card">
+			<span class="tape" style="top:-12px;left:30px"></span>
+			<p class="hand">hmm</p>
+			<h2>This link <em>didn’t open</em></h2>
+			<p class="body" id="errMsg">Ask Busy Fox for your dashboard link.</p>
+		</div>
+	</section>
+
+	<footer class="foot">
+		<span><b>Busy Fox Marketing</b></span>
+		<span><a href="../privacy/">Privacy</a></span>
+	</footer>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../assets/config.js"></script>
+<script src="../assets/autodm.js"></script>
+<script>
+(function () {
+	'use strict';
+	var cc = window.CC || {};
+	var $ = function (id) { return document.getElementById(id); };
+	var KEY = 'cc_me_token';
+	function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]; }); }
+	function n(v) { return v == null ? '–' : Number(v).toLocaleString('en-IN'); }
+	function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('on'); setTimeout(function () { el.classList.remove('on'); }, 1800); }
+	function store(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} }
+	function read(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+
+	// the private token lives in the #fragment (never sent to the web server); remember it on this phone
+	var token = (location.hash || '').replace(/^#/, '').trim();
+	if (token) store(KEY, token); else token = read(KEY);
+	if (!token) return fail('Open the dashboard link Busy Fox sent you on WhatsApp.');
+
+	function api(path, opt) {
+		opt = opt || {};
+		opt.headers = Object.assign({Authorization: 'Bearer ' + token}, opt.headers || {});
+		opt.cache = 'no-store';
+		return fetch(cc.api + path, opt).then(function (r) { return r.json(); });
+	}
+	function fail(msg) { $('page').hidden = true; $('err').hidden = false; $('errMsg').textContent = msg; }
+
+	function spark(points) {
+		var v = points.map(function (p) { return p.followers; }).filter(function (x) { return x != null; });
+		if (v.length < 2) return '';
+		var min = Math.min.apply(null, v), max = Math.max.apply(null, v), span = max - min || 1, w = 300, h = 60;
+		var d = v.map(function (y, i) { return (i ? 'L' : 'M') + (i * w / (v.length - 1)).toFixed(1) + ' ' + (h - 6 - (y - min) / span * (h - 12)).toFixed(1); }).join(' ');
+		return '<svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="#C42847" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+	}
+
+	api('/me').then(function (d) {
+		if (!d || !d.ok) { if (d && d.error === 'not_found') store(KEY, ''); return fail((d && d.message) || 'This link is not valid any more. Ask Busy Fox for a new one.'); }
+		var p = d.profile || {};
+		$('page').hidden = false;
+		var first = (p.name || p.username || '').trim().split(/[\s|·,]+/)[0] || p.username;
+		$('hiName').textContent = first;
+		$('handle').innerHTML = '<a href="https://www.instagram.com/' + esc(p.username) + '/" target="_blank" rel="noopener">@' + esc(p.username) + '</a>' + (p.connected_at ? ' · connected ' + new Date(p.connected_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) : '');
+		$('pic').textContent = (p.username || '?').charAt(0).toUpperCase();
+		if (p.profile_picture_url) { var img = new Image(); img.alt = ''; img.referrerPolicy = 'no-referrer'; img.onload = function () { $('pic').textContent = ''; $('pic').appendChild(img); }; img.src = p.profile_picture_url; }
+		var camps = (d.dm && d.dm.campaigns) || [], live = camps.filter(function (c) { return c.active; }).length;
+		var sent = ((d.dm && d.dm.log) || []).filter(function (e) { return e.dm === 'ok'; }).length;
+		$('stats').innerHTML = '<div class="stat"><b>' + n(p.followers_count) + '</b><span>followers</span>' + spark(d.followers || []) + '</div><div class="stat"><b>' + n(p.media_count) + '</b><span>posts</span></div><div class="stat"><b>' + (d.dm && d.dm.can_dm ? live + ' on' : 'Off') + '</b><span>auto-replies · ' + sent + ' DMs sent</span></div>';
+
+		$('report').innerHTML = d.report ?
+			'<h3>Your Instagram audit is ready</h3><p>Who follows you, when they’re online, which posts worked and your 90-day plan. Open it any time; use “Save as PDF” at the top to keep a copy.</p><div class="row"><a class="btn red" href="' + esc(d.report.url) + '" target="_blank" rel="noopener">Open my report</a></div>' :
+			'<h3>Your report is being prepared</h3><p>We’re going through every post since your first one. We’ll message you on WhatsApp the moment it’s ready, and it will appear right here.</p>';
+
+		var pr = d.prefs;
+		if (pr) {
+			var all = [].concat(pr.formats || [], pr.topics || [], pr.languages || []).map(function (x) { return String(x).replace(/^Other: /, ''); });
+			if (pr.goal) all.push('Goal: ' + pr.goal);
+			if (all.length) { $('choicesSec').hidden = false; $('choices').innerHTML = all.map(function (x) { return '<i>' + esc(x) + '</i>'; }).join(''); }
+		}
+
+		window.AutoDM.mount($('autodm'), {
+			voice: 'creator', who: p.username, toast: toast,
+			connectLink: (d.links && d.links.dm_connect) || '../?mode=dm',
+			load: function () { return api('/me').then(function (x) { return (x && x.dm) || {}; }); },
+			media: function () { return api('/me/media').then(function (r) { return (r && r.media) || []; }); },
+			save: function (c) { return api('/me/dm', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(c)}); },
+			del: function (cid) { return api('/me/dm-delete?cid=' + encodeURIComponent(cid), {method: 'POST'}); }
+		});
+	}, function () { fail('No connection. Check your internet and open the link again.'); });
+})();
+</script>
+</body>
+</html>

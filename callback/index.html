@@ -102,6 +102,7 @@ textarea.input { height: auto; min-height: 104px; padding: 13px 16px; resize: ve
 					<h1 id="hello">You're <em>connected.</em></h1>
 					<p class="lede">Your numbers are on their way to Busy Fox. One last thing below, and we'll plan your growth around you.</p>
 					<p class="msg" id="missing"></p>
+					<p id="dash" hidden style="margin-top:14px"><a class="btn red" id="dashLink" href="#">Open my dashboard</a><br><small style="color:var(--warm);font-size:13px">Your report and comment auto-replies live here. Bookmark it.</small></p>
 				</div>
 				<figure class="me">
 					<span class="tape"></span>
@@ -141,7 +142,7 @@ textarea.input { height: auto; min-height: 104px; padding: 13px 16px; resize: ve
 					<span class="stamp">Saved</span>
 					<h2>Thank you<span id="thx-name"></span><em>!</em></h2>
 					<p class="lede">Busy Fox will send your report and growth plan to you on WhatsApp. You can close this page.</p>
-					<button class="btn line" id="edit" type="button">Change my choices</button>
+					<div style="display:flex;flex-wrap:wrap;gap:10px"><a class="btn red" id="dashLink2" href="#" hidden>Open my dashboard</a><button class="btn line" id="edit" type="button">Change my choices</button></div>
 				</div>
 			</div>
 		</section>
@@ -231,6 +232,7 @@ textarea.input { height: auto; min-height: 104px; padding: 13px 16px; resize: ve
 		$('ph').textContent = (d.username || 'B').charAt(0).toUpperCase();
 		if (d.profile_picture_url) { var img = new Image(); img.alt = ''; img.referrerPolicy = 'no-referrer'; img.onload = function () { $('ph').textContent = ''; $('ph').appendChild(img); }; img.src = d.profile_picture_url; }
 		if (d.missing && d.missing.length) { $('missing').textContent = d.mode === 'dm' && d.missing.every(function (p) { return /comments|messages/.test(p); }) ? 'Comment auto-replies need access to your comments and messages. Please go back, tap Continue with Instagram again and leave every switch on.' : 'You switched off part of the access, so we can’t see your insights yet. Please go back, tap Continue with Instagram again and leave every switch on.'; $('missing').classList.add('show'); }
+		if (d.portal_url) { $('dashLink').href = $('dashLink2').href = d.portal_url; $('dash').hidden = false; $('dashLink2').hidden = false; }
 		fill(d.prefs);
 		document.title = 'Connected | Busy Fox';
 		show('v-done');

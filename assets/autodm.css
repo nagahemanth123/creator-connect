@@ -1,0 +1,39 @@
+/* Auto-DM campaign manager (assets/autodm.js), shared by admin/ and me/ */
+.adm-box { background: var(--card); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--soft); }
+.adm-box h3 { font-family: var(--serif); font-weight: 400; font-size: 23px; line-height: 1.15; }
+.adm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.adm-l { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--hint); margin-top: 4px; }
+.adm-l span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.adm-box input[type=text], .adm-box input[type=url], .adm-box textarea { width: 100%; border: 1px solid var(--field-line); background: var(--field); border-radius: 12px; padding: 12px 14px; font: 400 16px var(--sans); color: var(--ink); }
+.adm-box textarea { min-height: 92px; resize: vertical; line-height: 1.45; }
+.adm-box input:focus, .adm-box textarea:focus { outline: 2px solid var(--cherry); border-color: transparent; }
+.adm-seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-seg button { min-height: 40px; padding: 0 15px; border-radius: 999px; border: 0; background: var(--field); box-shadow: inset 0 0 0 1.5px var(--field-line); font: 600 14px var(--sans); color: var(--ink); cursor: pointer; }
+.adm-seg button.on { background: var(--cherry); color: #fff; box-shadow: none; }
+.adm-posts { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding: 3px; }
+.adm-posts button { position: relative; aspect-ratio: 1; border: 0; border-radius: 10px; overflow: hidden; padding: 0; cursor: pointer; background: var(--pink-soft); color: var(--warm); font: 600 11px var(--sans); }
+.adm-posts img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.adm-posts button.on { outline: 3px solid var(--cherry); outline-offset: 1px; }
+.adm-posts small { position: absolute; left: 4px; bottom: 4px; background: rgba(0,0,0,.62); color: #fff; border-radius: 6px; padding: 1px 6px; font-size: 10.5px; }
+.adm-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.adm-camp { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 10px 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+.adm-camp:first-of-type { border-top: 0; padding-top: 0; }
+.adm-th { width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: var(--pink-soft); display: grid; place-items: center; font-size: 10.5px; font-weight: 700; color: var(--cherry); text-align: center; line-height: 1.15; }
+.adm-th img { width: 100%; height: 100%; object-fit: cover; }
+.adm-ct p { font-size: 14.5px; overflow-wrap: anywhere; }
+.adm-ct small { display: block; color: var(--warm); font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere; }
+.adm-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--hint); margin-right: 6px; vertical-align: 1px; }
+.adm-dot.on { background: #2E7D4F; }
+.adm-cb { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; }
+.adm-cb .btn { height: 36px; padding: 0 13px; font-size: 13px; }
+@media (min-width: 640px) { .adm-camp { grid-template-columns: 56px minmax(0, 1fr) auto; } .adm-cb { grid-column: auto; } }
+.adm-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 14px; }
+.adm-log li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; border-top: 1px solid var(--line); padding-top: 9px; }
+.adm-log li:first-child { border-top: 0; padding-top: 0; }
+@media (min-width: 640px) { .adm-log li { grid-template-columns: 128px minmax(0, 1fr); gap: 12px; } }
+.adm-log small { display: block; color: var(--warm); font-size: 12.5px; overflow-wrap: anywhere; }
+.adm-when { color: var(--hint); font-size: 13px; }
+.adm-ok { color: #2E7D4F; font-weight: 700; } .adm-err { color: var(--cherry); font-weight: 700; } .adm-skip { color: var(--warm); font-weight: 700; }
+.adm-warn { background: var(--butter); border-radius: 14px; padding: 14px 16px; font-size: 14.5px; line-height: 1.5; display: grid; gap: 10px; }
+.adm-none { color: var(--hint); font-size: 14.5px; }
+.adm-fine { color: var(--hint); font-size: 12.5px; line-height: 1.5; }

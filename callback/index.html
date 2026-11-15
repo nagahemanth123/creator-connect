@@ -2,229 +2,285 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Connecting | Busy Fox</title>
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
-<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F7E6E3">
 <link rel="icon" type="image/png" href="../assets/fox.png">
-<link rel="stylesheet" href="../assets/site.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/cc.css">
 <style>
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;border:0}
-  .chips legend,.field legend{padding:0;margin:0 0 12px;font-weight:600;font-size:16px;color:var(--ink)}
-  .chip{position:relative}
-  .chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
-  .chip span{display:inline-flex;align-items:center;min-height:42px;padding:9px 16px;border:1px solid var(--line);border-radius:999px;font-size:15px;color:var(--ink-2);background:#fff;transition:border-color .15s,background .15s,color .15s}
-  .chip input:checked + span{background:var(--ink);border-color:var(--ink);color:#fff}
-  .chip input:focus-visible + span{outline:2px solid var(--fox);outline-offset:2px}
-  .field{margin:0 0 26px;padding:0;border:0;min-width:0}
-  .field label.lbl{display:block;font-weight:600;font-size:16px;margin:0 0 10px}
-  .field .sub{display:block;font-weight:400;font-size:14px;color:var(--mute);margin-top:2px}
-  input[type=text],textarea{width:100%;font:16px/1.4 var(--sans);color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:4px;padding:12px 14px}
-  input[type=text]:focus,textarea:focus{outline:2px solid var(--fox);outline-offset:1px;border-color:transparent}
-  textarea{min-height:88px;resize:vertical}
-  .other{margin-top:10px}
-  .warn{border-left-color:var(--fox-t)}
+.view { padding-block: 16px 72px; }
+.center { max-width: 640px; margin: 40px auto 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.spin { width: 54px; height: 54px; border-radius: 50%; border: 3px solid var(--pink-soft); border-top-color: var(--cherry); animation: spin .9s linear infinite; margin-top: 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s; } }
+.center .btn { margin-top: 8px; min-width: 240px; }
+
+/* connected */
+.hi { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 32px 56px; align-items: center; margin-top: 18px; }
+.hi .txt { display: flex; flex-direction: column; gap: 16px; }
+.hi h1 { font-size: clamp(42px, 5vw, 70px); }
+.me { position: relative; justify-self: center; width: 230px; padding: 10px 10px 54px; background: var(--card); border-radius: 4px; box-shadow: var(--lift); transform: rotate(3deg); }
+.me > .tape { top: -12px; left: 50%; margin-left: -46px; --r: -4deg; }
+.me .ph { width: 100%; aspect-ratio: 1; border-radius: 2px; overflow: hidden; background: var(--pink-soft); display: grid; place-items: center; font: italic 500 78px/1 var(--serif); color: var(--cherry); }
+.me .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.me .cap { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font: 600 23px/1.05 var(--hand); color: var(--ink); }
+.me .cap small { display: block; font: 500 12.5px var(--sans); color: var(--warm); margin-top: 3px; }
+.me .stk { position: absolute; right: -14px; bottom: 40px; width: 38px; height: 38px; transform: rotate(14deg); filter: drop-shadow(0 3px 3px rgba(61, 37, 33, .22)); }
+@media (max-width: 760px) { .hi { grid-template-columns: minmax(0, 1fr); } .me { width: 200px; order: -1; margin-top: 8px; } }
+
+/* preferences form: a taped diary page */
+.diary { position: relative; max-width: 860px; margin: 64px auto 0; background: var(--card); border-radius: 20px; padding: 40px 40px 36px; box-shadow: var(--lift); }
+.diary > .tape.t1 { top: -13px; left: 44px; --w: 110px; --r: -5deg; }
+.diary > .tape.t2 { top: -11px; right: 52px; --w: 80px; --r: 6deg; }
+.diary .head2 { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
+.diary .head2 .lede { font-size: 16.5px; }
+.q { border: 0; margin: 0; padding: 22px 0 24px; border-top: 1.5px dashed var(--line); min-width: 0; }
+.q legend, .q .lbl { display: block; float: left; width: 100%; margin: 0 0 14px; padding: 0; font: 400 22px/1.2 var(--serif); color: var(--ink); }
+.q legend .hand, .q .lbl .hand { font-size: 20px; margin-left: 8px; }
+.q legend + *, .q .lbl + * { clear: both; }
+.chips { display: flex; flex-wrap: wrap; gap: 9px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.chip span { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 9px 17px; border-radius: 999px; background: var(--field); box-shadow: inset 0 0 0 1.5px var(--field-line); font-size: 15px; font-weight: 500; color: var(--ink); transition: background .15s, box-shadow .15s, color .15s, transform .15s; }
+.chip span::before { content: ''; width: 0; height: 14px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 7.3l2.8 2.8 6-6.4' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat; transition: width .15s; }
+.chip input:checked + span { background: var(--cherry); color: #fff; box-shadow: none; }
+.chip input:checked + span::before { width: 14px; }
+.chip input:focus-visible + span { outline: 2px solid var(--cherry); outline-offset: 2px; }
+@media (hover: hover) { .chip:hover span { box-shadow: inset 0 0 0 1.5px var(--cherry); } .chip input:checked:hover + span { box-shadow: none; } }
+.input { width: 100%; height: 52px; border: 1px solid var(--field-line); background: var(--field); border-radius: 12px; padding: 0 16px; font: 400 16px var(--sans); color: var(--ink); }
+textarea.input { height: auto; min-height: 104px; padding: 13px 16px; resize: vertical; line-height: 1.45; }
+.input::placeholder { color: var(--hint); opacity: 1; }
+.input:focus { outline: 2px solid var(--cherry); outline-offset: 0; border-color: transparent; }
+.other { margin-top: 12px; max-width: 520px; }
+.submit { border-top: 1.5px dashed var(--line); padding-top: 26px; display: flex; flex-direction: column; gap: 6px; }
+.submit .btn { width: 100%; height: 58px; font-size: 16.5px; }
+.thanks { position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 18px 0 8px; }
+.thanks .stamp { position: static; transform: rotate(-6deg); font-size: 18px; margin-bottom: 8px; }
+.thanks .btn { margin-top: 6px; }
+@media (max-width: 600px) { .diary { padding: 32px 18px 26px; margin-top: 48px; } .q legend, .q .lbl { font-size: 20px; } .chip span { font-size: 14.5px; padding: 8px 14px; min-height: 42px; } }
+
+/* confetti */
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
+.confetti i { position: absolute; top: -20px; display: block; }
 </style>
 </head>
 <body>
-<main class="wrap">
-  <a class="mark" href="https://busyfox.in"><img src="../assets/fox.png" alt=""><span>Busy Fox</span></a>
+<script>if (/[?&]still\b/.test(location.search)) document.documentElement.classList.add('still');</script>
+<div class="wrap">
+	<header class="head">
+		<a class="logo" href="../" aria-label="Busy Fox"><span class="mast">Busy<em>Fox</em></span><span class="sub" aria-hidden="true"><span>C</span><span>R</span><span>E</span><span>A</span><span>T</span><span>O</span><span>R</span><span>&nbsp;</span><span>C</span><span>O</span><span>N</span><span>N</span><span>E</span><span>C</span><span>T</span></span></a>
+	</header>
 
-  <!-- 1. working -->
-  <section id="v-working">
-    <p class="eyebrow">Creator Connect</p>
-    <h1>Connecting your account…</h1>
-    <div class="spinner" aria-hidden="true"></div>
-    <p class="lead">This takes a few seconds. Please keep this page open.</p>
-  </section>
+	<main class="view">
+		<!-- 1. working -->
+		<section id="v-working" class="center" style="padding:0">
+			<p class="hand">almost there…</p>
+			<h1>Connecting your <em>account</em></h1>
+			<div class="spin" aria-hidden="true"></div>
+			<p class="lede">This takes a few seconds. Please keep this page open.</p>
+		</section>
 
-  <!-- 2. problem -->
-  <section id="v-error" hidden>
-    <p class="eyebrow">Creator Connect</p>
-    <h1 id="err-title">That didn't work</h1>
-    <p class="lead" id="err-text">Something went wrong while connecting.</p>
-    <a class="btn" id="retry" href="../">Try again</a>
-    <p class="small" style="margin-top:14px">Still stuck? <a id="wa1" href="https://wa.me/918341333373" target="_blank" rel="noopener">Message Busy Fox on WhatsApp</a>.</p>
-  </section>
+		<!-- 2. problem -->
+		<section id="v-error" class="center" style="padding:0" hidden>
+			<p class="hand" id="err-kick">oops</p>
+			<h1 id="err-title">That didn't <em>work</em></h1>
+			<p class="lede" id="err-text">Something went wrong while connecting.</p>
+			<a class="btn red" id="retry" href="../">Try again</a>
+			<p class="fine">Still stuck? Reply to the Busy Fox message that sent you this link.</p>
+		</section>
 
-  <!-- 3. connected + preferences -->
-  <section id="v-done" hidden>
-    <p class="eyebrow">Connected</p>
-    <h1 id="hello">You're connected.</h1>
-    <div class="who"><img id="pic" alt="" hidden><div><b id="uname"></b><span id="ufoll"></span></div></div>
-    <p class="msg warn" id="missing"></p>
+		<!-- 3. connected + preferences -->
+		<section id="v-done" style="padding:0" hidden>
+			<div class="hi">
+				<div class="txt">
+					<p class="hand">you're in!</p>
+					<h1 id="hello">You're <em>connected.</em></h1>
+					<p class="lede">Your numbers are on their way to Busy Fox. One last thing below, and we'll plan your growth around you.</p>
+					<p class="msg" id="missing"></p>
+				</div>
+				<figure class="me">
+					<span class="tape"></span>
+					<div class="ph" id="ph">B</div>
+					<figcaption class="cap"><span id="uname">@you</span><small id="ufoll"></small></figcaption>
+					<svg class="stk" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 35s-13-8.2-13-17.3C7 12.5 10.6 9 15 9c2.4 0 4 1.2 5 2.9C21 10.2 22.6 9 25 9c4.4 0 8 3.5 8 8.7C33 26.8 20 35 20 35z" fill="#C42847" stroke="#fff" stroke-width="3" paint-order="stroke"/></svg>
+				</figure>
+			</div>
 
-    <form id="prefs" novalidate>
-      <h2 style="margin-top:8px">One last thing: what do you enjoy making?</h2>
-      <p class="lead" style="font-size:16px;margin-bottom:28px">We'll build your growth plan around content you're happy to create. It takes about a minute, and you can skip anything.</p>
+			<div class="diary">
+				<span class="tape t1"></span><span class="tape t2 butter"></span>
+				<form id="prefs" novalidate>
+					<div class="head2">
+						<p class="hand">one last thing</p>
+						<h2>What do you <em>love</em> making?</h2>
+						<p class="lede">We'll build your plan around content you're happy to create. About a minute, and you can skip anything.</p>
+					</div>
 
-      <fieldset class="field chips" data-name="formats">
-        <legend>Formats you're happy to make</legend>
-      </fieldset>
+					<fieldset class="q" data-name="formats"><legend>Formats you're happy to make <span class="hand">pick all you like</span></legend><div class="chips"></div></fieldset>
+					<fieldset class="q" data-name="topics"><legend>Topics you love</legend><div class="chips"></div>
+						<input class="input other" type="text" id="topics_other" placeholder="Anything else? e.g. temple travel, millet recipes" maxlength="120" aria-label="Other topics"></fieldset>
+					<fieldset class="q" data-name="posts_per_week" data-single><legend>How many posts a week can you make? <span class="hand">be honest!</span></legend><div class="chips"></div></fieldset>
+					<fieldset class="q" data-name="face" data-single><legend>Showing your face on camera</legend><div class="chips"></div></fieldset>
+					<fieldset class="q" data-name="languages"><legend>Languages you post in</legend><div class="chips"></div></fieldset>
+					<fieldset class="q" data-name="goal" data-single><legend>Your main goal right now</legend><div class="chips"></div></fieldset>
+					<div class="q"><label class="lbl" for="brands">Brands you'd love to work with <span class="hand">optional</span></label><input class="input" type="text" id="brands" maxlength="300" placeholder="e.g. kitchen appliances, cafés, saree brands"></div>
+					<div class="q"><label class="lbl" for="wont_do">Anything you won't do? <span class="hand">optional</span></label><input class="input" type="text" id="wont_do" maxlength="300" placeholder="e.g. no dance trends, no alcohol brands"></div>
+					<div class="q"><label class="lbl" for="notes">Anything else we should know? <span class="hand">optional</span></label><textarea class="input" id="notes" maxlength="1000" placeholder="Your dreams for the page, what you've tried, what worries you"></textarea></div>
 
-      <fieldset class="field chips" data-name="topics">
-        <legend>Topics you love</legend>
-      </fieldset>
-      <input class="other" type="text" id="topics_other" placeholder="Other topics, e.g. temple travel, millet recipes" maxlength="120" aria-label="Other topics">
+					<div class="submit">
+						<button class="btn red" id="save" type="submit">Save my choices</button>
+						<p class="msg" id="pmsg" role="status" aria-live="polite"></p>
+					</div>
+				</form>
 
-      <fieldset class="field chips" data-name="posts_per_week" data-single style="margin-top:26px">
-        <legend>How many posts a week can you make?</legend>
-      </fieldset>
+				<div class="thanks" id="thanks" hidden>
+					<span class="stamp">Saved</span>
+					<h2>Thank you<span id="thx-name"></span><em>!</em></h2>
+					<p class="lede">Busy Fox will send your report and growth plan to you on WhatsApp. You can close this page.</p>
+					<button class="btn line" id="edit" type="button">Change my choices</button>
+				</div>
+			</div>
+		</section>
+	</main>
 
-      <fieldset class="field chips" data-name="face" data-single>
-        <legend>Showing your face on camera</legend>
-      </fieldset>
-
-      <fieldset class="field chips" data-name="languages">
-        <legend>Languages you post in</legend>
-      </fieldset>
-
-      <fieldset class="field chips" data-name="goal" data-single>
-        <legend>Your main goal right now</legend>
-      </fieldset>
-
-      <div class="field">
-        <label class="lbl" for="brands">Brands or categories you'd love to work with<span class="sub">Optional</span></label>
-        <input type="text" id="brands" maxlength="300" placeholder="e.g. kitchen appliances, cafés, saree brands">
-      </div>
-      <div class="field">
-        <label class="lbl" for="wont_do">Anything you won't do?<span class="sub">Optional</span></label>
-        <input type="text" id="wont_do" maxlength="300" placeholder="e.g. no dance trends, no alcohol brands">
-      </div>
-      <div class="field">
-        <label class="lbl" for="notes">Anything else we should know?<span class="sub">Optional</span></label>
-        <textarea id="notes" maxlength="1000" placeholder="Your dreams for the page, what you've tried, what worries you"></textarea>
-      </div>
-
-      <button class="btn" id="save" type="submit">Save my choices</button>
-      <p class="msg" id="pmsg" role="status" aria-live="polite"></p>
-    </form>
-
-    <div id="thanks" hidden>
-      <h2 style="margin-top:8px">Thank you!</h2>
-      <p class="lead" style="font-size:16px">Busy Fox will share your report and growth plan soon. You can close this page.</p>
-      <button class="btn ghost" id="edit" type="button">Change my choices</button>
-    </div>
-  </section>
-
-  <footer>
-    <span>Busy Fox · Busyfox Marketing LLP · Kadapa</span>
-    <a href="../privacy/">Privacy</a>
-    <a id="wa2" href="https://wa.me/918341333373" target="_blank" rel="noopener">WhatsApp +91 83413 33373</a>
-  </footer>
-</main>
+	<footer class="foot">
+		<span><b>Busy Fox Marketing</b></span>
+		<span><a href="../privacy/">Privacy</a></span>
+	</footer>
+</div>
 <script src="../assets/config.js"></script>
 <script>
 (function () {
-  var cc = window.CC || {};
-  var OPTIONS = {
-    formats: ['Reels talking to camera', 'Reels without talking (b-roll/music)', 'Photo posts', 'Photo carousels', 'Text/educational carousels', 'Daily stories', 'Lives', 'Collabs with other creators'],
-    topics: ['Food & recipes', 'Fashion & outfits', 'Beauty & makeup', 'Day-in-my-life', 'Travel', 'Fitness & health', 'Comedy & skits', 'Education & tips', 'Tech & gadgets', 'Parenting & family', 'Home & decor', 'Business & money', 'Motivation', 'Dance & music', 'Art & DIY', 'Pets'],
-    posts_per_week: ['1-2', '3-4', '5-7', 'Daily or more'],
-    face: ['comfortable', 'sometimes', 'prefer not'],
-    languages: ['Telugu', 'English', 'Hindi', 'Tamil', 'Kannada', 'Malayalam'],
-    goal: ['Grow followers', 'Brand deals', 'Sell my own product/service', 'Build a community']
-  };
-  var LABEL = {comfortable: 'Comfortable', sometimes: 'Sometimes', 'prefer not': 'Prefer not to'};
-  var $ = function (id) { return document.getElementById(id); };
-  if (cc.whatsapp) { $('wa1').href = cc.whatsapp; $('wa2').href = cc.whatsapp; }
+	var cc = window.CC || {};
+	var OPTIONS = {
+		formats: ['Reels talking to camera', 'Reels without talking (b-roll/music)', 'Photo posts', 'Photo carousels', 'Text/educational carousels', 'Daily stories', 'Lives', 'Collabs with other creators'],
+		topics: ['Food & recipes', 'Fashion & outfits', 'Beauty & makeup', 'Day-in-my-life', 'Travel', 'Fitness & health', 'Comedy & skits', 'Education & tips', 'Tech & gadgets', 'Parenting & family', 'Home & decor', 'Business & money', 'Motivation', 'Dance & music', 'Art & DIY', 'Pets'],
+		posts_per_week: ['1-2', '3-4', '5-7', 'Daily or more'],
+		face: ['comfortable', 'sometimes', 'prefer not'],
+		languages: ['Telugu', 'English', 'Hindi', 'Tamil', 'Kannada', 'Malayalam'],
+		goal: ['Grow followers', 'Brand deals', 'Sell my own product/service', 'Build a community']
+	};
+	var LABEL = {comfortable: 'Comfortable', sometimes: 'Sometimes', 'prefer not': 'Prefer not to', '1-2': '1–2', '3-4': '3–4', '5-7': '5–7'};
+	var $ = function (id) { return document.getElementById(id); };
+	var $$ = function (s) { return [].slice.call(document.querySelectorAll(s)); };
+	var still = document.documentElement.classList.contains('still');
+	var reduce = still || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function show(id) { ['v-working', 'v-error', 'v-done'].forEach(function (v) { $(v).hidden = v !== id; }); }
-  function fail(title, text) { $('err-title').textContent = title; $('err-text').textContent = text; show('v-error'); }
+	function show(id) { ['v-working', 'v-error', 'v-done'].forEach(function (v) { $(v).hidden = v !== id; }); }
+	function fail(kick, title, text) { $('err-kick').textContent = kick; $('err-title').innerHTML = title; $('err-text').textContent = text; document.title = 'Not connected | Busy Fox'; show('v-error'); }
 
-  // build chip groups
-  document.querySelectorAll('fieldset.chips').forEach(function (fs) {
-    var name = fs.dataset.name, single = fs.hasAttribute('data-single');
-    OPTIONS[name].forEach(function (opt, i) {
-      var id = name + '_' + i;
-      var lab = document.createElement('label'); lab.className = 'chip';
-      var inp = document.createElement('input'); inp.type = single ? 'radio' : 'checkbox'; inp.name = name; inp.value = opt; inp.id = id;
-      var sp = document.createElement('span'); sp.textContent = LABEL[opt] || opt;
-      lab.appendChild(inp); lab.appendChild(sp); fs.appendChild(lab);
-    });
-  });
-  function fill(p) {
-    if (!p) return;
-    Object.keys(OPTIONS).forEach(function (name) {
-      var vals = [].concat(p[name] || []);
-      document.querySelectorAll('input[name="' + name + '"]').forEach(function (i) { i.checked = vals.indexOf(i.value) >= 0; });
-    });
-    var extra = (p.topics || []).filter(function (t) { return OPTIONS.topics.indexOf(t) < 0; }).map(function (t) { return t.replace(/^Other: /, ''); });
-    $('topics_other').value = extra.join(', ');
-    ['brands', 'wont_do', 'notes'].forEach(function (k) { $(k).value = p[k] || ''; });
-  }
-  function collect() {
-    var p = {};
-    Object.keys(OPTIONS).forEach(function (name) {
-      var picked = [].map.call(document.querySelectorAll('input[name="' + name + '"]:checked'), function (i) { return i.value; });
-      p[name] = document.querySelector('fieldset[data-name="' + name + '"]').hasAttribute('data-single') ? (picked[0] || '') : picked;
-    });
-    var other = $('topics_other').value.trim();
-    if (other) other.split(',').forEach(function (t) { t = t.trim(); if (t) p.topics.push('Other: ' + t); });
-    ['brands', 'wont_do', 'notes'].forEach(function (k) { p[k] = $(k).value.trim(); });
-    return p;
-  }
+	// chip groups
+	$$('fieldset.q').forEach(function (fs) {
+		var name = fs.dataset.name, single = fs.hasAttribute('data-single'), box = fs.querySelector('.chips');
+		OPTIONS[name].forEach(function (opt) {
+			var lab = document.createElement('label'); lab.className = 'chip';
+			var inp = document.createElement('input'); inp.type = single ? 'radio' : 'checkbox'; inp.name = name; inp.value = opt;
+			var sp = document.createElement('span'); sp.textContent = LABEL[opt] || opt;
+			lab.appendChild(inp); lab.appendChild(sp); box.appendChild(lab);
+		});
+	});
+	function fill(p) {
+		if (!p) return;
+		Object.keys(OPTIONS).forEach(function (name) {
+			var vals = [].concat(p[name] || []);
+			$$('input[name="' + name + '"]').forEach(function (i) { i.checked = vals.indexOf(i.value) >= 0; });
+		});
+		$('topics_other').value = (p.topics || []).filter(function (t) { return OPTIONS.topics.indexOf(t) < 0; }).map(function (t) { return t.replace(/^Other: /, ''); }).join(', ');
+		['brands', 'wont_do', 'notes'].forEach(function (k) { $(k).value = p[k] || ''; });
+	}
+	function collect() {
+		var p = {};
+		Object.keys(OPTIONS).forEach(function (name) {
+			var picked = $$('input[name="' + name + '"]:checked').map(function (i) { return i.value; });
+			p[name] = document.querySelector('fieldset[data-name="' + name + '"]').hasAttribute('data-single') ? (picked[0] || '') : picked;
+		});
+		$('topics_other').value.split(',').forEach(function (t) { t = t.trim(); if (t) p.topics.push('Other: ' + t); });
+		['brands', 'wont_do', 'notes'].forEach(function (k) { p[k] = $(k).value.trim(); });
+		return p;
+	}
 
-  function connected(d) {
-    var first = (d.name || '').split(' ')[0];
-    $('hello').textContent = first ? 'You’re connected, ' + first + '.' : 'You’re connected.';
-    $('uname').textContent = '@' + d.username;
-    $('ufoll').textContent = d.followers_count != null ? Number(d.followers_count).toLocaleString('en-IN') + ' followers' : '';
-    if (d.profile_picture_url) { $('pic').src = d.profile_picture_url; $('pic').hidden = false; }
-    if (d.missing && d.missing.length) {
-      $('missing').textContent = 'You switched off part of the access, so we can’t see your insights. Please tap Try again on the first page and leave every switch on.';
-      $('missing').classList.add('show');
-    }
-    fill(d.prefs);
-    document.title = 'Connected | Busy Fox';
-    show('v-done');
-  }
+	function confetti() {
+		if (reduce || !document.body.animate) return;
+		var box = document.createElement('div'); box.className = 'confetti'; document.body.appendChild(box);
+		var colors = ['#C42847', '#F2B8C6', '#F6E3A1', '#D98799', '#FADDE4'];
+		for (var i = 0; i < 46; i++) {
+			var p = document.createElement('i'), w = 6 + Math.random() * 8, heart = i % 7 === 0;
+			p.style.left = (Math.random() * 100) + 'vw';
+			p.style.width = (heart ? 14 : w) + 'px'; p.style.height = (heart ? 14 : w * .55) + 'px';
+			p.style.background = heart ? 'none' : colors[i % colors.length];
+			if (heart) p.innerHTML = '<svg viewBox="0 0 40 40" width="14" height="14"><path d="M20 35s-13-8.2-13-17.3C7 12.5 10.6 9 15 9c2.4 0 4 1.2 5 2.9C21 10.2 22.6 9 25 9c4.4 0 8 3.5 8 8.7C33 26.8 20 35 20 35z" fill="#C42847"/></svg>';
+			box.appendChild(p);
+			p.animate([{transform: 'translate(0,0) rotate(0deg)', opacity: 1}, {transform: 'translate(' + (Math.random() * 160 - 80) + 'px,' + (innerHeight + 40) + 'px) rotate(' + (Math.random() * 720 - 360) + 'deg)', opacity: .9}],
+				{duration: 1700 + Math.random() * 1500, delay: Math.random() * 400, easing: 'cubic-bezier(.25,.6,.4,1)', fill: 'forwards'});
+		}
+		setTimeout(function () { box.remove(); }, 3800);
+	}
 
-  // form
-  $('prefs').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var saved = JSON.parse(sessionStorage.getItem('cc_result') || 'null');
-    if (!saved || !saved.prefs_token) { $('pmsg').textContent = 'This page has expired. Please tap the connect link again.'; $('pmsg').classList.add('show'); return; }
-    var btn = $('save'); btn.disabled = true; btn.textContent = 'Saving…';
-    var prefs = collect();
-    fetch(cc.api + '/prefs', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({token: saved.prefs_token, prefs: prefs})})
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        btn.disabled = false; btn.textContent = 'Save my choices';
-        if (!d.ok) { $('pmsg').textContent = d.message || 'We could not save that. Please try again.'; $('pmsg').classList.add('show'); return; }
-        saved.prefs = prefs; sessionStorage.setItem('cc_result', JSON.stringify(saved));
-        $('prefs').hidden = true; $('thanks').hidden = false; $('pmsg').classList.remove('show');
-        window.scrollTo({top: 0, behavior: 'smooth'});
-      })
-      .catch(function () { btn.disabled = false; btn.textContent = 'Save my choices'; $('pmsg').textContent = 'No connection. Please try again.'; $('pmsg').classList.add('show'); });
-  });
-  $('edit').addEventListener('click', function () { $('thanks').hidden = true; $('prefs').hidden = false; });
+	function connected(d, celebrate) {
+		var first = (d.name || '').split(' ')[0];
+		$('hello').innerHTML = first ? 'You’re <em>connected,</em> ' + first.replace(/[<>&]/g, '') + '.' : 'You’re <em>connected.</em>';
+		$('thx-name').textContent = first ? ', ' + first : '';
+		$('uname').textContent = '@' + d.username;
+		$('ufoll').textContent = d.followers_count != null ? Number(d.followers_count).toLocaleString('en-IN') + ' followers' : '';
+		$('ph').textContent = (d.username || 'B').charAt(0).toUpperCase();
+		if (d.profile_picture_url) { var img = new Image(); img.alt = ''; img.referrerPolicy = 'no-referrer'; img.onload = function () { $('ph').textContent = ''; $('ph').appendChild(img); }; img.src = d.profile_picture_url; }
+		if (d.missing && d.missing.length) { $('missing').textContent = 'You switched off part of the access, so we can’t see your insights yet. Please go back, tap Continue with Instagram again and leave every switch on.'; $('missing').classList.add('show'); }
+		fill(d.prefs);
+		document.title = 'Connected | Busy Fox';
+		show('v-done');
+		if (celebrate) confetti();
+	}
 
-  // flow
-  var q = new URLSearchParams(location.search);
-  if (q.get('error')) {
-    if (q.get('error_reason') === 'user_denied' || q.get('error') === 'access_denied') fail('No problem', 'You cancelled, so nothing was shared. You can connect whenever you’re ready.');
-    else fail('That didn’t work', q.get('error_description') || 'Instagram could not finish the connection.');
-    return;
-  }
-  var code = q.get('code'), state = q.get('state');
-  if (!code) {
-    var kept = JSON.parse(sessionStorage.getItem('cc_result') || 'null');
-    if (kept) { connected(kept); return; }
-    fail('Nothing to connect', 'Please start from the Busy Fox connect link.');
-    return;
-  }
-  history.replaceState(null, '', location.pathname); // drop the one-time code from the address bar
-  fetch(cc.api + '/callback', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({code: code, state: state})})
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (d.ok) { sessionStorage.setItem('cc_result', JSON.stringify(d)); connected(d); return; }
-      if (d.error === 'link_expired') fail('This link has expired', 'Please go back and tap Continue with Instagram again.');
-      else if (d.error === 'not_configured') fail('Not switched on yet', 'This link is not ready. Busy Fox will message you when it is.');
-      else fail('That didn’t work', 'Instagram said: ' + (d.message || 'unknown error') + '. Please try again.');
-    })
-    .catch(function () { fail('No connection', 'Check your internet and try again.'); });
+	$('prefs').addEventListener('submit', function (e) {
+		e.preventDefault();
+		var saved = JSON.parse(sessionStorage.getItem('cc_result') || 'null');
+		var msg = $('pmsg');
+		if (!saved || !saved.prefs_token) { msg.textContent = 'This page has expired. Please open the Busy Fox link and connect again.'; msg.classList.add('show'); return; }
+		var btn = $('save'); btn.disabled = true; btn.textContent = 'Saving…'; msg.classList.remove('show');
+		var prefs = collect();
+		fetch(cc.api + '/prefs', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({token: saved.prefs_token, prefs: prefs})})
+			.then(function (r) { return r.json(); })
+			.then(function (d) {
+				btn.disabled = false; btn.textContent = 'Save my choices';
+				if (!d.ok) { msg.textContent = d.message || 'We couldn’t save that. Please try again.'; msg.classList.add('show'); return; }
+				saved.prefs = prefs; sessionStorage.setItem('cc_result', JSON.stringify(saved));
+				$('prefs').hidden = true; $('thanks').hidden = false;
+				document.querySelector('.diary').scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block: 'start'});
+				confetti();
+			})
+			.catch(function () { btn.disabled = false; btn.textContent = 'Save my choices'; msg.textContent = 'No connection. Please try again.'; msg.classList.add('show'); });
+	});
+	$('edit').addEventListener('click', function () { $('thanks').hidden = true; $('prefs').hidden = false; });
+
+	// flow
+	var q = new URLSearchParams(location.search);
+	if (q.get('demo') !== null) { connected({username: 'yourhandle', name: 'Priya Reddy', followers_count: 12840, missing: [], prefs: null}, !still); return; }
+	if (q.get('error')) {
+		if (q.get('error_reason') === 'user_denied' || q.get('error') === 'access_denied') fail('no worries', 'Nothing was <em>shared</em>', 'You cancelled, so Busy Fox got nothing. Connect whenever you’re ready.');
+		else fail('oops', 'That didn’t <em>work</em>', q.get('error_description') || 'Instagram couldn’t finish the connection.');
+		return;
+	}
+	var code = q.get('code'), state = q.get('state');
+	if (!code) {
+		var kept = JSON.parse(sessionStorage.getItem('cc_result') || 'null');
+		if (kept) { connected(kept, false); return; }
+		fail('hmm', 'Nothing to <em>connect</em>', 'Please start from the Busy Fox link you were sent.');
+		return;
+	}
+	history.replaceState(null, '', location.pathname); // drop the one-time code from the address bar
+	fetch(cc.api + '/callback', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({code: code, state: state})})
+		.then(function (r) { return r.json(); })
+		.then(function (d) {
+			if (d.ok) { sessionStorage.setItem('cc_result', JSON.stringify(d)); connected(d, true); return; }
+			if (d.error === 'link_expired') fail('timed out', 'This link has <em>expired</em>', 'Please go back and tap Continue with Instagram again.');
+			else if (d.error === 'not_configured') fail('soon', 'Not switched on <em>yet</em>', 'This link isn’t ready. Busy Fox will message you when it is.');
+			else fail('oops', 'That didn’t <em>work</em>', 'Instagram said: ' + (d.message || 'unknown error') + '. Please try again.');
+		})
+		.catch(function () { fail('offline?', 'No <em>connection</em>', 'Check your internet and try again.'); });
 })();
 </script>
 </body>

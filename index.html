@@ -149,13 +149,12 @@
 /* ---------- your page, your rules ---------- */
 .rules { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 48px 64px; align-items: center; }
 .rules .txt { display: flex; flex-direction: column; gap: 16px; }
-.notes2 { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.notes2 { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); max-width: 460px; width: 100%; justify-self: center; }
 .notes2 .card { transform: rotate(var(--rot, 0deg)); }
 .notes2 .card h3 { margin-bottom: 14px; font-size: 26px; }
 .notes2 .card > .tape { top: -12px; left: 50%; margin-left: -38px; --w: 76px; }
-.notes2 .stamp { right: -10px; bottom: -22px; }
 @media (max-width: 960px) { .rules { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 600px) { .notes2 { grid-template-columns: minmax(0, 1fr); gap: 34px; } .notes2 .stamp { right: 10px; bottom: -18px; } }
+
 
 /* ---------- steps ---------- */
 .steps { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin-top: 64px; counter-reset: s; }
@@ -389,17 +388,6 @@
 						<li>How every post, reel and story did</li>
 						<li>When your followers are online</li>
 					</ul>
-				</div>
-				<div class="card" data-in style="--rot:1.4deg;--dl:.12s">
-					<span class="tape" style="--r:6deg"></span>
-					<h3>We'll <em>never</em></h3>
-					<ul class="cross">
-						<li>Post, comment or like as you</li>
-						<li>Read your messages</li>
-						<li>See or change your password</li>
-						<li>Follow, unfollow or delete anything</li>
-					</ul>
-					<span class="stamp">Read-only</span>
 				</div>
 			</div>
 		</div>

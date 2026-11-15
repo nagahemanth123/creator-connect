@@ -138,9 +138,7 @@
 				'<p class="pl-key"><span><i class="s-idea"></i>Planned</span><span><i class="s-review"></i>' + (me ? 'Needs your yes' : 'Needs her yes') + '</span><span><i class="s-approved"></i>Approved</span><span><i class="s-posted"></i>Posted</span><span><i class="s-story"></i>Story that day</span></p></div>';
 		}
 		function agenda() {
-			var list = posts().filter(function (p) { var t = ist(Date.parse(p.at)); return t.y === st.y && t.m === st.m; })
-				.concat(igOnly().map(function (x) { return {ig: x, at: x.at}; }))
-				.sort(function (x, y) { return Date.parse(x.at) - Date.parse(y.at); });
+			var list = posts().filter(function (p) { var t = ist(Date.parse(p.at)); return t.y === st.y && t.m === st.m; }); // planned posts only; what is already on Instagram lives on the calendar
 			if (!list.length) return '<p class="pl-none">' + (me ? 'Nothing is planned for ' + MONTHS[st.m] + ' yet. Your team adds the month’s posts here, and you can add your own.' : 'Nothing planned for ' + MONTHS[st.m] + '. Add a post, or fill the month from her audit plan.') + '</p>';
 			var out = '', last = '';
 			list.forEach(function (p) {
@@ -337,6 +335,9 @@
 			if (a === 'day') {
 				var el = root.querySelector('#pl-d-' + id);
 				if (el) return el.scrollIntoView({behavior: 'smooth', block: 'center'});
+				var onIg = igOnly().filter(function (x) { return dayKey(Date.parse(x.at)) === id && x.permalink && (x.type !== 'story' || x.live); })[0];
+				if (onIg) return window.open(onIg.permalink, '_blank', 'noopener');
+				if (id < dayKey(Date.now())) return;
 				st.form = blank(id); return render();
 			}
 			if (a === 'open') { st.open = id; st.ask = false; st.ideas = null; return render(); }

@@ -152,6 +152,27 @@
 			});
 			return '<div class="pl-agenda">' + out + '</div></div>';
 		}
+		// men and women: Instagram gives this for the whole account over 30 days, never for one post
+		function splitRow(label, v) {
+			var tot = v ? v.men + v.women + v.other : 0;
+			if (!tot) return '';
+			var m = Math.round(v.men / tot * 100), w = Math.round(v.women / tot * 100), u = Math.max(0, 100 - m - w);
+			return '<div class="pl-sp"><p class="pl-spt"><b>' + label + '</b><span>' + n(tot) + '</span></p>' +
+				'<div class="pl-bar" role="img" aria-label="Men ' + m + ' percent, women ' + w + ' percent, not specified ' + u + ' percent"><i class="m" style="width:' + m + '%"></i><i class="w" style="width:' + w + '%"></i><i class="u"></i></div>' +
+				'<p class="pl-leg"><span><i class="m"></i>Men <b>' + m + '%</b> <small>' + n(v.men) + '</small></span><span><i class="w"></i>Women <b>' + w + '%</b> <small>' + n(v.women) + '</small></span><span><i class="u"></i>Not specified <b>' + u + '%</b> <small>' + n(v.other) + '</small></span></p></div>';
+		}
+		function audience() {
+			var a = st.d.audience;
+			if (!a) return '';
+			var rows = splitRow(me ? 'People you reached' : 'People she reached', a.reach) + splitRow(me ? 'People who liked, commented, saved or shared' : 'People who engaged', a.engaged) + splitRow(me ? 'Your followers' : 'Her followers', a.followers);
+			return rows ? '<div class="pl-box pl-aud"><p class="hand">last 30 days</p><h3>Men and <em>women</em></h3>' + rows + '<p class="pl-fine">Instagram shares this for the whole account, not for a single post. “Not specified” are people who have not told Instagram.</p></div>' : '';
+		}
+		function weekSplit(w) {
+			var a = w.audience || st.d.audience;
+			if (!a) return '';
+			var rows = splitRow('Reached', a.reach) + splitRow('Engaged', a.engaged);
+			return rows ? '<div class="pl-wsp"><p class="pl-h">Men and women, last 30 days</p>' + rows + '</div>' : '';
+		}
 		function weekly() {
 			var ws = (st.d.weekly || []);
 			if (!ws.length) return me ? '' : '<div class="pl-box"><h3>Monday report</h3><p class="pl-fine">It is made every Monday morning once she has a plan. You can also make it now for last week.</p><div class="pl-acts"><button class="btn line" type="button" data-a="mkweekly">Make last week’s report</button></div></div>';
@@ -160,7 +181,7 @@
 			var range = dayLong(Date.parse(w.from)).slice(4) + ' to ' + dayLong(Date.parse(w.to) - DAY).slice(4);
 			var gain = f.gain == null ? '–' : (f.gain > 0 ? '+' : '') + n(f.gain);
 			return '<div class="pl-box pl-week"><p class="hand">every Monday</p><h3>Your week, <em>' + esc(range) + '</em></h3>' +
-				'<div class="pl-tiles"><div><b>' + n(t.posts) + '</b><span>posts went out</span></div><div><b>' + n(t.reach) + '</b><span>people reached</span></div><div><b>' + gain + '</b><span>followers</span></div></div>' +
+				'<div class="pl-tiles"><div><b>' + n(t.posts) + '</b><span>posts went out</span></div><div><b>' + n(t.reach) + '</b><span>people reached</span></div><div><b>' + gain + '</b><span>followers</span></div></div>' + weekSplit(w) +
 				(best ? '<a class="pl-best' + (best.thumb ? '' : ' noimg') + '" href="' + esc(best.permalink) + '" target="_blank" rel="noopener">' + (best.thumb ? '<img src="' + esc(best.thumb) + '" alt="" referrerpolicy="no-referrer" loading="lazy">' : '') + '<span><small>Best post of the week</small><b>' + esc(best.caption || TYPE[best.type]) + '</b><small>' + n(best.reach) + ' reached · ' + n(best.likes) + ' likes · ' + n(best.saves) + ' saves</small></span></a>' : '<p class="pl-fine">No posts went out that week.</p>') +
 				((w.next || []).length ? '<p class="pl-h">Coming this week</p><ul class="pl-next">' + w.next.map(function (x) { return '<li><span>' + dayLong(Date.parse(x.at)) + ', ' + time(Date.parse(x.at)) + '</span>' + esc(x.hook) + '</li>'; }).join('') + '</ul>' : '') +
 				(me ? (w.note ? '<p class="pl-h">From your team</p><p class="pl-note">' + esc(w.note) + '</p>' : '') :
@@ -338,7 +359,7 @@
 			st.sheet = sheetKey; st.deal = false; // a sheet rises once when it opens, not on every redraw inside it
 			root.innerHTML = '<div class="pl">' + needs() + ideasBar() + warn + calendar() +
 				'<div class="pl-list"><div class="pl-listhd"><h3>Posts in <em>' + MONTHS[st.m] + '</em></h3><div class="pl-acts pl-top"><button class="btn line" type="button" data-a="new">' + (me ? 'Add my own post' : 'Add a post') + '</button>' + (me ? '' : '<button class="btn line" type="button" data-a="fill">Fill 4 weeks from her audit plan</button>') + '</div></div>' +
-				agenda() + '</div>' + weekly() + '</div>' +
+				agenda() + '</div>' + audience() + weekly() + '</div>' +
 				(sheetKey ? '<div class="pl-back on' + (opening ? ' pl-open' : '') + '">' + (st.ideas ? ideasSheet() : st.form ? form(st.form) : sheet(p)) + '</div>' : '');
 			if (window.Fun && window.Fun.planner) window.Fun.planner(root, {deal: deal});
 			window.scrollTo(0, keepY);

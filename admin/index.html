@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="../assets/autodm.css">
 <link rel="stylesheet" href="../assets/planner.css">
 <link rel="stylesheet" href="../assets/fun.css">
+<link rel="stylesheet" href="../assets/visits.css">
 <style>
 .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin: 18px 0 26px; }
 .top h1 { font-size: clamp(40px, 5vw, 64px); }
@@ -116,6 +117,7 @@
 <script src="../assets/config.js"></script>
 <script src="../assets/autodm.js"></script>
 <script src="../assets/fun.js"></script>
+<script src="../assets/visits.js"></script>
 <script src="../assets/planner.js"></script>
 <script>
 (function () {
@@ -170,7 +172,7 @@
 				(a.can_post ? '<span class="tag post">Can post</span>' : '<span class="tag">Read-only</span>') +
 				(a.can_dm ? '<span class="tag dm">Auto-DM ready</span>' : '') +
 				(a.followers_count != null ? '<span class="tag">' + Number(a.followers_count).toLocaleString('en-IN') + ' followers</span>' : '') +
-				'<span class="tag">Since ' + fmtDate(a.connected_at) + '</span>' + (a.ref ? '<span class="tag">Link: ' + esc(a.ref) + '</span>' : '');
+				'<span class="tag">Since ' + fmtDate(a.connected_at) + '</span>' + (a.seen ? '<span class="tag">Opened dashboard ' + (a.seen.me || 0) + '× · report ' + (a.seen.report || 0) + '× · last ' + fmtDate(a.seen.last) + '</span>' : '<span class="tag">Not opened yet</span>') + (a.ref ? '<span class="tag">Link: ' + esc(a.ref) + '</span>' : '');
 			var picks = a.prefs ? (
 				row('Formats', chips(p.formats)) + row('Topics', chips(p.topics)) + row('Posts / week', text(p.posts_per_week)) +
 				row('Camera', text(LABEL[p.face] || p.face)) + row('Languages', chips(p.languages)) + row('Goal', text(p.goal)) +
@@ -184,6 +186,7 @@
 				'<div class="picks">' + picks + '</div>' +
 				'<div class="acts">' + (a.report ? '<a class="btn red" href="' + esc(a.report.url) + '" target="_blank" rel="noopener">Open report</a><button class="btn line" data-copy="' + esc(a.report.url) + '" data-msg="Report link copied" type="button">Copy report link</button>' : '<span class="none">No report yet</span>') +
 					'<button class="btn line" data-plan="' + esc(a.username) + '" type="button">Content plan</button>' +
+					'<button class="btn line" data-visits="' + esc(a.username) + '" type="button">Visits</button>' +
 					'<button class="btn line" data-dm="' + esc(a.username) + '" type="button">Auto-DM</button>' +
 					'<button class="btn line" data-portal="' + esc(a.username) + '" type="button">Copy her dashboard link</button>' +
 				'</div></article>';
@@ -255,11 +258,22 @@
 			}
 		});
 	}
+	function openVisits(who) {
+		var q = '?id=' + encodeURIComponent(who);
+		$('dm').innerHTML = '<button class="x" type="button" data-dmclose aria-label="Close">×</button><p class="hand">who opened it, from where, for how long</p><h2>Visits for <em>@' + esc(who) + '</em></h2><div class="dm-stack" id="dmMount"></div>';
+		$('dmBack').classList.add('on');
+		window.Visits.mount($('dmMount'), {
+			who: who, toast: toast,
+			load: function () { return api('/admin/visits' + q); },
+			clearTeam: function () { return api('/admin/visits-clear' + q, {method: 'POST'}); }
+		});
+	}
 	function closeDm() { $('dmBack').classList.remove('on'); $('dm').innerHTML = ''; }
 	document.addEventListener('click', function (e) {
-		var t = e.target.closest('[data-dm],[data-dmclose],[data-portal],[data-plan]');
+		var t = e.target.closest('[data-dm],[data-dmclose],[data-portal],[data-plan],[data-visits]');
 		if (!t) { if (e.target === $('dmBack')) closeDm(); return; }
 		if (t.hasAttribute('data-plan')) return openPlan(t.getAttribute('data-plan'));
+		if (t.hasAttribute('data-visits')) return openVisits(t.getAttribute('data-visits'));
 		if (t.hasAttribute('data-dm')) return openDm(t.getAttribute('data-dm'));
 		if (t.hasAttribute('data-dmclose')) return closeDm();
 		if (t.hasAttribute('data-portal')) {

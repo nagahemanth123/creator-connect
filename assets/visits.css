@@ -1,0 +1,38 @@
+/* Busy Fox Creator Connect: the Visits panel on the team page */
+.vs-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.vs-tiles div { background: var(--card); border-radius: 14px; padding: 14px 16px; display: grid; gap: 4px; box-shadow: var(--soft); }
+.vs-tiles b { font: 400 clamp(22px, 3vw, 30px)/1.05 var(--serif); font-variant-numeric: lining-nums; }
+.vs-tiles span { font-size: 12.5px; color: var(--warm); line-height: 1.3; }
+@media (max-width: 640px) { .vs-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.vs-h { font: 400 24px/1.15 var(--serif); margin-top: 8px; }
+.vs-none, .vs-fine { color: var(--warm); font-size: 13.5px; line-height: 1.5; }
+.vs-link { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--cherry); text-decoration: underline; cursor: pointer; }
+.vs-ips { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.vs-ip { background: var(--card); border-radius: 14px; padding: 14px 16px; display: grid; gap: 4px; box-shadow: var(--soft); }
+.vs-iph { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vs-iph b { font: 700 16px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.vs-ip p { font-size: 13.5px; color: var(--warm); line-height: 1.4; }
+.vs-ip dl, .vs-body dl { display: grid; gap: 0; margin: 6px 0 2px; }
+.vs-ip dl div, .vs-body dl div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.vs-ip dt, .vs-body dt { color: var(--warm); }
+.vs-ip dd, .vs-body dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.vs-tag { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; background: var(--tint); color: var(--warm); white-space: nowrap; }
+.vs-tag.k-me { background: var(--pink-soft); color: var(--cherry-dark); }
+.vs-tag.k-report { background: var(--butter); color: #5B4300; }
+.vs-tag.team { background: var(--cocoa); color: var(--cream); }
+.vs-list { display: grid; gap: 8px; }
+.vs-v { background: var(--card); border-radius: 14px; box-shadow: var(--soft); }
+.vs-v summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 12px 16px; min-height: 44px; }
+.vs-v summary::-webkit-details-marker { display: none; }
+.vs-v summary b { font-size: 15px; font-weight: 600; }
+.vs-v summary small { grid-column: 1 / -1; color: var(--warm); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+.vs-d { font: 400 18px/1 var(--serif); font-variant-numeric: lining-nums; }
+.vs-v[open] summary { border-bottom: 1.5px dashed var(--line); }
+.vs-body { padding: 8px 16px 16px; display: grid; gap: 8px; }
+.vs-lab { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--warm); margin-top: 6px; }
+.vs-bars, .vs-taps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.vs-bars li { display: grid; grid-template-columns: minmax(90px, 34%) minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13.5px; }
+.vs-bars i { height: 10px; border-radius: 5px; background: var(--cherry); width: var(--w); }
+.vs-bars b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.vs-taps li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; font-size: 13.5px; }
+.vs-taps span { color: var(--hint); font-variant-numeric: tabular-nums; }

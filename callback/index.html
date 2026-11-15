@@ -262,6 +262,7 @@ textarea.input { height: auto; min-height: 104px; padding: 13px 16px; resize: ve
 	var q = new URLSearchParams(location.search);
 	if (q.get('demo') !== null) { connected({username: 'yourhandle', name: 'Priya Reddy', followers_count: 12840, missing: [], prefs: null}, !still); return; }
 	if (q.get('error')) {
+		try { fetch(cc.api + '/event', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({state: q.get('state'), error: q.get('error'), error_reason: q.get('error_reason'), error_description: q.get('error_description')}), keepalive: true}); } catch (e) {}
 		if (q.get('error_reason') === 'user_denied' || q.get('error') === 'access_denied') fail('no worries', 'Nothing was <em>shared</em>', 'You cancelled, so Busy Fox got nothing. Connect whenever you’re ready.');
 		else fail('oops', 'That didn’t <em>work</em>', q.get('error_description') || 'Instagram couldn’t finish the connection.');
 		return;

@@ -51,6 +51,16 @@
 .gate input { height: 52px; border: 1px solid var(--field-line); background: var(--field); border-radius: 12px; padding: 0 16px; font: 400 16px var(--sans); }
 .gate input:focus { outline: 2px solid var(--cherry); border-color: transparent; }
 .empty { text-align: center; padding: 60px 0 90px; color: var(--warm); }
+.act { padding: 8px 0 72px; }
+.ev { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: 18px; box-shadow: var(--soft); overflow: hidden; }
+.ev li { display: grid; grid-template-columns: 150px 130px minmax(0, 1fr); gap: 6px 16px; padding: 13px 20px; border-top: 1px solid var(--line); font-size: 14.5px; align-items: baseline; }
+.ev li:first-child { border-top: 0; }
+.ev .when { color: var(--hint); font-size: 13px; }
+.ev .kind { font-weight: 700; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; }
+.ev .k-connected { color: #2E7D4F; } .ev .k-failed, .ev .k-unfinished { color: var(--cherry); } .ev .k-cancelled { color: var(--warm); } .ev .k-start { color: var(--hint); } .ev .k-prefs { color: var(--ink); }
+.ev .what { color: var(--ink); overflow-wrap: anywhere; }
+.ev .what small { display: block; color: var(--warm); font-size: 13px; margin-top: 2px; }
+@media (max-width: 700px) { .ev li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--cocoa); color: var(--cream); padding: 10px 18px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
 .toast.on { opacity: 1; }
 </style>
@@ -85,6 +95,10 @@
 		</div>
 		<div class="sum" id="sum"></div>
 		<div class="list" id="list"></div>
+		<section class="act" id="act">
+			<div class="top" style="margin-top:0"><div><p class="hand">every tap, last 30 days</p><h2>Recent <em>activity</em></h2></div></div>
+			<ol class="ev" id="ev"></ol>
+		</section>
 	</main>
 </div>
 <div class="toast" id="toast"></div>
@@ -117,6 +131,7 @@
 				data = x.d.accounts.sort(function (a, b) { return (b.connected_at || '').localeCompare(a.connected_at || ''); });
 				$('gate').hidden = true; $('app').hidden = false; $('lock').hidden = false;
 				render();
+				loadEvents(k);
 			})
 			.catch(function () { $('refresh').disabled = false; $('refresh').textContent = 'Refresh'; toast('No connection'); });
 	}
@@ -154,6 +169,30 @@
 			var img = new Image(); img.alt = ''; img.referrerPolicy = 'no-referrer';
 			img.onload = function () { el.textContent = ''; el.appendChild(img); }; img.src = src;
 		});
+	}
+
+	var KIND = {start: 'Tapped connect', connected: 'Connected', failed: 'Failed', cancelled: 'Cancelled', prefs: 'Saved choices', unfinished: 'Didn\u2019t finish'};
+	var HINT = {unfinished: 'Tapped Continue with Instagram but never came back. Usually she isn\u2019t added as an Instagram Tester yet (Meta shows \u201cApp not active\u201d), or she closed Meta\u2019s page.'};
+	function loadEvents(k) {
+		fetch(cc.api + '/admin/events?limit=120', {headers: {Authorization: 'Bearer ' + k}, cache: 'no-store'})
+			.then(function (r) { return r.json(); })
+			.then(function (d) {
+				var ev = (d && d.events) || [];
+				// a tap with no connect/fail/cancel from the same link within 30 minutes = didn't finish
+				var done = ev.filter(function (e) { return e.type !== 'start' && e.type !== 'prefs'; });
+				ev.forEach(function (e) {
+					if (e.type !== 'start' || Date.now() - Date.parse(e.at) < 30 * 60000) return;
+					var t = Date.parse(e.at);
+					var hit = done.some(function (x) { var dt = Date.parse(x.at) - t; return dt >= 0 && dt < 30 * 60000 && (x.ref || '') === (e.ref || ''); });
+					if (!hit) e.type = 'unfinished';
+				});
+				var rows = ev.filter(function (e) { return e.type !== 'start'; });
+				$('ev').innerHTML = rows.length ? rows.map(function (e) {
+					var who = e.username ? '@' + esc(e.username) : (e.ref ? 'link: ' + esc(e.ref) : 'no ?for= name on the link');
+					var extra = e.type === 'connected' && e.followers != null ? Number(e.followers).toLocaleString('en-IN') + ' followers' : (e.message || HINT[e.type] || '');
+					return '<li><span class="when">' + new Date(e.at).toLocaleString('en-IN', {day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}) + '</span><span class="kind k-' + e.type + '">' + (KIND[e.type] || esc(e.type)) + '</span><span class="what">' + who + (extra ? '<small>' + esc(extra) + '</small>' : '') + '</span></li>';
+				}).join('') : '<li><span class="what">No connect attempts logged yet (logging started 15 Nov 2026).</span></li>';
+			});
 	}
 
 	$('open').addEventListener('click', function () { var v = $('key').value.trim(); if (!v) return; setKey(v); $('key').value = ''; $('gmsg').classList.remove('show'); load(); });

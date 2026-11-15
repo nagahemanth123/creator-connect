@@ -1356,7 +1356,19 @@
 
   var t;
   window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { drawAll(false); }, 120); });
-  window.addEventListener('hashchange', function () { if (!window.REPORT) boot(); });
+  // The link's # holds the report key, so in-page links must scroll without touching it.
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    var root = document.getElementById('report');
+    if (!a || !root || !root.contains(a)) return;
+    var id = a.getAttribute('href').slice(1), el = id ? document.getElementById(id) : null;
+    if (!el) return;
+    e.preventDefault();
+    var nav = root.querySelector('.chapnav'), off = (nav ? nav.offsetHeight : 0) + 12;
+    var still = root.classList.contains('still') || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + (window.scrollY || 0) - off), behavior: still ? 'auto' : 'smooth' });
+  });
+  window.addEventListener('hashchange', function () { if (!window.REPORT && !window.REPORT_DATA) boot(); });
   window.BFReport = { render: function (R) { render(document.getElementById('report'), R); }, redraw: function () { drawAll(true); } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

@@ -902,6 +902,164 @@
     { id: 'plan', key: 'plan', eyebrow: 'Growth plan', title: 'The <em>plan</em>', lead: 'What to do next, built from the numbers above and what you told us.', fn: secPlan, flow: true, keep: 430 }
   ];
 
+  /* ------------------------------------------------------------------ story layer (web only)
+     Turned on by plan.story (see ig-audits/<creator>/make_plan.py). The PDF and reports without it are unchanged.
+     Adds: a 3D fan of her most-seen posts, a year-in-numbers band, a sticky chapter bar, charts that draw in when
+     scrolled to, numbers that count up. ?still or reduced-motion shows everything in its final state. */
+  var CHAPTERS = [
+    { id: 'today', label: 'Today', secs: ['glance'] },
+    { id: 'people', label: 'Your people', secs: ['audience', 'quality'] },
+    { id: 'content', label: 'Your content', secs: ['posts', 'patterns', 'reels', 'virality'] },
+    { id: 'timing', label: 'Timing', secs: ['optimisation', 'consistency', 'momentum', 'forecast', 'profile'] },
+    { id: 'brands', label: 'Brands', secs: ['kit', 'prefs'] },
+    { id: 'plan', label: 'Your plan', secs: ['plan'] }
+  ];
+  var STILL = /[?&]still\b/.test(location.search) || !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function lakh(v) {
+    if (!isNum(v)) return '—';
+    if (v >= 1e7) return (v / 1e7).toFixed(1).replace(/\.0$/, '') + ' crore';
+    if (v >= 1e5) return (v / 1e5).toFixed(v >= 1e6 ? 1 : 2).replace(/\.?0+$/, '') + ' lakh';
+    return nint(v);
+  }
+  function storySecs(R) {
+    var out = [];
+    CHAPTERS.forEach(function (c) {
+      c.secs.forEach(function (id) {
+        var s = SECTIONS.filter(function (x) { return x.id === id; })[0];
+        if (s && !isNA(R[s.key])) out.push(s);
+      });
+    });
+    return out;
+  }
+  function storyNav(secs) {
+    var have = { glance: 1 };
+    secs.forEach(function (s) { have[s.id] = 1; });
+    return '<nav class="chapnav" aria-label="Chapters"><div class="cn-in">' + CHAPTERS.map(function (c) {
+      var first = c.secs.filter(function (id) { return have[id]; })[0];
+      return first ? '<a href="#' + first + '" data-ch="' + c.id + '">' + esc(c.label) + '</a>' : '';
+    }).join('') + '</div><i class="cn-bar" aria-hidden="true"></i></nav>';
+  }
+  function storyHero(R, ST) {
+    var P = R.profile || {}, top = (R.posts && R.posts.top) || {}, cards = top.cards || {};
+    var ids = ((top.lists || {}).reach || {}).ids || [];
+    var best = ids.map(function (id) { return cards[id]; }).filter(function (c) { return c && c.thumb; }).slice(0, 5);
+    // the most-seen post sits in the middle of the fan
+    var order = best.length === 5 ? [best[3], best[1], best[0], best[2], best[4]] : best;
+    var fan = order.map(function (c) {
+      return '<a class="fc" href="' + esc(c.url || '#') + '" target="_blank" rel="noopener" aria-label="Open the post from ' + esc(c.date) + ' on Instagram">' +
+        '<img src="' + esc(c.thumb) + '" alt="" decoding="async"><span class="fc-n"><b>' + esc(lakh(c.reach)) + '</b>reached</span></a>';
+    }).join('');
+    var name = ST.first_name || (P.name || '').split(' ')[0] || '';
+    var me = '<div class="me"><span class="tape" aria-hidden="true"></span>' +
+      (ST.picture ? '<img src="' + esc(ST.picture) + '" alt="' + esc(P.name || name) + '">' : '<b class="ini">' + esc(name.charAt(0)) + '</b>') +
+      '<span>@' + esc(P.username || '') + '</span></div>';
+    var g = {};
+    ((R.glance || {}).items || []).forEach(function (i) { g[i.label] = i; });
+    var net = g['Net followers, 30 days'];
+    return '<header class="hero"><div class="hero-t"><p class="hand">' + esc(ST.greeting || 'Your Instagram growth audit') + '</p>' +
+      '<h1>' + (ST.title || esc(P.name || '')) + '</h1>' + (ST.intro ? '<p class="hero-lead">' + esc(ST.intro) + '</p>' : '') +
+      '<div class="hero-m"><div><p>Followers today</p><b data-count>' + nint(P.followers) + '</b></div>' +
+      (net && isNum(net.value) ? '<div><p>Last 30 days</p><b data-count>' + esc(fv(net.value, 'signed_int')) + '</b></div>' : '') +
+      '<div><p>Posts we read</p><b data-count>' + nint(P.posts_found) + '</b></div></div>' +
+      '<a class="btn solid" href="#plan">See your 90-day plan</a></div>' +
+      '<div class="hero-s"><div class="stage"><div class="fan-tilt"><div class="fan">' + fan + me + '</div></div></div>' +
+      (order.length ? '<p class="hand hero-cap">Your five most-seen posts. Tap one to open it.</p>' : '') + '</div></header>';
+  }
+  function storyYear(R, ST) {
+    if (!ST.year || !ST.year.length) return '';
+    var ft = (R.virality || {}).follow_type || {}, share = ft.non_follower_share;
+    var h = '<section class="year" aria-label="Your last twelve months"><h2>' + (ST.year_title || 'Your last twelve months') + '</h2><div class="yr">' +
+      ST.year.map(function (y) {
+        return '<div><b data-count>' + nint(y.value) + '</b><p>' + esc(y.label) + '</p>' + (y.note ? '<small>' + esc(y.note) + '</small>' : '') + '</div>';
+      }).join('') + '</div>';
+    if (isNum(share)) {
+      var a = Math.round(share * 100);
+      h += '<div class="split"><p>Of everyone your posts reached last month, <b>' + a + ' in every 100 were not following you yet</b>. That is how growth starts.</p>' +
+        '<div class="sbar" role="img" aria-label="' + a + '% new people, ' + (100 - a) + '% followers"><i style="--w:' + a + '%"><span>' + a + '% new people</span></i><u></u></div>' +
+        '<div class="skey"><span>New people</span><span>Your followers, ' + (100 - a) + '%</span></div></div>';
+    }
+    return h + '</section>';
+  }
+  function countUp(el) {
+    var txt = el.textContent, m = txt.match(/^([+−-]?)([\d,]+(?:\.\d+)?)(.*)$/);
+    if (!m) return;
+    var end = parseFloat(m[2].replace(/,/g, '')), dec = (m[2].split('.')[1] || '').length, t0 = 0, dur = 1300;
+    if (!isFinite(end) || end === 0) return;
+    var nf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    (function step(t) {
+      if (!t0) t0 = t;
+      var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = p < 1 ? m[1] + nf.format(end * e) + m[3] : txt;
+      if (p < 1) requestAnimationFrame(step);
+    })(performance.now());
+  }
+  function storyWire(root) {
+    var chOf = {};
+    CHAPTERS.forEach(function (c) { c.secs.forEach(function (id) { chOf[id] = c.id; }); });
+    var hero = root.querySelector('.hero');
+    var blocks = root.querySelectorAll('.fig,.stats,.year,.verdict-card');
+    var nums = root.querySelectorAll('[data-count],.stat .n:not(.t)');
+    // the 13-week calendar opens on the first two weeks
+    var weeks = root.querySelector('.weeks');
+    if (weeks && weeks.children.length > 2) {
+      var more = document.createElement('button');
+      more.type = 'button'; more.className = 'btn more';
+      more.textContent = 'Show all ' + weeks.children.length + ' weeks';
+      more.addEventListener('click', function () {
+        weeks.classList.add('open'); more.remove();
+        weeks.querySelectorAll('.wk').forEach(function (w) { w.classList.add('in'); });
+      });
+      weeks.parentNode.insertBefore(more, weeks.nextSibling);
+    }
+    if (STILL || !('IntersectionObserver' in window)) {
+      if (hero) hero.classList.add('on');
+      blocks.forEach(function (b) { b.classList.add('in'); });
+    } else {
+      requestAnimationFrame(function () { requestAnimationFrame(function () { if (hero) hero.classList.add('on'); }); });
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+      blocks.forEach(function (b) { io.observe(b); });
+      var cio = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { countUp(e.target); cio.unobserve(e.target); } });
+      }, { threshold: 0.6 });
+      nums.forEach(function (n) { cio.observe(n); });
+      // the fan leans a little towards the pointer
+      var stage = root.querySelector('.stage'), tilt = root.querySelector('.fan-tilt');
+      if (stage && tilt && window.matchMedia('(hover:hover)').matches) {
+        stage.addEventListener('pointermove', function (e) {
+          var r = stage.getBoundingClientRect();
+          tilt.style.setProperty('--ry', (((e.clientX - r.left) / r.width - 0.5) * 16).toFixed(1) + 'deg');
+          tilt.style.setProperty('--rx', ((0.5 - (e.clientY - r.top) / r.height) * 10).toFixed(1) + 'deg');
+        });
+        stage.addEventListener('pointerleave', function () { tilt.style.setProperty('--ry', '0deg'); tilt.style.setProperty('--rx', '0deg'); });
+      }
+    }
+    // chapter bar: where you are, and how far through
+    var nav = root.querySelector('.chapnav');
+    if (!nav) return;
+    var links = nav.querySelectorAll('a'), secs = root.querySelectorAll('.sec'), bar = nav.querySelector('.cn-bar'), tick = 0, cur = '';
+    function upd() {
+      tick = 0;
+      var y = window.scrollY || 0, max = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.setProperty('--p', max > 0 ? Math.min(1, y / max).toFixed(4) : '0');
+      var id = '';
+      secs.forEach(function (s) { if (s.getBoundingClientRect().top < window.innerHeight * 0.4) id = chOf[s.id] || id; });
+      if (id === cur) return;
+      cur = id;
+      links.forEach(function (a) {
+        var on = a.getAttribute('data-ch') === id;
+        a.setAttribute('aria-current', String(on));
+        if (on && a.scrollIntoView && nav.querySelector('.cn-in').scrollWidth > nav.clientWidth) {
+          var box = nav.querySelector('.cn-in');
+          box.scrollTo({ left: a.offsetLeft - 16, behavior: STILL ? 'auto' : 'smooth' });
+        }
+      });
+    }
+    window.addEventListener('scroll', function () { if (!tick) tick = requestAnimationFrame(upd); }, { passive: true });
+    upd();
+  }
+
   function setPageCss(R) {
     var P = R.profile || {};
     var who = (P.username ? '@' + P.username + ' \u00b7 ' : '') + 'Instagram audit \u00b7 ' + AGENCY.name + ' \u00b7 ' + AGENCY.email;
@@ -920,6 +1078,11 @@
     var P = R.profile || {};
     document.title = (P.name || (P.username ? '@' + P.username : 'Creator')) + ' · Instagram audit | ' + AGENCY.name;
     setPageCss(R);
+    var Pl0 = R.plan && !isNA(R.plan) ? R.plan : null;
+    var ST = !PRINT && Pl0 && Pl0.story ? Pl0.story : null;
+    var secs = ST ? storySecs(R) : SECTIONS;
+    root.classList.toggle('story', !!ST);
+    root.classList.toggle('still', !!ST && STILL);
     var gen = R.generated_at ? new Date(R.generated_at) : null;
     var genLabel = gen && !isNaN(gen) ? gen.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }) : (P.today_label || '');
     var h = '<header class="head">' + logo('Marketing') + '<div class="head-r"><span class="when">Instagram audit · ' + esc(genLabel) + '</span>' +
@@ -929,6 +1092,7 @@
       '<p class="cv-handle">@' + esc(P.username || '') + '</p>' +
       '<p class="cv-period"><span><b>' + esc(P.period || '') + '</b></span><span>' + nint(P.followers) + ' followers · ' + nint(P.posts_found) + ' posts</span><span class="no-print">Prepared by ' + esc(AGENCY.name) + '</span></p></div>' +
       '<div class="cv-foot"><span>Prepared by <b>' + esc(AGENCY.name) + '</b> · ' + esc(genLabel) + '</span><span>' + esc(AGENCY.email) + '</span></div></header>';
+    if (ST) h += storyNav(secs) + storyHero(R, ST);
     // glance
     var G = R.glance || {}, Pl = R.plan && !isNA(R.plan) ? R.plan : null;
     h += '<section class="sec" id="glance">' + head(null, 'At a glance', 'The <em>short</em> version', null);
@@ -947,7 +1111,8 @@
       return '<li data-sec="' + s.id + '"><span>' + (i + 1) + '</span>' + esc(s.eyebrow) + '<b class="pg"></b></li>';
     }).join('') + '<li data-sec="notes"><span>·</span>Notes on the data<b class="pg"></b></li></ol>', { cls: 'print-only toc-fig' });
     h += '</section>';
-    SECTIONS.forEach(function (s, i) {
+    if (ST) h += storyYear(R, ST);
+    secs.forEach(function (s, i) {
       var num = String(i + 1).padStart(2, '0');
       var body;
       try { body = s.fn(R[s.key], R); }
@@ -971,6 +1136,7 @@
       '<small>Numbers come from Instagram with your permission, as of ' + esc(P.today_label || '') + '. Times are India time (IST). This report is private to you; ask us any time to delete your data.</small></footer>';
     root.innerHTML = h;
     wire(root);
+    if (ST) storyWire(root);
     drawAll(true);
     var finish = function () {
       drawAll(true);

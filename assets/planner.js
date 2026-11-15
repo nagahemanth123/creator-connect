@@ -25,7 +25,7 @@
 	function mount(root, o) {
 		var me = o.voice !== 'team', toast = o.toast || function () {};
 		var now0 = ist(Date.now());
-		var st = {d: null, y: now0.y, m: now0.m, open: null, form: null, ask: false, busy: false, up: null, ig: {}, fresh: true};
+		var st = {d: null, y: now0.y, m: now0.m, open: null, form: null, ask: false, busy: false, up: null, ig: {}, fresh: true, ideas: null};
 		var LABEL = me ?
 			{idea: 'Planned', review: 'Waiting for your yes', changes: 'Change asked', approved: 'Approved', posting: 'Going live', posted: 'Posted', failed: 'Didn’t post', due: 'Post it now', missed: 'Time passed'} :
 			{idea: 'Idea', review: 'Waiting for her yes', changes: 'She asked for a change', approved: 'Approved', posting: 'Going live', posted: 'Posted', failed: 'Failed', due: 'Due: she posts it', missed: 'Missed its time'};
@@ -166,6 +166,29 @@
 				'</div>';
 		}
 
+		// ---------- her 90-day plan: pick an idea, give it a date ----------
+		function ideas() { return (st.d && st.d.ideas) || []; }
+		function usedBy(x) { return posts().filter(function (p) { return p.idea === x.key || (p.hook && p.hook === x.hook); })[0]; }
+		function ideasBar() {
+			var all = ideas();
+			if (!all.length) return '';
+			var left = all.filter(function (x) { return !usedBy(x); }).length;
+			return '<button type="button" class="pl-ninety" data-a="ideas"><span class="hand">' + (me ? 'your 90-day plan' : 'her 90-day plan') + '</span><b>' + (left ? left + ' of ' + all.length + ' ideas are waiting for a date' : 'All ' + all.length + ' ideas are on the calendar') + '</b><small>' + (me ? 'Pick an idea and choose the day you want to make it' : 'Pick an idea and give it a date') + '</small><i aria-hidden="true">›</i></button>';
+		}
+		function ideasSheet() {
+			var day = st.ideas.day, out = '', last = -1;
+			ideas().forEach(function (x) {
+				if (x.week !== last) { out += (last >= 0 ? '</div>' : '') + '<div class="pl-wk"><p class="pl-dl">Week ' + x.week + (x.theme ? ' <small>' + esc(x.theme) + '</small>' : '') + '</p>'; last = x.week; }
+				var p = usedBy(x), t = Date.parse(x.at);
+				out += '<div class="pl-idea' + (p ? ' used' : '') + '"><span class="pl-rt"><b>' + esc(x.hook) + '</b><small>' + esc(x.format || TYPE[x.type]) + (x.pillar ? ' · ' + esc(x.pillar) : '') + ' · suggested ' + dayLong(t) + ', ' + time(t) + '</small></span>' +
+					(p ? '<button type="button" class="pl-tag s-approved" data-a="open" data-id="' + esc(p.id) + '">On ' + dayLong(Date.parse(p.at)).slice(4) + '</button>' :
+						'<button type="button" class="btn red small" data-a="useidea" data-id="' + esc(x.key) + '">' + (day ? 'Use this' : 'Pick a date') + '</button>') + '</div>';
+			});
+			return '<div class="pl-sheet pl-ideas" role="dialog" aria-modal="true" aria-label="90-day plan"><button class="pl-x" type="button" data-a="close" aria-label="Close">×</button>' +
+				'<p class="hand">' + (day ? 'for ' + dayLong(fromIst(day, '12:00')) : 'from your audit') + '</p><h3>' + (me ? 'Your' : 'Her') + ' <em>90-day plan</em></h3>' +
+				'<p class="pl-fine">' + (day ? 'Choose the idea you want to make on this day.' : 'Choose an idea, then set the day and time you want to make it. The suggested date is only a start: change it to suit you.') + '</p>' + out + '</div></div>';
+		}
+
 		// ---------- one post, opened ----------
 		function media(p) {
 			var list = p.media || [];
@@ -210,6 +233,7 @@
 			var files = f.media.map(function (m, i) { return '<li>' + (m.kind === 'video' ? 'Video' : 'Photo') + ' · ' + esc(m.name || '') + '<button type="button" data-a="rmfile" data-id="' + i + '" aria-label="Remove file">×</button></li>'; }).join('');
 			return '<div class="pl-sheet pl-form" role="dialog" aria-modal="true" aria-label="' + (f.id ? 'Edit post' : 'New post') + '"><button class="pl-x" type="button" data-a="close" aria-label="Close">×</button>' +
 				'<h3>' + (f.id ? 'Edit <em>post</em>' : (me ? 'Add your <em>own post</em>' : 'Add a <em>post</em>')) + '</h3>' +
+				(f.idea ? '<p class="pl-from">From ' + (me ? 'your' : 'her') + ' 90-day plan. Set the day you want to make it.</p>' : (!f.id && ideas().length ? '<button type="button" class="pl-linkb" data-a="ideasfor">Or pick an idea from ' + (me ? 'your' : 'her') + ' 90-day plan for this day</button>' : '')) +
 				'<label class="pl-l">What is it?</label>' + seg('type', f.type, [['reel', 'Reel'], ['carousel', 'Carousel'], ['photo', 'Photo'], ['story', 'Story']]) +
 				'<div class="pl-two"><div><label class="pl-l" for="pl-date">Date</label><input id="pl-date" type="date" value="' + esc(f.date) + '"></div><div><label class="pl-l" for="pl-time">Time (IST)</label><input id="pl-time" type="time" value="' + esc(f.time) + '"></div></div>' +
 				'<label class="pl-l">How does it go out?</label>' + seg('mode', f.mode, [['auto', me ? 'Post it for me' : 'Posts on its own'], ['self', me ? 'I’ll post it myself' : 'She posts it herself']]) +
@@ -234,7 +258,7 @@
 			var f = st.form, at = fromIst(f.date, f.time);
 			if (!at) return toast('Pick a date and time');
 			if (st.up) return toast('Wait for the upload to finish');
-			var body = Object.assign({id: f.id || undefined, at: new Date(at).toISOString(), type: f.type, mode: f.mode, hook: f.hook, caption: f.caption, pillar: f.pillar, media: f.media, cover: f.cover, note: f.note}, extra || {});
+			var body = Object.assign({id: f.id || undefined, at: new Date(at).toISOString(), type: f.type, mode: f.mode, hook: f.hook, caption: f.caption, pillar: f.pillar, idea: f.idea || undefined, media: f.media, cover: f.cover, note: f.note}, extra || {});
 			call('post', {method: 'POST', json: body}, extra && extra.send ? 'Sent for her yes' : 'Saved').then(function (r) { if (r) { st.form = null; st.open = null; render(); } });
 		}
 
@@ -293,11 +317,11 @@
 			var warn = st.d.can_post ? '' : '<div class="pl-warn">' + (me ? 'Auto-posting is off. Approved posts wait here for you to post. To let Busy Fox post them for you at the planned time, allow it once.' : 'Auto-posting is off for @' + esc(o.who) + '. She needs to connect once with the posting link; until then every post is “she posts it”.') + ' <a href="' + esc(o.postConnect || '#') + '"' + (me ? '' : ' data-a="copyconnect"') + '>' + (me ? 'Turn on auto-posting' : 'Copy the posting link') + '</a></div>';
 			var keepY = window.scrollY;
 			root.innerHTML = '<div class="pl">' + warn + needs() + calendar() +
-				'<div class="pl-acts pl-top"><button class="btn red" type="button" data-a="new">' + (me ? 'Add my own post' : 'Add a post') + '</button>' + (me ? '' : '<button class="btn line" type="button" data-a="fill">Fill 4 weeks from her audit plan</button>') + '</div>' +
+				ideasBar() + '<div class="pl-acts pl-top"><button class="btn red" type="button" data-a="new">' + (me ? 'Add my own post' : 'Add a post') + '</button>' + (me ? '' : '<button class="btn line" type="button" data-a="fill">Fill 4 weeks from her audit plan</button>') + '</div>' +
 				agenda() + weekly() + '</div>' +
-				(st.form ? '<div class="pl-back on">' + form(st.form) + '</div>' : p ? '<div class="pl-back on">' + sheet(p) + '</div>' : '');
+				(st.ideas ? '<div class="pl-back on">' + ideasSheet() + '</div>' : st.form ? '<div class="pl-back on">' + form(st.form) + '</div>' : p ? '<div class="pl-back on">' + sheet(p) + '</div>' : '');
 			window.scrollTo(0, keepY);
-			document.documentElement.classList.toggle('pl-lock', Boolean(st.form || p));
+			document.documentElement.classList.toggle('pl-lock', Boolean(st.form || p || st.ideas));
 		}
 
 		root.addEventListener('change', function (e) {
@@ -305,7 +329,7 @@
 			if (e.target.id === 'pl-cover' && e.target.files.length) addFiles(e.target.files, true);
 		});
 		root.addEventListener('click', function (e) {
-			if (e.target.classList && e.target.classList.contains('pl-back')) { if (!st.up) { st.open = null; st.form = null; st.ask = false; render(); } return; }
+			if (e.target.classList && e.target.classList.contains('pl-back')) { if (!st.up) { st.open = null; st.form = null; st.ask = false; st.ideas = null; render(); } return; }
 			var b = e.target.closest('[data-a]');
 			if (!b || !root.contains(b)) return;
 			var a = b.getAttribute('data-a'), id = b.getAttribute('data-id'), p = st.open ? byId(st.open) : null;
@@ -315,8 +339,17 @@
 				if (el) return el.scrollIntoView({behavior: 'smooth', block: 'center'});
 				st.form = blank(id); return render();
 			}
-			if (a === 'open') { st.open = id; st.ask = false; return render(); }
-			if (a === 'close') { if (st.up) return toast('Wait for the upload to finish'); st.open = null; st.form = null; st.ask = false; return render(); }
+			if (a === 'open') { st.open = id; st.ask = false; st.ideas = null; return render(); }
+			if (a === 'ideas') { st.ideas = {day: null}; return render(); }
+			if (a === 'ideasfor') { readForm(); st.ideas = {day: st.form.date}; st.form = null; return render(); }
+			if (a === 'useidea') {
+				var x = ideas().filter(function (i) { return i.key === id; })[0];
+				if (!x) return;
+				var sug = Date.parse(x.at), ti = ist(sug), f0 = blank(st.ideas && st.ideas.day ? st.ideas.day : (sug > Date.now() ? dayKey(sug) : undefined));
+				f0.time = pad(ti.h) + ':' + pad(ti.min); f0.type = x.type; f0.hook = x.hook; f0.pillar = x.pillar; f0.idea = x.key;
+				st.ideas = null; st.form = f0; return render();
+			}
+			if (a === 'close') { if (st.up) return toast('Wait for the upload to finish'); st.open = null; st.form = null; st.ask = false; st.ideas = null; return render(); }
 			if (a === 'new') { st.form = blank(); return render(); }
 			if (a === 'edit' && p) { st.form = toForm(p); return render(); }
 			if (a === 'set') { readForm(); st.form[b.getAttribute('data-k')] = id; if (st.form.type !== 'carousel') st.form.media = st.form.media.slice(0, 1); return render(); }
@@ -337,7 +370,7 @@
 			if (a === 'mkweekly') return call('weekly', {method: 'POST'}, 'Report made');
 			if (a === 'wnote') return call('weekly-note', {method: 'POST', json: {week: id, note: (root.querySelector('#pl-wnote') || {}).value || ''}}, 'Note saved');
 		});
-		document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && (st.open || st.form) && !st.up && root.isConnected) { st.open = null; st.form = null; st.ask = false; render(); } });
+		document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && (st.open || st.form || st.ideas) && !st.up && root.isConnected) { st.open = null; st.form = null; st.ask = false; st.ideas = null; render(); } });
 
 		root.innerHTML = '<p class="pl-none">Loading…</p>';
 		load();

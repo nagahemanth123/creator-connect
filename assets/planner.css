@@ -156,3 +156,27 @@ html.pl-lock { overflow: hidden; }
 .pl-key i.s-story { background: transparent; border: 1.5px dashed var(--cherry); border-radius: 3px; }
 div.pl-row { cursor: default; }
 .pl-row.st .pl-th { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--cherry); border-radius: 50%; }
+
+/* her 90-day plan: the bar under the calendar and the list of ideas */
+.pl-ninety { position: relative; width: 100%; display: grid; gap: 2px; text-align: left; border: 0; cursor: pointer; background: var(--butter); color: var(--ink); border-radius: 18px; padding: 16px 56px 16px 20px; font: inherit; }
+.pl-ninety .hand { font-size: 22px; }
+.pl-ninety b { font: 400 clamp(19px, 2.200vw, 23px)/1.2 var(--serif); }
+.pl-ninety small { font-size: 13.5px; color: #5B4300; }
+.pl-ninety i { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; background: var(--cocoa); color: var(--cream); display: grid; place-items: center; font: 400 20px/1 var(--serif); font-style: normal; }
+.pl-ideas { max-width: 640px; justify-items: stretch; }
+.pl-wk { display: grid; gap: 0; margin-top: 8px; }
+.pl-dl small { font: 500 13px var(--sans); color: var(--warm); margin-left: 6px; }
+.pl-idea { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.pl-wk .pl-idea:first-of-type { border-top: 0; }
+.pl-idea .pl-rt b { -webkit-line-clamp: 4; }
+.pl-idea.used .pl-rt b { color: var(--warm); font-weight: 500; }
+.pl-idea .pl-tag { border: 0; cursor: pointer; font-family: inherit; }
+.pl-from { background: var(--butter); color: #5B4300; border-radius: 10px; padding: 8px 12px; font-size: 13.5px; font-weight: 600; }
+@media (max-width: 480px) { .pl-idea { grid-template-columns: minmax(0, 1fr); } .pl-idea > button { justify-self: start; } }
+@media (prefers-reduced-motion: no-preference) {
+	.pl-ninety { transition: transform .2s cubic-bezier(.3, 1.6, .5, 1); }
+	.pl-ninety:hover { transform: rotate(-.6deg) scale(1.01); }
+	.pl-ninety i { animation: pl-nudge 1.600s ease-in-out infinite; }
+	@keyframes pl-nudge { 0%, 100% { transform: translateY(-50%); } 50% { transform: translate(5px, -50%); } }
+}
+.pl-idea .btn.small { padding: 9px 16px; font-size: 13.5px; min-height: 40px; white-space: nowrap; }

@@ -15,6 +15,11 @@
 	for (var i = 0; i < 14; i++) sid += abc.charAt(Math.floor(Math.random() * 36));
 	var seenKey = 'cc_seen_' + kind, ret = Boolean(read(seenKey));
 	write(seenKey, '1');
+	// what the phone itself says it is (model and system version are offered by Chrome on Android; iPhones do not say)
+	var hint = {};
+	try {
+		if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) navigator.userAgentData.getHighEntropyValues(['model', 'platformVersion']).then(function (h) { hint = h || {}; dirty = true; }, function () {});
+	} catch (e) {}
 	var st = Date.now(), sec = 0, scroll = 0, parts = {}, taps = [], sent = 0, sends = 0, lastMove = Date.now(), dirty = true;
 
 	function label(el) { return (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40); }
@@ -52,6 +57,8 @@
 		if (sends >= 80) return;
 		sends++; dirty = false;
 		var body = JSON.stringify({k: kind, t: token, sid: sid, st: st, sec: sec, scroll: scroll, parts: parts, taps: taps.slice(sent), ret: ret, team: Boolean(read('cc_admin_key')),
+			model: hint.model || '', osv: hint.platform === 'Android' || hint.platform === 'macOS' ? (hint.platformVersion || '') : '', dpr: window.devicePixelRatio || 1, disp: (window.screen ? screen.width + 'x' + screen.height : ''),
+			net: (navigator.connection && navigator.connection.effectiveType) || '', touch: (navigator.maxTouchPoints || 0) > 0, dark: Boolean(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches), langs: (navigator.languages || []).slice(0, 4).join(', '),
 			scr: window.innerWidth + 'x' + window.innerHeight, lang: navigator.language || '', tz: (window.Intl && Intl.DateTimeFormat().resolvedOptions().timeZone) || '', ref: document.referrer ? document.referrer.split('/').slice(0, 3).join('/') : ''});
 		sent = taps.length;
 		try {
@@ -59,7 +66,7 @@
 			else fetch(api + '/track', {method: 'POST', body: body, keepalive: true, headers: {'content-type': 'text/plain'}}).catch(function () {});
 		} catch (e) {}
 	}
-	send(false);
+	setTimeout(function () { send(false); }, 350); // a moment for the phone to answer the model question
 	document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') send(true); });
 	window.addEventListener('pagehide', function () { send(true); });
 })();

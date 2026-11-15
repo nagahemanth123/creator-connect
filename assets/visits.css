@@ -36,3 +36,6 @@
 .vs-bars b { font-weight: 600; font-variant-numeric: tabular-nums; }
 .vs-taps li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; font-size: 13.5px; }
 .vs-taps span { color: var(--hint); font-variant-numeric: tabular-nums; }
+
+.vs-ua { font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--warm); overflow-wrap: anywhere; }
+.vs-body dd a { color: var(--cherry); font-weight: 700; }

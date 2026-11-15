@@ -7,6 +7,25 @@
 	function when(iso) { var d = new Date(iso); return d.toLocaleDateString('en-IN', {weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata'}) + ', ' + d.toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata'}); }
 	function clock(sec) { var m = Math.floor(sec / 60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
 	var KIND = {me: 'Dashboard', report: 'Report'};
+	// one visit's device and place, written out in full
+	function devLine(v) { var d = v.device || {}; return [d.model, (d.os || '') + (d.osv ? ' ' + d.osv : ''), (d.app || '') + (d.appv ? ' ' + d.appv : '')].filter(Boolean).join(' · '); }
+	function placeLine(v) { return [v.city, v.region, v.country].filter(Boolean).join(', ') + (v.postal ? ' ' + v.postal : ''); }
+	function fullRows(v) {
+		var d = v.device || {}, map = v.lat != null && v.lon != null ? ' · <a href="https://www.google.com/maps?q=' + encodeURIComponent(v.lat + ',' + v.lon) + '" target="_blank" rel="noopener">open on a map</a>' : '';
+		var row = function (k, val) { return val ? '<div><dt>' + k + '</dt><dd>' + val + '</dd></div>' : ''; };
+		return row('IP address', esc(v.ip) + (v.ipv ? ' (' + v.ipv + ')' : '')) +
+			row('Location (from the IP)', esc(placeLine(v) || 'not known') + map) +
+			row('Internet provider', esc(v.network || 'not known') + (v.asn ? ' · AS' + esc(v.asn) : '')) +
+			row('Time zone', esc([v.tz, v.ip_tz && v.ip_tz !== v.tz ? 'IP says ' + v.ip_tz : ''].filter(Boolean).join(' · '))) +
+			row('Device', esc([d.model, d.phone ? 'phone' : 'computer or tablet'].filter(Boolean).join(' · '))) +
+			row('System', esc((d.os || '') + (d.osv ? ' ' + d.osv : ''))) +
+			row('Opened in', esc((d.app || '') + (d.appv ? ' ' + d.appv : ''))) +
+			row('Screen', esc([v.display ? v.display + ' screen' : '', v.screen ? v.screen + ' window' : '', v.dpr ? v.dpr + '× sharpness' : '', v.touch ? 'touch' : '', v.dark ? 'dark mode' : ''].filter(Boolean).join(' · '))) +
+			row('Connection', esc(v.net ? v.net.toUpperCase() : '')) +
+			row('Languages', esc(v.langs || v.lang || '')) +
+			row('Came from', esc(v.from || ''));
+	}
+
 
 	function mount(root, o) {
 		var st = {d: null, team: false};
@@ -38,15 +57,13 @@
 				var taps = (v.taps || []).map(function (t) { return '<li><span>' + clock(t.at) + '</span>' + esc(t.what) + '</li>'; }).join('');
 				var dev = v.device || {};
 				return '<details class="vs-v"><summary><span class="vs-tag k-' + v.kind + '">' + KIND[v.kind] + '</span><b>' + when(v.start) + '</b><span class="vs-d">' + dur(v.active_s) + '</span>' +
-					'<small>' + esc(v.ip) + ' · ' + esc([v.city, v.country].filter(Boolean).join(', ') || 'place not known') + ' · ' + esc(dev.os || '') + ', ' + esc(dev.app || '') + (v.team ? ' · Busy Fox team' : '') + '</small></summary>' +
+					'<small>' + esc(v.ip) + ' · ' + esc(placeLine(v) || 'place not known') + ' · ' + esc(devLine(v)) + (v.team ? ' · Busy Fox team' : '') + '</small></summary>' +
 					'<div class="vs-body"><dl>' +
 					'<div><dt>Opened</dt><dd>' + when(v.start) + '</dd></div><div><dt>Last activity</dt><dd>' + when(v.last) + '</dd></div><div><dt>Time actually reading</dt><dd>' + dur(v.active_s) + '</dd></div>' +
 					'<div><dt>Scrolled</dt><dd>' + (v.scroll || 0) + '% of the page</dd></div><div><dt>Visitor</dt><dd>' + (v.returning ? 'Has opened it before on this device' : 'First time on this device') + '</dd></div>' +
-					'<div><dt>Device</dt><dd>' + esc(dev.os || '') + (dev.phone ? ' phone' : '') + ' · ' + esc(dev.app || '') + ' · screen ' + esc(v.screen || '?') + '</dd></div>' +
-					'<div><dt>Network</dt><dd>' + esc(v.network || 'not known') + '</dd></div><div><dt>Place (from the IP)</dt><dd>' + esc([v.city, v.region, v.country].filter(Boolean).join(', ') || 'not known') + '</dd></div>' +
-					(v.from ? '<div><dt>Came from</dt><dd>' + esc(v.from) + '</dd></div>' : '') + '</dl>' +
+					fullRows(v) + '</dl>' +
 					(bars ? '<p class="vs-lab">Time on each part</p><ul class="vs-bars">' + bars + '</ul>' : '') +
-					(taps ? '<p class="vs-lab">What was tapped (minutes:seconds into the visit)</p><ol class="vs-taps">' + taps + '</ol>' : '<p class="vs-fine">Nothing was tapped in this visit.</p>') +
+					(taps ? '<p class="vs-lab">What was tapped (minutes:seconds into the visit)</p><ol class="vs-taps">' + taps + '</ol>' : '<p class="vs-fine">Nothing was tapped in this visit.</p>') + (v.ua ? '<p class="vs-lab">Browser signature</p><p class="vs-ua">' + esc(v.ua) + '</p>' : '') +
 					'</div></details>';
 			}).join('') + '</div><p class="vs-fine">Time counts only while the page is in front and being used (it stops after a minute without a touch or scroll). Place is an estimate from the IP address. Visits are kept for 120 days.</p>';
 			root.innerHTML = h;

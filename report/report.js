@@ -14,6 +14,8 @@
   };
   var PALETTE = [C.ink2, C.fox, C.pinkDeep, C.stone, C.butter, C.mute2];
   var NA_TITLE = 'Not available from Instagram';
+  // true while the PDF is rendered (Playwright emulates print media before the page loads); screen layout ignores it
+  var PRINT = !!(window.matchMedia && window.matchMedia('print').matches);
 
   /* ------------------------------------------------------------------ formatting */
   var NF = new Intl.NumberFormat('en-IN');
@@ -75,17 +77,17 @@
   function fig(title, body, o) {
     o = o || {};
     return '<figure class="fig' + (o.cls ? ' ' + o.cls : '') + '"><div class="fig-h"><span class="fig-t">' + esc(title) + '</span>' +
-      (o.right ? '<span class="fig-r">' + esc(o.right) + '</span>' : '') + '</div>' +
+      (o.right ? '<span class="fig-r">' + esc(o.right) + '</span>' : '') + (o.printRight ? '<span class="fig-r print-only">' + esc(o.printRight) + '</span>' : '') + '</div>' +
       (o.desc ? '<p class="fig-d">' + esc(o.desc) + '</p>' : '') + body +
-      (o.note ? '<p class="fig-n">' + esc(o.note) + '</p>' : '') + '</figure>';
+      (o.note ? '<p class="fig-n">' + esc(o.note) + '</p>' : '') + (o.printNote ? '<p class="fig-n print-only">' + esc(o.printNote) + '</p>' : '') + '</figure>';
   }
   function figOrNA(title, data, body, o) {
-    return isNA(data) ? fig(title, naBox(data), { right: (o || {}).right && !/^\d/.test(o.right) ? o.right : '' }) : fig(title, body(), o);
+    return isNA(data) ? fig(title, naBox(data), { cls: (o || {}).cls, right: (o || {}).right && !/^\d/.test(o.right) ? o.right : '' }) : fig(title, body(), o);
   }
-  function reading(notes, title) {
+  function reading(notes, title, cls) {
     notes = (notes || []).filter(Boolean);
     if (!notes.length) return '';
-    return '<div class="reading"><span class="hand">' + esc(title || 'Reading the numbers') + '</span><ul class="ticks">' +
+    return '<div class="reading ' + (cls || 'end') + '"><span class="hand">' + esc(title || 'Reading the numbers') + '</span><ul class="ticks">' +
       notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul></div>';
   }
   function stats(items) {
@@ -96,7 +98,7 @@
       var val = fv(i.value, i.fmt || 'int');
       return '<div class="stat"><p class="k">' + esc(i.label) + '</p><p class="n' + (txt ? ' t' : '') + '">' + esc(val) + '</p>' +
         (i.sub ? '<p class="s">' + esc(i.sub) + '</p>' : '') + '</div>';
-    }).join('') + '</div>';
+    }).join('') + '</div><!--/stats-->';
   }
   function hbars(items, o) {
     o = o || {};
@@ -107,7 +109,7 @@
       var w = Math.max(0, (o.byShare ? (i.share || 0) : (i.value || 0)) / max * 100);
       var main = o.byShare ? pct(i.share, i.share < 0.1 ? 1 : 0) : fv(i.value, o.fmt || 'int');
       var small = o.byShare ? nint(i.value) : (i.share != null && o.showShare ? pct(i.share, 0) : '');
-      return '<li><span class="l">' + esc(i.label) + '</span><span class="v">' + esc(main) + (small ? '<small>' + esc(small) + '</small>' : '') +
+      return '<li' + (!i.value ? ' class="zero"' : '') + '><span class="l">' + esc(i.label) + '</span><span class="v">' + esc(main) + (small ? '<small>' + esc(small) + '</small>' : '') +
         '</span><span class="t"><i style="width:' + w.toFixed(1) + '%"></i></span></li>';
     }).join('') + '</ul>';
   }
@@ -301,13 +303,19 @@
         if (li >= 0) s += '<text class="v" x="' + r1(x(li) + 6) + '" y="' + r1(y(lv) + 4) + '">' + esc(f === 'int' ? (o.zero === false && Math.abs(lv) < 1e5 ? nint(lv) : compact(lv)) : fv(lv, f)) + '</text>';
       }
     });
-    var every = Math.max(1, Math.ceil(n * (o.lw || 46) / pw));
+    var every = Math.max(1, Math.ceil(n * (o.lw || 46) / pw)), labs = [];
     xs.forEach(function (lb, i) {
       if (i % every && i !== n - 1) return;
-      if (i !== n - 1 && n - 1 - i < every * 0.6) return;
       var anchor = n === 1 ? 'middle' : i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
-      s += '<text x="' + r1(x(i)) + '" y="' + (H - 6) + '" text-anchor="' + anchor + '">' + esc(lb) + '</text>';
+      var w = String(lb).length * 6.2, xx = x(i);
+      var x0 = anchor === 'start' ? xx : anchor === 'end' ? xx - w : xx - w / 2;
+      var cand = { lb: lb, xx: xx, anchor: anchor, x0: x0, x1: x0 + w };
+      while (labs.length && cand.x0 < labs[labs.length - 1].x1 + 8) {
+        if (i === n - 1 && labs.length > 1) labs.pop(); else return;
+      }
+      labs.push(cand);
     });
+    labs.forEach(function (l) { s += '<text x="' + r1(l.xx) + '" y="' + (H - 6) + '" text-anchor="' + l.anchor + '">' + esc(l.lb) + '</text>'; });
     var leg = S.length > 1 ? legend(S.map(function (se, k) { return { label: se.name, color: se.dash ? C.mute2 : (k === 0 ? C.ink : C.fox), line: !se.dash, dash: se.dash }; })) : '';
     return svg(W, H, s) + leg;
   }
@@ -434,7 +442,8 @@
 
   /* ------------------------------------------------------------------ sections */
   function head(num, eyebrow, title, lead) {
-    return '<p class="eb">' + (num ? '<span class="hand">' + num + '</span>' : '') + '<span class="ex">' + esc(eyebrow) + '</span></p><h2 class="h">' + title + '</h2>' + (lead ? '<p class="lead">' + esc(lead) + '</p>' : '');
+    // .sh is display:contents on screen; in print it becomes the full-width section band
+    return '<div class="sh"><p class="eb">' + (num ? '<span class="hand">' + num + '</span>' : '') + '<span class="ex">' + esc(eyebrow) + '</span></p><h2 class="h">' + title + '</h2>' + (lead ? '<p class="lead">' + esc(lead) + '</p>' : '') + '</div>';
   }
 
   function secAudience(A, R) {
@@ -461,18 +470,18 @@
     h += '<div class="g2">' + snap + figOrNA('Gained vs lost, 30 days', gl, function () {
       return gl.items && gl.items.length ? hbars(gl.items, { flat: false }) : stats([{ label: 'Net follows', value: gl.net, fmt: 'signed_int' }]);
     }, { desc: 'Follows and unfollows Instagram counted over the last 30 days.' }) + '</div>';
-    h += '<h3 class="sub">Who they are</h3>';
-    h += '<div class="g2">' + figOrNA('Gender', A.gender, function () { return ch('donut', A.gender, {}); }) +
+    h += '<h3 class="sub span">Who they are</h3>';
+    h += '<div class="quad"><div class="g2">' + figOrNA('Gender', A.gender, function () { return ch('donut', A.gender, {}); }) +
       figOrNA('Age', A.age, function () { return ch('bars', A.age, { fmt: 'pct', h: 180 }); }) + '</div>';
     h += '<div class="g2">' + figOrNA('Top countries', A.countries, function () { return hbars(A.countries.items, { byShare: true }); }) +
-      figOrNA('Top cities', A.cities, function () { return hbars(A.cities.items, { byShare: true }); }, { note: 'Share of the followers Instagram could place in a city.' }) + '</div>';
-    h += '<h3 class="sub">When they are online</h3>';
+      figOrNA('Top cities', A.cities, function () { return hbars(A.cities.items, { byShare: true }); }, { note: 'Share of the followers Instagram could place in a city.' }) + '</div></div>';
+    h += '<h3 class="sub span">When they are online</h3>';
     var on = A.online;
     if (isNA(on)) h += naBox(on);
     else {
-      h += '<p class="sub-lead">Average followers online by weekday and hour over the last ' + on.days + ' days. Most active: ' + esc(on.best_ist.join(', ')) + ' (IST).</p>';
-      h += fig('India time (IST)', ch('heat', { rows: on.rows, cols: hourCols(), col_labels: hourCols(true), values: on.ist.values, fmt: 'int' }, { h: 170 }), { note: on.ist.label + ' IST = Pacific + 12 h 30 m (daylight time) or + 13 h 30 m (standard time), shifted date by date.' });
-      h += fig('As Meta returns it (Pacific time)', ch('heat', { rows: on.rows, cols: hourCols(false, true), values: on.pt.values, fmt: 'int' }, { h: 170 }), { note: 'Meta does not say which time zone it uses for this metric; Pacific time is the best-supported reading.' });
+      h += '<p class="sub-lead span">Average followers online by weekday and hour over the last ' + on.days + ' days. Most active: ' + esc(on.best_ist.join(', ')) + ' (IST).</p>';
+      h += '<div class="pair">' + fig('India time (IST)', ch('heat', { rows: on.rows, cols: hourCols(), col_labels: hourCols(true), values: on.ist.values, fmt: 'int' }, { h: 170 }), { note: on.ist.label + ' IST = Pacific + 12 h 30 m (daylight time) or + 13 h 30 m (standard time), shifted date by date.' });
+      h += fig('As Meta returns it (Pacific time)', ch('heat', { rows: on.rows, cols: hourCols(false, true), values: on.pt.values, fmt: 'int' }, { h: 170 }), { note: 'Meta does not say which time zone it uses for this metric; Pacific time is the best-supported reading.' }) + '</div>';
     }
     h += reading(A.notes);
     return h;
@@ -506,7 +515,7 @@
     // top posts
     var T = P.top || {}, lists = T.lists || {}, cards = T.cards || {};
     var keys = ['er', 'reach', 'saves', 'shares', 'likes'].filter(function (k) { return lists[k] && lists[k].ids && lists[k].ids.length; });
-    h += '<h3 class="sub">Top posts</h3>';
+    h += '<h3 class="sub span">Top posts</h3>';
     if (!keys.length) h += naBox('No posts to rank yet.');
     else {
       h += '<div class="tabs" role="tablist">' + keys.map(function (k, i) {
@@ -586,7 +595,7 @@
     if (isNA(PA.trend)) h += fig('30-day windows over time', naBox(PA.trend));
     else {
       h += '<h3 class="sub">Trend, 30-day windows</h3><p class="sub-lead">' + esc(PA.trend.note) + '</p><div class="g3">' + PA.trend.charts.map(function (c) {
-        return fig(c.title, ch('line', { x: PA.trend.labels, series: [{ name: c.title, values: c.values }] }, { h: 140, right: 40, lw: 50 }));
+        return fig(c.title, ch('line', { x: PA.trend.labels, series: [{ name: c.title, values: c.values }] }, { h: PRINT ? 112 : 140, right: 40, lw: 50 }));
       }).join('') + '</div>';
     }
     h += '<div class="g2">' + figOrNA('Link taps by button', PA.taps, function () { return hbars(PA.taps.items, { showShare: true }); }, { right: 'Last 30 days' }) +
@@ -634,22 +643,23 @@
 
   function secPatterns(Pt) {
     if (isNA(Pt)) return naBox(Pt);
-    var h = '<p class="sub-lead">' + esc(Pt.method) + '</p>';
+    var h = '<p class="sub-lead screen-only">' + esc(Pt.method) + '</p>', first = true;
     function fmts(o) {
       var f = o.formats || {};
       return Object.keys(f).sort(function (a, b) { return f[b] - f[a]; }).map(function (k) { return k + 's ' + pct(f[k], 0); }).join(', ');
     }
     [['ri', 'Ranked by reach'], ['er_r', 'Ranked by engagement']].forEach(function (pair) {
       var a = Pt[pair[0]];
-      h += '<h3 class="sub">' + esc(pair[1]) + '</h3>';
-      if (isNA(a)) { h += naBox(a); return; }
+      h += '<h3 class="sub screen-only">' + esc(pair[1]) + '</h3>';
+      if (isNA(a)) { h += fig(pair[1], naBox(a)); return; }
       var rows = [['Format mix', fmts(a.top), fmts(a.bottom), fmts(a.all)]];
       (Pt.rows || []).forEach(function (r) {
         var key = r[1], f = r[2];
         var g = function (o) { var v = o[key]; return f === 'list' ? (v || []).join(', ') : f === 'text' ? (v || '\u2014') : fv(v, f === 'pct0' ? 'pct0' : f === 'dec' ? 'dec' : f); };
         rows.push([r[0], g(a.top), g(a.bottom), g(a.all)]);
       });
-      h += fig('Top 10% vs bottom 25%', table(['', 'Top 10% (' + a.top.n + ')', 'Bottom 25% (' + a.bottom.n + ')', 'All (' + a.all.n + ')'], rows, { wide: [1, 2, 3] }));
+      h += fig('Top 10% vs bottom 25%', table(['', 'Top 10% (' + a.top.n + ')', 'Bottom 25% (' + a.bottom.n + ')', 'All (' + a.all.n + ')'], rows, { wide: [1, 2, 3] }), { cls: 'w2', printRight: pair[1], printNote: first ? Pt.method : null });
+      first = false;
       var kt = a.keywords_top || [], kb = a.keywords_bottom || [];
       h += '<div class="g2">' + fig('Words more common in winners', kt.length ? '<ul class="chips">' + kt.map(function (k) {
         return '<li>' + esc(k.word) + '<b>' + pct(k.top, 0) + '</b></li>';
@@ -674,7 +684,7 @@
     ]);
     h += fig('By format', table(['Format', 'Posts', 'Shares / 1k', 'Saves / 1k', 'Follows / 1k', 'Visits / 1k', 'Visit \u2192 follow'], (V.rows || []).map(function (r) {
       return [r.format, nint(r.posts), fv(r.shares_r, 'per1k'), fv(r.saves_r, 'per1k'), fv(r.follows_k, 'dec'), fv(r.pv_k, 'dec'), pct(r.pv_to_follow, 0)];
-    })), { right: V.window, desc: 'Per 1,000 accounts reached. Shares and saves spread a post; follows and profile visits turn reach into an audience.' });
+    })), { cls: 'w2', right: V.window, desc: 'Per 1,000 accounts reached. Shares and saves spread a post; follows and profile visits turn reach into an audience.' });
     h += '<div class="g2">' + figOrNA('Who the reach came from', V.follow_type, function () { return ch('donut', V.follow_type, {}); }, { right: 'Last 30 days' }) +
       fig('Follower magnets', V.magnets && V.magnets.length ? miniList(V.magnets, [['Follows', function (c) { return nint(c.follows); }], ['Reach', function (c) { return compact(c.reach); }]]) : naBox(V.magnets_na || 'Not available.'), { desc: 'Posts that brought the most new followers.' }) + '</div>';
     h += reading(V.notes);
@@ -740,7 +750,7 @@
     var h = '<p class="sub-lead">' + esc(Rv.window) + '. ' + esc(Rv.method) + '</p>';
     h += fig('Side by side', table(['Account', 'Followers', 'Posts / week', 'Avg likes', 'Avg comments', 'Avg reel views', 'Engagement', 'Reels', 'Best format'], rows.map(function (r) {
       return { cls: r.me ? 'me' : '', cells: ['@' + r.username + (r.me ? ' (you)' : ''), compact(r.followers), fv(r.per_week, 'dec'), compact(r.avg_likes), compact(r.avg_comments), compact(r.avg_views), pct(r.er), pct(r.reel_share, 0), r.top_type ? r.top_type + 's' : '\u2014'] };
-    })));
+    })), { cls: 'w2' });
     function cmpBars(key, fmt) {
       return hbars(rows.map(function (r) { return { label: '@' + r.username + (r.me ? ' (you)' : ''), value: r[key] }; }), { fmt: fmt });
     }
@@ -788,11 +798,11 @@
   function secPlan(Pl, R) {
     if (!Pl || isNA(Pl)) return naBox('Your growth plan is being written by our strategist from these numbers and will appear here.', 'Coming next', true);
     var h = '';
-    if (Pl.headline || Pl.summary) h += '<div class="verdict-card"><span class="tape" aria-hidden="true"></span>' + (Pl.headline ? '<p class="verdict">' + esc(Pl.headline) + '</p>' : '') + (Pl.summary ? '<p class="vsum">' + esc(Pl.summary) + '</p>' : '') + '</div>';
+    if (Pl.headline || Pl.summary) h += '<div class="verdict-card dup"><span class="tape" aria-hidden="true"></span>' + (Pl.headline ? '<p class="verdict">' + esc(Pl.headline) + '</p>' : '') + (Pl.summary ? '<p class="vsum">' + esc(Pl.summary) + '</p>' : '') + '</div>';
     if (Pl.key_findings && Pl.key_findings.length) {
       h += fig('Key findings', '<ol class="steps">' + Pl.key_findings.map(function (k) {
         return typeof k === 'string' ? '<li>' + esc(k) + '</li>' : '<li><strong>' + esc(k.title) + '</strong>' + esc(k.detail || '') + (k.evidence ? '<span class="ev">' + esc(k.evidence) + '</span>' : '') + '</li>';
-      }).join('') + '</ol>');
+      }).join('') + '</ol>', { cls: 'dup' });
     }
     if ((Pl.working && Pl.working.length) || (Pl.not_working && Pl.not_working.length)) {
       h += '<div class="two">' + fig('What is working', listItems(Pl.working, 'ticks') || naBox('—')) + fig('What is not', listItems(Pl.not_working, 'cross') || naBox('—')) + '</div>';
@@ -808,13 +818,13 @@
       }).join('') + '</div>';
     }
     if ((Pl.posting_rules && Pl.posting_rules.length) || (Pl.best_slots && Pl.best_slots.length)) {
-      h += '<h3 class="sub">When and how to post</h3><div class="two">' +
+      h += '<h3 class="sub span">When and how to post</h3><div class="two">' +
         fig('Posting rules', listItems(Pl.posting_rules, 'ticks') || naBox('—')) +
         fig('Your slots', Pl.best_slots && Pl.best_slots.length ? table(['Day', 'Time (IST)', 'Format', 'Why'], Pl.best_slots.map(function (s) { return [s.day, s.time_ist, s.format, s.why || '']; }), { wide: [3] }) : naBox('—')) + '</div>';
     }
     var cal = Pl.calendar;
     if (cal && cal.weeks && cal.weeks.length) {
-      h += '<h3 class="sub">90-day calendar</h3><p class="sub-lead">' + esc([cal.start ? 'Starts ' + cal.start : '', cal.posts_per_week ? cal.posts_per_week + ' posts a week' : '', cal.note || ''].filter(Boolean).join(' \u00b7 ')) + '</p>';
+      h += '<h3 class="sub span">90-day calendar</h3><p class="sub-lead span">' + esc([cal.start ? 'Starts ' + cal.start : '', cal.posts_per_week ? cal.posts_per_week + ' posts a week' : '', cal.note || ''].filter(Boolean).join(' \u00b7 ')) + '</p>';
       h += '<div class="weeks">' + cal.weeks.map(function (w) {
         return '<div class="fig wk"><div class="fig-h"><b>Week ' + esc(w.week) + '</b><span class="fig-r">' + esc([w.dates, w.theme].filter(Boolean).join(' \u00b7 ')) + '</span></div>' +
           '<ul class="cal">' + (w.posts || []).map(function (p) {
@@ -828,11 +838,11 @@
     if (gt) {
       var groups = [['collabs', 'Collaborations'], ['hooks', 'Hooks'], ['profile_fixes', 'Profile and bio fixes'], ['keywords', 'Keywords and SEO'], ['other', 'Also']];
       var parts = groups.filter(function (g) { return gt[g[0]] && gt[g[0]].length; }).map(function (g) { return fig(g[1], listItems(gt[g[0]], 'ticks')); });
-      if (parts.length) h += '<h3 class="sub">Growing followers</h3><div class="two">' + parts.join('') + '</div>';
+      if (parts.length) h += '<h3 class="sub span">Growing followers</h3><div class="two">' + parts.join('') + '</div>';
     }
     var br = Pl.brand_readiness;
     if (br) {
-      h += '<h3 class="sub">Brand-deal readiness</h3><div class="two"><div class="fig">' +
+      h += '<h3 class="sub span">Brand-deal readiness</h3><div class="two"><div class="fig">' +
         (br.score != null ? '<div class="score"><b>' + esc(br.score) + '</b><span>out of ' + esc(br.out_of || 10) + (br.status ? ' \u00b7 ' + esc(br.status) : '') + '</span></div>' : '') +
         (br.summary ? '<p class="vsum" style="font-size:15.5px;margin-top:0">' + esc(br.summary) + '</p>' : '') + '</div><div>' +
         (br.strengths && br.strengths.length ? fig('Strengths', listItems(br.strengths, 'ticks')) : '') +
@@ -841,16 +851,16 @@
         h += fig('Rate guidance', table(['Deliverable', 'Range', 'Notes'], br.rates.map(function (r) {
           var cur = r.currency === 'INR' || !r.currency ? '\u20b9' : r.currency + ' ';
           return [r.deliverable, cur + nint(r.low) + '\u2013' + nint(r.high), r.note || ''];
-        }), { wide: [2] }), { note: br.rates_note || 'Guidance ranges for the Indian market at this size; final rates depend on usage rights, exclusivity and deliverables.' });
+        }), { wide: [2] }), { cls: 'wide', note: br.rates_note || 'Guidance ranges for the Indian market at this size; final rates depend on usage rights, exclusivity and deliverables.' });
       }
       if (br.pitch_list && br.pitch_list.length) {
         h += fig('Who to pitch', table(['Category', 'Why you fit', 'Examples'], br.pitch_list.map(function (p) {
           return [p.category, p.why || '', (p.examples || []).join(', ')];
-        }), { wide: [1, 2] }));
+        }), { wide: [1, 2] }), { cls: 'wide' });
       }
     }
     if (Pl.kpis && Pl.kpis.length) {
-      h += '<h3 class="sub">Targets</h3>' + fig('30 / 60 / 90-day KPIs', table(['Metric', 'Now', '30 days', '60 days', '90 days'], Pl.kpis.map(function (k) {
+      h += '<h3 class="sub span">Targets</h3>' + fig('30 / 60 / 90-day KPIs', table(['Metric', 'Now', '30 days', '60 days', '90 days'], Pl.kpis.map(function (k) {
         var f = k.fmt || 'int';
         return [k.metric, fv(k.now, f), fv(k.d30, f), fv(k.d60, f), fv(k.d90, f)];
       })));
@@ -862,32 +872,34 @@
 
   function secNotes(D) {
     if (isNA(D)) return naBox(D);
-    var h = '<dl class="dn">' + (D.items || []).map(function (i) { return '<div><b>' + esc(i.title) + '</b><span>' + esc(i.text) + '</span></div>'; }).join('') + '</dl>';
     var errs = (D.errors || []).map(function (e) { return (e.step ? e.step + ': ' : '') + e.error; });
     (D.missing_files || []).forEach(function (f) { errs.push(f + ' was not received.'); });
     (D.bad_files || []).forEach(function (f) { errs.push(f + ' could not be read.'); });
-    if (errs.length) h += fig('What Instagram held back on this pull', '<ul class="dash">' + errs.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>');
+    // on paper the held-back list joins the definitions grid (its last row has room); on screen it is its own card
+    var h = '<dl class="dn">' + (D.items || []).map(function (i) { return '<div><b>' + esc(i.title) + '</b><span>' + esc(i.text) + '</span></div>'; }).join('') +
+      (errs.length ? '<div class="print-only"><b>Held back on this pull</b><span>' + esc(errs.join(' \u00b7 ')) + '</span></div>' : '') + '</dl>';
+    if (errs.length) h += fig('What Instagram held back on this pull', '<ul class="dash">' + errs.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>', { cls: 'screen-only' });
     return h;
   }
 
   /* ------------------------------------------------------------------ page */
   var SECTIONS = [
-    { id: 'audience', key: 'audience', eyebrow: 'Audience', title: 'Who <em>follows</em> you', lead: 'Follower count, growth, who they are and when they are online.', fn: secAudience },
-    { id: 'posts', key: 'posts', eyebrow: 'Posts', title: 'What you have <em>posted</em>', lead: 'Every post from the first one to today: volume, formats, results and the best performers.', fn: secPosts },
-    { id: 'optimisation', key: 'optimization', eyebrow: 'Optimisation', title: 'When and how to <em>post</em>', lead: 'The days, hours, formats and hashtags that work best for you.', fn: secOpt },
-    { id: 'stories', key: 'stories', eyebrow: 'Stories', title: '<em>Stories</em>', lead: 'Reach, views, replies and drop-off for the stories we collected.', fn: secStories, flow: true },
+    { id: 'audience', key: 'audience', eyebrow: 'Audience', title: 'Who <em>follows</em> you', lead: 'Follower count, growth, who they are and when they are online.', fn: secAudience, flow: true },
+    { id: 'posts', key: 'posts', eyebrow: 'Posts', title: 'What you have <em>posted</em>', lead: 'Every post from the first one to today: volume, formats, results and the best performers.', fn: secPosts, flow: true },
+    { id: 'optimisation', key: 'optimization', eyebrow: 'Optimisation', title: 'When and how to <em>post</em>', lead: 'The days, hours, formats and hashtags that work best for you.', fn: secOpt, flow: true },
+    { id: 'stories', key: 'stories', eyebrow: 'Stories', title: '<em>Stories</em>', lead: 'Reach, views, replies and drop-off for the stories we collected.', fn: secStories, flow: true, keep: 360 },
     { id: 'profile', key: 'profile_activity', eyebrow: 'Profile', title: 'Profile and <em>account</em> activity', lead: 'Accounts reached, views, link taps and engagement, in 30-day windows.', fn: secProfile, flow: true },
-    { id: 'momentum', key: 'momentum', eyebrow: 'Momentum', title: 'Are you <em>growing</em>?', lead: 'Monthly medians since your first post: reach, engagement, likes and views.', fn: secMomentum },
+    { id: 'momentum', key: 'momentum', eyebrow: 'Momentum', title: 'Are you <em>growing</em>?', lead: 'Monthly medians since your first post: reach, engagement, likes and views.', fn: secMomentum, flow: true },
     { id: 'consistency', key: 'consistency', eyebrow: 'Consistency', title: 'Rhythm and <em>breaks</em>', lead: 'How often you post, the longest gaps, and what happened to reach after them.', fn: secConsistency, flow: true },
-    { id: 'patterns', key: 'patterns', eyebrow: 'Patterns', title: 'What your <em>best</em> posts share', lead: 'Your top 10% against your bottom 25%: format, timing, captions, hooks and words.', fn: secPatterns },
+    { id: 'patterns', key: 'patterns', eyebrow: 'Patterns', title: 'What your <em>best</em> posts share', lead: 'Your top 10% against your bottom 25%: format, timing, captions, hooks and words.', fn: secPatterns, flow: true, keep: 600 },
     { id: 'virality', key: 'virality', eyebrow: 'Virality and conversion', title: 'Shares, saves and <em>new followers</em>', lead: 'Which posts travel beyond your followers, and which turn viewers into followers.', fn: secVirality, flow: true },
-    { id: 'reels', key: 'reels', eyebrow: 'Reels retention', title: 'Do people keep <em>watching</em>?', lead: 'Average watch time per reel, and how it relates to reach.', fn: secReels },
+    { id: 'reels', key: 'reels', eyebrow: 'Reels retention', title: 'Do people keep <em>watching</em>?', lead: 'Average watch time per reel, and how it relates to reach.', fn: secReels, flow: true },
     { id: 'quality', key: 'quality', eyebrow: 'Engagement quality', title: 'Who really <em>engages</em>', lead: 'Comments against likes, and the people who engage against the people who follow.', fn: secQuality, flow: true },
-    { id: 'forecast', key: 'forecast', eyebrow: 'Forecast', title: 'Where followers are <em>heading</em>', lead: 'A simple estimate at the current pace.', fn: secForecast, flow: true },
-    { id: 'rivals', key: 'rivals', eyebrow: 'Rivals', title: 'How you <em>compare</em>', lead: 'Public numbers for the creators you named.', fn: secRivals },
-    { id: 'kit', key: 'media_kit', eyebrow: 'Media kit', title: 'The numbers <em>brands</em> ask for', lead: 'Ready to paste into a pitch or a rate card.', fn: secKit },
-    { id: 'prefs', key: 'prefs', eyebrow: 'What you told us', title: 'In your <em>words</em>', lead: 'Your answers on the connect page. The plan is built around them.', fn: secPrefs },
-    { id: 'plan', key: 'plan', eyebrow: 'Growth plan', title: 'The <em>plan</em>', lead: 'What to do next, built from the numbers above and what you told us.', fn: secPlan, flow: true }
+    { id: 'forecast', key: 'forecast', eyebrow: 'Forecast', title: 'Where followers are <em>heading</em>', lead: 'A simple estimate at the current pace.', fn: secForecast, flow: true, keep: 380 },
+    { id: 'rivals', key: 'rivals', eyebrow: 'Rivals', title: 'How you <em>compare</em>', lead: 'Public numbers for the creators you named.', fn: secRivals, flow: true, keep: 360 },
+    { id: 'kit', key: 'media_kit', eyebrow: 'Media kit', title: 'The numbers <em>brands</em> ask for', lead: 'Ready to paste into a pitch or a rate card.', fn: secKit, flow: true, keep: 480 },
+    { id: 'prefs', key: 'prefs', eyebrow: 'What you told us', title: 'In your <em>words</em>', lead: 'Your answers on the connect page. The plan is built around them.', fn: secPrefs, flow: true, keep: 300 },
+    { id: 'plan', key: 'plan', eyebrow: 'Growth plan', title: 'The <em>plan</em>', lead: 'What to do next, built from the numbers above and what you told us.', fn: secPlan, flow: true, keep: 430 }
   ];
 
   function setPageCss(R) {
@@ -895,7 +907,7 @@
     var who = (P.username ? '@' + P.username + ' \u00b7 ' : '') + 'Instagram audit \u00b7 ' + AGENCY.name + ' \u00b7 ' + AGENCY.email;
     var css = '@page{@bottom-left{content:"' + who.replace(/["\\]/g, '') + '";font-family:"DM Sans",Helvetica,Arial,sans-serif;font-size:7.5pt;color:#6E5551}' +
       '@bottom-right{content:counter(page) " / " counter(pages);font-family:"DM Sans",Helvetica,Arial,sans-serif;font-size:7.5pt;color:#6E5551}}' +
-      '@page :first{@bottom-left{content:none}@bottom-right{content:none}}@page back{margin:0;@bottom-left{content:none}@bottom-right{content:none}}';
+      '@page :first{@bottom-left{content:none}@bottom-right{content:none}}@page back{margin:0;background:#3D2521;@bottom-left{content:none}@bottom-right{content:none}}';
     var el = document.getElementById('rp-page-css') || document.createElement('style');
     el.id = 'rp-page-css';
     el.textContent = css;
@@ -931,15 +943,26 @@
     h += fig('Contents', '<ol class="toc">' + SECTIONS.map(function (s, i) {
       return '<li><span>' + (i + 1) + '</span><a href="#' + s.id + '">' + esc(s.eyebrow) + '</a></li>';
     }).join('') + '<li><span>·</span><a href="#notes">Notes on the data</a></li></ol>', { cls: 'no-print' });
+    h += fig('Contents', '<ol class="toc toc-print">' + SECTIONS.map(function (s, i) {
+      return '<li data-sec="' + s.id + '"><span>' + (i + 1) + '</span>' + esc(s.eyebrow) + '<b class="pg"></b></li>';
+    }).join('') + '<li data-sec="notes"><span>·</span>Notes on the data<b class="pg"></b></li></ol>', { cls: 'print-only toc-fig' });
     h += '</section>';
     SECTIONS.forEach(function (s, i) {
       var num = String(i + 1).padStart(2, '0');
       var body;
       try { body = s.fn(R[s.key], R); }
       catch (e) { body = naBox('This section could not be shown (' + (e && e.message ? e.message : 'error') + ').'); }
-      h += '<section class="sec' + (s.flow ? ' flow' : '') + '" id="' + s.id + '">' + head(num, s.eyebrow, s.title, s.lead) + body + '</section>';
+      // print-only copy of the takeaways, placed first so it sits beside the charts on a landscape page
+      var lead = R[s.key] && !isNA(R[s.key]) ? reading(R[s.key].notes, null, 'lead-r') : '';
+      if (lead) {
+        // after the opening stat band when the section starts with one, otherwise first
+        var m = body.indexOf('<!--/stats-->'), f = body.search(/<figure|class="kit"|class="pair"|class="tp-list"/);
+        body = m >= 0 && (f < 0 || m < f) ? body.slice(0, m) + lead + body.slice(m) : lead + body;
+      }
+      // .pbk is print-only: an unbreakable spacer that starts the section on a new page when too little of the page is left
+      h += (s.flow ? '<div class="pbk" aria-hidden="true"' + (s.keep ? ' style="--keep:' + s.keep + 'px"' : '') + '></div>' : '') + '<section class="sec' + (s.flow ? ' flow' : '') + '" id="' + s.id + '"' + (s.flow ? '' : ' data-newpage="1"') + (s.keep ? ' data-keep="' + s.keep + '"' : '') + '>' + head(num, s.eyebrow, s.title, s.lead) + body + '</section>';
     });
-    h += '<section class="sec" id="notes">' + head(null, 'Notes on the data', 'How to read this <em>report</em>', 'Definitions, time zones and the things Instagram does not share.') + secNotes(R.data_notes) + '</section>';
+    h += '<section class="sec flow" id="notes" data-keep="360">' + head(null, 'Notes on the data', 'How to read this <em>report</em>', 'Definitions, time zones and the things Instagram does not share.') + secNotes(R.data_notes) + '</section>';
     h += '<footer class="band" style="page:back">' + logo('Marketing') +
       '<p class="hand">Thank you for connecting</p>' +
       '<h2>Questions about your audit, or want us to run the plan <em>with you</em>?</h2>' +
@@ -949,8 +972,177 @@
     root.innerHTML = h;
     wire(root);
     drawAll(true);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { drawAll(true); window.__REPORT_READY = true; });
-    else window.__REPORT_READY = true;
+    var finish = function () {
+      drawAll(true);
+      if (PRINT) {
+        try { paginate(root); } catch (e) { if (window.console) console.error('paginate failed, using CSS columns', e); }
+        drawAll(true);
+      }
+      window.__REPORT_READY = true;
+    };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(finish); else finish();
+  }
+
+  /* ------------------------------------------------------------------ print pagination (PDF only)
+     Chrome balances CSS columns only inside one page, so short runs of cards pile into the first column.
+     For the PDF we lay the pages out ourselves: every block is measured at print width, then packed masonry-style
+     (shortest of three columns) into fixed landscape pages; full-width blocks cross all columns; headings stay with
+     the block after them; a section continues on the same page only if data-keep px (default 430) are still free. */
+  var PAGE_H = 840, GAP = 13, SEC_GAP = 20, COLS = 3;  // A4 landscape content box is 843.5 css px tall at print scale .82
+  var SPAN = '.sh,.stats,.wide,.pair,.quad,.tp-list,.pillars,.kit,.verdict-card,.prefs,.quote,.dn,h3.span,.sub-lead.span';
+  function paginate(root) {
+    var secs = Array.prototype.slice.call(root.querySelectorAll('section.sec'));
+    if (!secs.length) return;
+    var W = Math.floor(secs[0].getBoundingClientRect().width) || root.clientWidth;
+    var colW = (W - GAP * (COLS - 1)) / COLS;
+    var meas = document.createElement('div');
+    meas.className = 'pp-meas';
+    root.appendChild(meas);
+    var hidden = function (el) { return getComputedStyle(el).display === 'none'; };
+    // 1. blocks per section
+    var plan = secs.map(function (sec) {
+      var items = [];
+      if (sec.id === 'glance') items.push({ els: [sec], span: true });
+      else {
+        var walk = function (el) {
+          Array.prototype.forEach.call(el.children, function (ch) {
+            if (hidden(ch)) return;
+            if (ch.matches('.g2,.g3,.g4,.two,.weeks') || (ch.tagName === 'DIV' && !ch.className && ch.querySelector('.fig'))) { walk(ch); return; }
+            items.push({ els: [ch], span: ch.matches(SPAN) || (ch.parentNode === sec && ch.matches('.na')), head: ch.matches('h3.sub,.sub-lead,.sh') });
+          });
+        };
+        walk(sec);
+      }
+      // headings travel with the block they introduce: with a full-width block they form one block; a column heading
+      // joins the card after it; a full-width heading before cards becomes its own block that must fit with the first card
+      var blocks = [], hb = [];
+      items.forEach(function (it) {
+        if (it.head && !it.els[0].matches('.sh')) { hb.push(it); return; }
+        var heads = hb; hb = [];
+        if (it.span || !heads.length) {
+          blocks.push({ els: heads.reduce(function (a, h) { return a.concat(h.els); }, []).concat(it.els), span: it.span || heads.some(function (h) { return h.span; }), keepNext: it.els[0].matches('.sh') });
+        } else if (heads.some(function (h) { return h.span; })) {
+          blocks.push({ els: heads.reduce(function (a, h) { return a.concat(h.els); }, []), span: true, keepNext: true });
+          blocks.push({ els: it.els, span: false });
+        } else {
+          blocks.push({ els: heads.reduce(function (a, h) { return a.concat(h.els); }, []).concat(it.els), span: false });
+        }
+      });
+      if (hb.length) blocks.push({ els: hb.reduce(function (a, h) { return a.concat(h.els); }, []), span: true });
+      return { sec: sec, blocks: blocks, newPage: sec.id === 'glance' || sec.getAttribute('data-newpage') === '1', keep: +(sec.getAttribute('data-keep') || 430) };
+    });
+    // 2. measure each block in a wrapper at its print width
+    plan.forEach(function (p) {
+      p.blocks.forEach(function (b) {
+        var w = document.createElement('div');
+        b.w2 = !b.span && b.els.some(function (el) { return el.matches('.w2'); });
+        w.className = 'blk' + (b.span ? ' blk-span' : '');
+        w.style.width = (b.span ? W : b.w2 ? 2 * colW + GAP : colW) + 'px';
+        b.els.forEach(function (el) { w.appendChild(el); });
+        meas.appendChild(w);
+        b.wrap = w;
+      });
+    });
+    drawAll(true);
+    plan.forEach(function (p) { p.blocks.forEach(function (b) { b.h = Math.ceil(b.wrap.getBoundingClientRect().height); }); });
+    // 3. pack into pages; if a section ends on a near-empty spill page after starting mid-page, re-pack with that
+    //    section on a fresh page (a few rounds at most)
+    // a block taller than a page (never in the sample) is scaled to fit rather than clipped
+    plan.forEach(function (p) { p.blocks.forEach(function (b) { if (b.h > PAGE_H) { b.wrap.style.zoom = PAGE_H / b.h; b.h = PAGE_H; } }); });
+    var pack = function (forced) {
+      var pages = [], page = null, colH = null, startPage = {}, endPage = {}, midStart = {};
+      var newPage = function () { page = []; pages.push(page); colH = [0, 0, 0]; };
+      var top = function () { return Math.max.apply(null, colH); };
+      newPage();
+      plan.forEach(function (p, si) {
+        var used = top();
+        if (si > 0 && (p.newPage || forced[p.sec.id] || PAGE_H - used - SEC_GAP < p.keep)) { if (page.length) newPage(); }
+        else if (used > 0) { colH = colH.map(function () { return used + SEC_GAP; }); midStart[p.sec.id] = true; }
+        startPage[p.sec.id] = pages.length;
+        var bl = p.blocks.slice();
+        while (bl.length) {
+          var b = bl.shift();
+          if (b.span) {
+            var nx = bl[0];
+            var need = b.h + (b.keepNext && nx ? (nx.span ? Math.min(nx.h, 200) : nx.h) + GAP : 0);
+            var t = top();
+            if (t > 0 && t + need > PAGE_H) { newPage(); t = 0; }
+            page.push({ b: b, x: 0, y: t, sec: p.sec.id });
+            colH = colH.map(function () { return t + b.h + GAP; });
+            continue;
+          }
+          if (b.w2) {
+            var p0 = Math.max(colH[0], colH[1]), p1 = Math.max(colH[1], colH[2]);
+            var cc = p0 <= p1 ? 0 : 1, yy = Math.min(p0, p1);
+            if (yy + b.h > PAGE_H) { newPage(); cc = 0; yy = 0; }
+            page.push({ b: b, x: cc * (colW + GAP), y: yy, sec: p.sec.id });
+            colH[cc] = colH[cc + 1] = yy + b.h + GAP;
+            continue;
+          }
+          var order = [0, 1, 2].sort(function (a, c) { return colH[a] - colH[c] || a - c; });
+          var c = order[0];
+          if (colH[c] + b.h > PAGE_H) {
+            // backfill: a later card of the same run that fits goes here first, but never past its own heading
+            var k = -1, headed = b.els[0].matches('h3.sub,.sub-lead');
+            for (var j = 0; !headed && j < bl.length && j < 6 && !bl[j].span && !bl[j].els[0].matches('h3.sub,.sub-lead'); j++) {
+              if (colH[c] + bl[j].h <= PAGE_H) { k = j; break; }
+            }
+            if (k >= 0) { bl.unshift(b); b = bl.splice(k + 1, 1)[0]; }
+            else { newPage(); c = 0; }
+          }
+          page.push({ b: b, x: c * (colW + GAP), y: colH[c], sec: p.sec.id });
+          colH[c] += b.h + GAP;
+        }
+        endPage[p.sec.id] = pages.length;
+      });
+      var fill = pages.map(function (pg) { return pg.length ? Math.max.apply(null, pg.map(function (it) { return it.y + it.b.h; })) / PAGE_H : 0; });
+      return { pages: pages, startPage: startPage, endPage: endPage, midStart: midStart, fill: fill };
+    };
+    var forced = {}, res = pack(forced);
+    for (var round = 0; round < 6; round++) {
+      var bad = null;
+      plan.forEach(function (p) {
+        var id = p.sec.id, e = res.endPage[id];
+        if (bad || !res.midStart[id] || e === res.startPage[id]) return;
+        var last = res.pages[e - 1];
+        var onlyThis = last.every(function (it) { return it.sec === id; });
+        if (onlyThis && res.fill[e - 1] < 0.3) bad = id;
+      });
+      if (!bad) break;
+      forced[bad] = true;
+      res = pack(forced);
+    }
+    var pages = res.pages, startPage = res.startPage;
+    window.__PAGINATE_FORCED = Object.keys(forced);
+    // 4. build the page boxes and move the measured blocks in
+    var host = document.createElement('div');
+    host.className = 'pages';
+    pages.forEach(function (pg) {
+      if (!pg.length) return;
+      var d = document.createElement('div');
+      d.className = 'pp';
+      pg.forEach(function (it) {
+        it.b.wrap.style.left = it.x + 'px';
+        it.b.wrap.style.top = it.y + 'px';
+        d.appendChild(it.b.wrap);
+      });
+      host.appendChild(d);
+    });
+    // page numbers in the printed contents: cover is page 1, packed pages follow
+    Array.prototype.forEach.call(host.querySelectorAll('.toc-print li'), function (li) {
+      var n = startPage[li.getAttribute('data-sec')];
+      li.querySelector('.pg').textContent = n ? String(n + 1) : '';
+    });
+    window.__PAGE_FILL = pages.filter(function (pg) { return pg.length; }).map(function (pg) {
+      return { fill: Math.round(Math.max.apply(null, pg.map(function (it) { return it.y + it.b.h; })) / PAGE_H * 100),
+        secs: pg.map(function (it) { var sec = it.b.els[0].closest ? (it.b.els[0].closest('section') || it.b.els[0]) : null; return sec && sec.id; }).filter(function (v, i, a) { return v && a.indexOf(v) === i; }) };
+    });
+    var band = root.querySelector('.band');
+    root.insertBefore(host, band || null);
+    secs.forEach(function (sec) { if (sec.parentNode && sec.parentNode !== meas && !sec.closest('.blk')) sec.parentNode.removeChild(sec); });
+    Array.prototype.forEach.call(root.querySelectorAll('.pbk'), function (el) { el.parentNode.removeChild(el); });
+    meas.parentNode.removeChild(meas);
+    root.classList.add('paginated');
   }
 
   function wire(root) {

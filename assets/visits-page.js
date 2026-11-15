@@ -34,7 +34,7 @@
 	}
 
 	var PERIODS = [['1', 'Today'], ['7', '7 days'], ['30', '30 days'], ['0', 'All']];
-	var st = {d: null, who: new URLSearchParams(location.search).get('id') || '', kind: '', days: '30', ip: '', team: false, timer: null, open: {}};
+	var st = {d: null, who: new URLSearchParams(location.search).get('id') || '', kind: '', days: '30', ip: '', team: false, open: {}};
 
 	function gate(msg) { $('app').hidden = true; $('gate').hidden = false; if (msg) { $('gmsg').textContent = msg; $('gmsg').classList.add('show'); } $('key').focus(); }
 	function load(quiet) {
@@ -44,14 +44,15 @@
 		fetch(cc.api + '/admin/visits-all', {headers: {Authorization: 'Bearer ' + k}, cache: 'no-store'})
 			.then(function (r) { return r.json().then(function (d) { return {s: r.status, d: d}; }); })
 			.then(function (x) {
-				$('refresh').disabled = false; $('refresh').textContent = 'Refresh';
+				$('refresh').disabled = false; $('refresh').textContent = 'Update';
 				if (x.s === 401) { setKey(''); return gate('That key didn’t work.'); }
 				if (!x.d.ok) return toast('Could not load the visits');
 				st.d = x.d; $('gate').hidden = true; $('app').hidden = false;
+				$('liveTxt').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', {hour: 'numeric', minute: '2-digit'}) + '. Tap Update for the latest.';
 				[].forEach.call(document.querySelectorAll('#list details[open]'), function (el) { st.open[el.getAttribute('data-k')] = 1; });
 				render();
 			})
-			.catch(function () { $('refresh').disabled = false; $('refresh').textContent = 'Refresh'; if (!quiet) toast('No connection'); });
+			.catch(function () { $('refresh').disabled = false; $('refresh').textContent = 'Update'; if (!quiet) toast('No connection'); });
 	}
 	function shown() {
 		var since = st.days === '0' ? 0 : (st.days === '1' ? Date.parse(istDay(Date.now()) + 'T00:00:00+05:30') : Date.now() - Number(st.days) * 86400000);
@@ -183,8 +184,5 @@
 	$('csv').addEventListener('click', csv);
 	$('open').addEventListener('click', function () { var v = $('key').value.trim(); if (!v) return; setKey(v); load(false); });
 	$('key').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('open').click(); });
-	$('live').addEventListener('click', function () { if (st.timer) { clearInterval(st.timer); st.timer = null; $('live').classList.add('off'); $('liveTxt').textContent = 'Paused. Tap to update by itself again'; } else start(); });
-	function start() { st.timer = setInterval(function () { if (document.visibilityState === 'visible') load(true); }, 30000); $('live').classList.remove('off'); $('liveTxt').textContent = 'Updating every 30 seconds'; }
-	$('live').style.cursor = 'pointer';
-	start(); load(false);
+	load(false);
 })();

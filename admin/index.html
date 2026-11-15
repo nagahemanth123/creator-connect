@@ -61,6 +61,38 @@
 .ev .what { color: var(--ink); overflow-wrap: anywhere; }
 .ev .what small { display: block; color: var(--warm); font-size: 13px; margin-top: 2px; }
 @media (max-width: 700px) { .ev li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+.tag.dm { background: #DCEFE3; color: #1F6B41; }
+.dm-back { position: fixed; inset: 0; background: rgba(42, 23, 23, .38); display: none; z-index: 40; overflow-y: auto; padding: 32px 16px; }
+.dm-back.on { display: block; }
+.dm { position: relative; max-width: 820px; margin: 0 auto; background: var(--paper, #F7E6E3); border-radius: 22px; padding: 26px; box-shadow: var(--lift); display: flex; flex-direction: column; gap: 20px; }
+.dm h2 { font-size: 32px; }
+.dm .x { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--card); font-size: 22px; cursor: pointer; color: var(--ink); }
+.dm .box { background: var(--card); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.dm .box h3 { font-family: var(--serif); font-weight: 400; font-size: 22px; }
+.dm label.l { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--hint); }
+.dm input[type=text], .dm input[type=url], .dm textarea { width: 100%; border: 1px solid var(--field-line); background: var(--field); border-radius: 12px; padding: 11px 14px; font: 400 15px var(--sans); color: var(--ink); }
+.dm textarea { min-height: 84px; resize: vertical; }
+.dm input:focus, .dm textarea:focus { outline: 2px solid var(--cherry); border-color: transparent; }
+.dm .seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.dm .seg button { height: 38px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--field); box-shadow: inset 0 0 0 1.5px var(--field-line); font: 600 13.5px var(--sans); color: var(--ink); cursor: pointer; }
+.dm .seg button.on { background: var(--cherry); color: #fff; box-shadow: none; }
+.posts { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; max-height: 260px; overflow-y: auto; padding: 2px; }
+.posts button { position: relative; aspect-ratio: 1; border: 0; border-radius: 10px; overflow: hidden; padding: 0; cursor: pointer; background: var(--pink-soft); font: 600 11px var(--sans); color: var(--warm); }
+.posts img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.posts button.on { outline: 3px solid var(--cherry); outline-offset: 1px; }
+.posts small { position: absolute; left: 4px; bottom: 4px; background: rgba(0,0,0,.6); color: #fff; border-radius: 6px; padding: 1px 5px; font-size: 10.5px; }
+.camp { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+.camp:first-child { border-top: 0; padding-top: 0; }
+.camp .th { width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: var(--pink-soft); display: grid; place-items: center; font-size: 11px; font-weight: 700; color: var(--cherry); text-align: center; }
+.camp .th img { width: 100%; height: 100%; object-fit: cover; }
+.camp p { font-size: 14px; overflow-wrap: anywhere; }
+.camp small { color: var(--warm); font-size: 12.5px; }
+.camp .b { display: flex; gap: 6px; }
+.camp .b .btn { height: 36px; padding: 0 12px; font-size: 13px; }
+.dmlog { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 13.5px; }
+.dmlog li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; }
+.dmlog .ok { color: #2E7D4F; font-weight: 600; } .dmlog .err { color: var(--cherry); font-weight: 600; }
+.warnbox { background: var(--butter); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--cocoa); color: var(--cream); padding: 10px 18px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
 .toast.on { opacity: 1; }
 </style>
@@ -101,6 +133,7 @@
 		</section>
 	</main>
 </div>
+<div class="dm-back" id="dmBack"><div class="dm" id="dm" role="dialog" aria-modal="true" aria-label="Auto-DM"></div></div>
 <div class="toast" id="toast"></div>
 <script src="../assets/config.js"></script>
 <script>
@@ -148,6 +181,7 @@
 			var p = a.prefs || {};
 			var tags = '<span class="tag ' + (a.status === 'ok' ? 'ok' : 'bad') + '">' + (a.status === 'ok' ? 'Connected' : 'Needs reconnect') + '</span>' +
 				(a.can_post ? '<span class="tag post">Can post</span>' : '<span class="tag">Read-only</span>') +
+				(a.can_dm ? '<span class="tag dm">Auto-DM ready</span>' : '') +
 				(a.followers_count != null ? '<span class="tag">' + Number(a.followers_count).toLocaleString('en-IN') + ' followers</span>' : '') +
 				'<span class="tag">Since ' + fmtDate(a.connected_at) + '</span>' + (a.ref ? '<span class="tag">Link: ' + esc(a.ref) + '</span>' : '');
 			var picks = a.prefs ? (
@@ -162,6 +196,7 @@
 				'<div class="tags">' + tags + '</div>' +
 				'<div class="picks">' + picks + '</div>' +
 				'<div class="acts">' + (a.report ? '<a class="btn red" href="' + esc(a.report.url) + '" target="_blank" rel="noopener">Open report</a><button class="btn line" data-copy="' + esc(a.report.url) + '" data-msg="Report link copied" type="button">Copy report link</button>' : '<span class="none">No report yet</span>') +
+					'<button class="btn line" data-dm="' + esc(a.username) + '" type="button">Auto-DM</button>' +
 				'</div></article>';
 		}).join('');
 		[].forEach.call(document.querySelectorAll('.pic[data-src]'), function (el) {
@@ -194,6 +229,114 @@
 				}).join('') : '<li><span class="what">No connect attempts logged yet (logging started 15 Nov 2026).</span></li>';
 			});
 	}
+
+	// ---------- Auto-DM: comment a keyword on a post -> the commenter gets the link in a private reply ----------
+	var dmState = null; // {who, data, media, edit}
+	function api(path, opt) {
+		opt = opt || {};
+		opt.headers = Object.assign({Authorization: 'Bearer ' + getKey()}, opt.headers || {});
+		opt.cache = 'no-store';
+		return fetch(cc.api + path, opt).then(function (r) { return r.json(); });
+	}
+	var SPECIAL = {any: 'Any post', story: 'Story replies', dm: 'Any DM'};
+	function thumb(m) { return m ? (m.thumbnail_url || m.media_url || '') : ''; }
+	function mediaById(id) { return (dmState.media || []).filter(function (m) { return m.id === id; })[0]; }
+	function openDm(who) {
+		dmState = {who: who, data: null, media: [], edit: null};
+		$('dm').innerHTML = '<button class="x" type="button" data-dmclose aria-label="Close">×</button><p class="hand">comment → DM</p><h2>Auto-DM for <em>@' + esc(who) + '</em></h2><p class="none">Loading…</p>';
+		$('dmBack').classList.add('on');
+		Promise.all([api('/admin/dm?id=' + encodeURIComponent(who)), api('/admin/media?id=' + encodeURIComponent(who))]).then(function (r) {
+			dmState.data = r[0]; dmState.media = (r[1] && r[1].media) || [];
+			renderDm();
+		}, function () { toast('No connection'); });
+	}
+	function closeDm() { $('dmBack').classList.remove('on'); dmState = null; }
+	function blankCamp() { return {media_id: (dmState.media[0] || {}).id || 'any', match: 'keyword', keywords: ['LINK'], dm_text: 'Hi! 💛 Here’s the link you asked for: {link}', link: '', public_reply: 'Sent it to your DMs! 📩', active: true}; }
+	function renderDm() {
+		var d = dmState.data || {}, who = dmState.who;
+		var dmLink = connectBase + '?mode=dm&for=' + encodeURIComponent(who);
+		var h = '<button class="x" type="button" data-dmclose aria-label="Close">×</button><p class="hand">comment → DM</p><h2>Auto-DM for <em>@' + esc(who) + '</em></h2>';
+		if (!d.can_dm) {
+			h += '<div class="warnbox"><b>Not switched on for this account yet.</b> She needs to connect once more with comment &amp; message access. Send her this link (she must be an Instagram Tester until Meta approves auto-DM):<br><br><button class="btn red small" type="button" data-copy="' + esc(dmLink) + '" data-msg="Auto-DM connect link copied">Copy auto-DM connect link</button></div>';
+		} else if (d.webhook && !d.webhook.ok) {
+			h += '<div class="warnbox">Comment alerts aren’t subscribed for this account yet. <button class="btn line small" type="button" data-dmsub>Try again</button></div>';
+		}
+		var camps = d.campaigns || [];
+		h += '<div class="box"><h3>Campaigns</h3>' + (camps.length ? camps.map(function (c) {
+			var m = mediaById(c.media_id), t = thumb(m);
+			var what = c.match === 'any' ? 'any comment' : 'comment ' + (c.keywords || []).map(function (k) { return '“' + esc(k) + '”'; }).join(' or ');
+			return '<div class="camp"><div class="th">' + (t ? '<img src="' + esc(t) + '" alt="" referrerpolicy="no-referrer">' : esc(SPECIAL[c.media_id] || 'Post')) + '</div>' +
+				'<div><p><b>' + (c.active ? '🟢 On' : '⚪️ Off') + '</b> · ' + what + ' → DM' + (c.public_reply ? ' + public reply' : '') + '</p><small>' + esc(c.link || 'no link') + (m && m.caption ? ' · ' + esc(m.caption.slice(0, 50)) : (SPECIAL[c.media_id] ? ' · ' + SPECIAL[c.media_id] : '')) + '</small></div>' +
+				'<div class="b"><button class="btn line" type="button" data-dmedit="' + esc(c.id) + '">Edit</button><button class="btn line" type="button" data-dmtoggle="' + esc(c.id) + '">' + (c.active ? 'Pause' : 'Turn on') + '</button><button class="btn line" type="button" data-dmdel="' + esc(c.id) + '">Delete</button></div></div>';
+		}).join('') : '<p class="none">No campaigns yet.</p>') + '<div><button class="btn red small" type="button" data-dmnew>+ New campaign</button></div></div>';
+		if (dmState.edit) h += formHtml(dmState.edit);
+		var log = d.log || [];
+		h += '<div class="box"><h3>Recent auto-DMs</h3>' + (log.length ? '<ol class="dmlog">' + log.slice(0, 30).map(function (e) {
+			var ok = e.dm === 'ok';
+			return '<li><span class="none">' + new Date(e.at).toLocaleString('en-IN', {day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}) + '</span><span><span class="' + (ok ? 'ok' : 'err') + '">' + (ok ? 'Sent' : 'Not sent') + '</span> to @' + esc(e.from) + (e.text ? ' · “' + esc(e.text) + '”' : '') + (ok ? '' : '<br><small>' + esc(e.dm) + '</small>') + (e.reply && e.reply !== 'ok' ? '<br><small>Public reply: ' + esc(e.reply) + '</small>' : '') + '</span></li>';
+		}).join('') + '</ol>' : '<p class="none">Nothing sent yet.</p>') +
+			'<p class="none" style="font-size:12.5px">Until Meta approves auto-DM for Busy Fox Insights, DMs only reach people with a role on the app (e.g. Instagram Testers). One DM per person per campaign per day.</p></div>';
+		$('dm').innerHTML = h;
+	}
+	function formHtml(c) {
+		var opts = ['any', 'story', 'dm'].map(function (k) { return '<button type="button" data-pick="' + k + '" class="' + (c.media_id === k ? 'on' : '') + '">' + SPECIAL[k] + '</button>'; }).join('');
+		var posts = (dmState.media || []).map(function (m) {
+			var t = thumb(m);
+			return '<button type="button" data-pick="' + esc(m.id) + '" class="' + (c.media_id === m.id ? 'on' : '') + '" title="' + esc((m.caption || '').slice(0, 120)) + '">' + (t ? '<img src="' + esc(t) + '" alt="" referrerpolicy="no-referrer" loading="lazy">' : esc(m.media_type)) + '<small>' + (m.media_product_type === 'REELS' ? 'Reel' : fmtDate(m.timestamp)) + '</small></button>';
+		}).join('');
+		return '<div class="box" id="dmform"><h3>' + (c.id ? 'Edit campaign' : 'New campaign') + '</h3>' +
+			'<label class="l">1. Where</label><div class="seg">' + opts + '</div><div class="posts">' + posts + '</div>' +
+			'<label class="l">2. When someone…</label><div class="seg"><button type="button" data-match="keyword" class="' + (c.match !== 'any' ? 'on' : '') + '">comments a keyword</button><button type="button" data-match="any" class="' + (c.match === 'any' ? 'on' : '') + '">comments anything</button></div>' +
+			'<input type="text" id="f_kw" placeholder="Keywords, comma separated (e.g. LINK, PRICE)" value="' + esc((c.keywords || []).join(', ')) + '"' + (c.match === 'any' ? ' hidden' : '') + '>' +
+			'<label class="l">3. Send this DM</label><textarea id="f_text" placeholder="Use {link} where the link should go">' + esc(c.dm_text || '') + '</textarea>' +
+			'<input type="url" id="f_link" placeholder="https://… (the link to send)" value="' + esc(c.link || '') + '">' +
+			'<label class="l">4. Public reply under the comment (optional)</label><input type="text" id="f_reply" placeholder="Leave empty for no public reply" value="' + esc(c.public_reply || '') + '">' +
+			'<div class="seg"><button type="button" data-active="1" class="' + (c.active !== false ? 'on' : '') + '">On</button><button type="button" data-active="0" class="' + (c.active === false ? 'on' : '') + '">Off</button></div>' +
+			'<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn red" type="button" data-dmsave>Save campaign</button><button class="btn line" type="button" data-dmcancel>Cancel</button></div><p class="msg" id="f_msg"></p></div>';
+	}
+	function readForm() {
+		var c = dmState.edit;
+		c.keywords = ($('f_kw').value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+		c.dm_text = $('f_text').value; c.link = $('f_link').value.trim(); c.public_reply = $('f_reply').value;
+		return c;
+	}
+	function saveCamp(c) {
+		var m = mediaById(c.media_id);
+		var body = Object.assign({}, c, {media_caption: m ? (m.caption || '').slice(0, 80) : '', media_permalink: m ? m.permalink : ''});
+		return api('/admin/dm?id=' + encodeURIComponent(dmState.who), {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(body)});
+	}
+	function reloadDm() { return api('/admin/dm?id=' + encodeURIComponent(dmState.who)).then(function (d) { dmState.data = d; renderDm(); }); }
+	document.addEventListener('click', function (e) {
+		var t = e.target.closest('[data-dm],[data-dmclose],[data-dmnew],[data-dmedit],[data-dmtoggle],[data-dmdel],[data-dmsave],[data-dmcancel],[data-pick],[data-match],[data-active],[data-dmsub]');
+		if (!t) { if (e.target === $('dmBack')) closeDm(); return; }
+		if (t.hasAttribute('data-dm')) return openDm(t.getAttribute('data-dm'));
+		if (!dmState) return;
+		if (t.hasAttribute('data-dmclose')) return closeDm();
+		if (t.hasAttribute('data-dmnew')) { dmState.edit = blankCamp(); renderDm(); var f = $('dmform'); if (f) f.scrollIntoView({behavior: 'smooth'}); return; }
+		if (t.hasAttribute('data-dmcancel')) { dmState.edit = null; return renderDm(); }
+		if (t.hasAttribute('data-dmedit')) { var id = t.getAttribute('data-dmedit'); dmState.edit = JSON.parse(JSON.stringify((dmState.data.campaigns || []).filter(function (c) { return c.id === id; })[0] || blankCamp())); renderDm(); var f2 = $('dmform'); if (f2) f2.scrollIntoView({behavior: 'smooth'}); return; }
+		if (t.hasAttribute('data-pick')) { readForm(); dmState.edit.media_id = t.getAttribute('data-pick'); return renderDm(); }
+		if (t.hasAttribute('data-match')) { readForm(); dmState.edit.match = t.getAttribute('data-match'); return renderDm(); }
+		if (t.hasAttribute('data-active')) { readForm(); dmState.edit.active = t.getAttribute('data-active') === '1'; return renderDm(); }
+		if (t.hasAttribute('data-dmsave')) {
+			var c = readForm(); t.disabled = true;
+			return saveCamp(c).then(function (r) {
+				if (!r.ok) { t.disabled = false; $('f_msg').textContent = r.error || 'Could not save'; $('f_msg').classList.add('show'); return; }
+				dmState.edit = null; toast('Campaign saved'); reloadDm();
+			}, function () { t.disabled = false; toast('No connection'); });
+		}
+		if (t.hasAttribute('data-dmtoggle')) {
+			var cid = t.getAttribute('data-dmtoggle'), cc0 = (dmState.data.campaigns || []).filter(function (c) { return c.id === cid; })[0];
+			if (!cc0) return; cc0 = Object.assign({}, cc0, {active: !cc0.active});
+			return saveCamp(cc0).then(function () { toast(cc0.active ? 'Turned on' : 'Paused'); reloadDm(); });
+		}
+		if (t.hasAttribute('data-dmdel')) {
+			if (!confirm('Delete this campaign?')) return;
+			return api('/admin/dm-delete?id=' + encodeURIComponent(dmState.who) + '&cid=' + encodeURIComponent(t.getAttribute('data-dmdel')), {method: 'POST'}).then(function () { toast('Deleted'); reloadDm(); });
+		}
+		if (t.hasAttribute('data-dmsub')) return api('/admin/subscribe?id=' + encodeURIComponent(dmState.who), {method: 'POST'}).then(function (r) { toast(r.ok ? 'Subscribed' : 'Still failing'); reloadDm(); });
+	});
+	document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && dmState) closeDm(); });
 
 	$('open').addEventListener('click', function () { var v = $('key').value.trim(); if (!v) return; setKey(v); $('key').value = ''; $('gmsg').classList.remove('show'); load(); });
 	$('key').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('open').click(); });

@@ -72,7 +72,10 @@
 		}
 		function igPic(x) { return x.thumb ? '<img src="' + esc(x.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : ''; }
 		function igRow(x) {
-			var t = Date.parse(x.at), nums = [x.likes != null ? n(x.likes) + ' likes' : '', x.comments != null ? n(x.comments) + ' comments' : ''].filter(Boolean).join(' · ');
+			var t = Date.parse(x.at), story = x.type === 'story';
+			var nums = (story ? [x.reach != null ? n(x.reach) + ' reached' : '', x.views != null ? n(x.views) + ' views' : ''] : [x.likes != null ? n(x.likes) + ' likes' : '', x.comments != null ? n(x.comments) + ' comments' : '']).filter(Boolean).join(' · ');
+			if (story) return '<' + (x.live && x.permalink ? 'a href="' + esc(x.permalink) + '" target="_blank" rel="noopener"' : 'div') + ' class="pl-row st"><span class="pl-th">' + (igPic(x) || 'Story') + '</span>' +
+				'<span class="pl-rt"><b>Story' + (x.video ? ' (video)' : '') + '</b><small>' + time(t) + (nums ? ' · ' + nums : '') + '</small></span><span class="pl-tag ' + (x.live ? 's-approved">Live now' : 's-posted">Story') + '</span></' + (x.live && x.permalink ? 'a' : 'div') + '>';
 			return '<a class="pl-row" href="' + esc(x.permalink) + '" target="_blank" rel="noopener"><span class="pl-th">' + (igPic(x) || esc(TYPE[x.type])) + '</span>' +
 				'<span class="pl-rt"><b>' + esc(x.caption || TYPE[x.type]) + '</b><small>' + time(t) + ' · ' + TYPE[x.type] + (nums ? ' · ' + nums : '') + '</small></span><span class="pl-tag s-posted">On Instagram</span></a>';
 		}
@@ -125,12 +128,14 @@
 				var say = all ? all + (all === 1 ? ' post' : ' posts') : 'add a post';
 				var shot = '';
 				for (var j = 0; j < list.length && !shot; j++) shot = pic(list[j]);
+				for (j = 0; j < on.length && !shot; j++) if (on[j].type !== 'story') shot = igPic(on[j]);
 				for (j = 0; j < on.length && !shot; j++) shot = igPic(on[j]);
-				cells += '<button type="button" class="pl-cell' + (k === today ? ' today' : '') + (all ? ' has' : '') + (shot ? ' pic' : '') + '"' + (all ? ' style="--i:' + (seq++) + '"' : '') + ' data-a="day" data-id="' + k + '" aria-label="' + d + ' ' + MONTHS[st.m] + ', ' + say + '">' +
+				var stor = on.some(function (x) { return x.type === 'story'; });
+				cells += '<button type="button" class="pl-cell' + (k === today ? ' today' : '') + (all ? ' has' : '') + (shot ? ' pic' : '') + (stor ? ' st' : '') + '"' + (all ? ' style="--i:' + (seq++) + '"' : '') + ' data-a="day" data-id="' + k + '" aria-label="' + d + ' ' + MONTHS[st.m] + ', ' + say + '">' +
 					(shot ? '<span class="pl-shot">' + shot + '</span>' : '') + '<b>' + d + '</b><span class="pl-dots">' + (shot && !list.length ? '' : dots) + '</span>' + (shot && all > 1 ? '<em>' + all + '</em>' : '') + '</button>';
 			}
 			return '<div class="pl-cal' + (fresh ? ' pl-fresh' : '') + '"><div class="pl-calhd"><button type="button" class="pl-nav" data-a="prev" aria-label="Previous month">‹</button><h3>' + MONTHS[st.m] + ' <em>' + st.y + '</em></h3><button type="button" class="pl-nav" data-a="next" aria-label="Next month">›</button></div><div class="pl-grid">' + cells + '</div>' +
-				'<p class="pl-key"><span><i class="s-idea"></i>Planned</span><span><i class="s-review"></i>' + (me ? 'Needs your yes' : 'Needs her yes') + '</span><span><i class="s-approved"></i>Approved</span><span><i class="s-posted"></i>Posted</span></p></div>';
+				'<p class="pl-key"><span><i class="s-idea"></i>Planned</span><span><i class="s-review"></i>' + (me ? 'Needs your yes' : 'Needs her yes') + '</span><span><i class="s-approved"></i>Approved</span><span><i class="s-posted"></i>Posted</span><span><i class="s-story"></i>Story that day</span></p></div>';
 		}
 		function agenda() {
 			var list = posts().filter(function (p) { var t = ist(Date.parse(p.at)); return t.y === st.y && t.m === st.m; })

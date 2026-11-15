@@ -149,3 +149,10 @@ html.pl-lock { overflow: hidden; }
 	.pl-sheet { animation: pl-rise .35s cubic-bezier(.2, .9, .3, 1.1); }
 	@keyframes pl-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 }
+
+/* a day with a story wears a story ring */
+.pl-cell.st::before { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: 12px; border: 2.5px dashed var(--cherry); box-shadow: inset 0 0 0 2.5px var(--card); pointer-events: none; }
+.pl-cell.pic b, .pl-cell.pic .pl-dots, .pl-cell.pic em { z-index: 2; }
+.pl-key i.s-story { background: transparent; border: 1.5px dashed var(--cherry); border-radius: 3px; }
+div.pl-row { cursor: default; }
+.pl-row.st .pl-th { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--cherry); border-radius: 50%; }

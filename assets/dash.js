@@ -31,9 +31,10 @@
 
 	function mount(o) {
 		var toast = o.toast || function () {}, els = o.els, d = null;
-		var ui = {type: 'all', q: '', more: false, full: false, busy: false};
-		try { var kept = JSON.parse(sessionStorage.getItem('cc_dash_ui') || '{}'); ['type', 'q', 'more', 'full', 'allAlerts'].forEach(function (k) { if (kept[k] != null) ui[k] = kept[k]; }); } catch (e) {}
-		function keep() { try { sessionStorage.setItem('cc_dash_ui', JSON.stringify({type: ui.type, q: ui.q, more: ui.more, full: ui.full, allAlerts: ui.allAlerts})); } catch (e) {} } // the filter she chose survives a reload and back/forward
+		var KEEP = ['type', 'q', 'more', 'full', 'allAlerts', 'idea', 'parts', 'allMovers', 'rates'];
+		var ui = {type: 'all', q: '', more: false, full: false, busy: false, idea: null, parts: false, allMovers: false, rates: false};
+		try { var kept = JSON.parse(sessionStorage.getItem('cc_dash_ui') || '{}'); KEEP.forEach(function (k) { if (kept[k] != null) ui[k] = kept[k]; }); } catch (e) {}
+		function keep() { try { var out = {}; KEEP.forEach(function (k) { out[k] = ui[k]; }); sessionStorage.setItem('cc_dash_ui', JSON.stringify(out)); } catch (e) {} } // the filter she chose survives a reload and back/forward
 
 		function load(first) {
 			return o.req('dash').then(function (r) {
@@ -59,27 +60,32 @@
 			var f = d.facts || {}, items = [];
 			if (f.first_post && f.history_done) items.push(['Every post since', K.day(f.first_post), full(f.posts) + ' posts read. Instagram shows about 90 days.']);
 			else if (f.posts) items.push(['Your history', full(f.posts) + ' posts', 'We are reading back to your very first post. Instagram shows about 90 days.']);
-			items.push(['Each post', 'against your usual', 'Measured at the same age, so a new post is judged fairly.']);
-			items.push(['Stories kept', f.stories_kept ? full(f.stories_kept) + ' saved' : 'after 24 hours', 'Instagram deletes story numbers after a day. We keep them.']);
-			if (f.connected_at) items.push(['Followers, every day', 'since ' + dayShort(Date.parse(f.connected_at)), 'Saved daily, so your history grows past Instagram’s 30 days.']);
+			items.push(['Each post', 'against your usual', 'Judged at the same age, so it is fair.']);
+			items.push(['Stories kept', f.stories_kept ? full(f.stories_kept) + ' saved' : 'after 24 hours', 'Instagram deletes them after a day.']);
+			if (f.connected_at) items.push(['Followers, every day', 'since ' + dayShort(Date.parse(f.connected_at)), 'Instagram keeps only 30 days.']);
 			return '<div class="os"><p class="os-h"><span class="hand">only here</span><b>What you get here that Instagram doesn’t show</b></p><ul>' + items.slice(0, 4).map(function (x) {
 				return '<li><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b><small>' + esc(x[2]) + '</small></li>';
 			}).join('') + '</ul></div>';
 		}
 
 		// ---------- Today ----------
-		var KIND = {post: 'Going out today', yes: 'Waiting for your yes', plan: 'Planned for today', posted: 'Posted today', idea: 'From your 90-day plan', nudge: 'A small one for today'};
-		var GO = {post: 'Open the post', yes: 'See it and say yes', plan: 'Open the post', idea: 'Give it a date'};
+		var KIND = {post: 'Going out today', yes: 'Waiting for your yes', plan: 'Planned for today', posted: 'Posted today', next: 'Next up', idea: 'From your 90-day plan', nudge: 'A small one for today'};
+		var GO = {post: 'Open the post', yes: 'See it and say yes', plan: 'Open the post', next: 'Open the post', idea: 'Give it a date'};
+		function hasScript(id) { return Boolean(id && o.script && o.script.has(id)); }
 		function today() {
 			var t = d.today, p = t.pick, b = t.best, n = ist(now()), done = t.done || (p.auto_done ? {auto: true} : null);
 			var cover = p.cover ? (p.cover.kind === 'video' ? '<span class="td-cover on"><video src="' + esc(p.cover.url) + '#t=0.1" muted playsinline preload="metadata" tabindex="-1"></video></span>' : bg(p.cover.url, 'td-cover')) : '';
-			var meta = [p.type ? TYPE[p.type] : '', p.format && p.format.toLowerCase() !== (p.type || '') ? p.format : '', p.time ? (p.kind === 'posted' ? 'went out ' : p.kind === 'yes' ? 'planned for ' : '') + p.time : ''].filter(Boolean).join(' · ');
-			var go = GO[p.kind] ? '<button class="btn red" type="button" data-a="go">' + GO[p.kind] + '</button>' : (p.kind === 'nudge' && /ideas/i.test(p.title) ? '<button class="btn red" type="button" data-a="toideas">Open my ideas bank</button>' : '');
+			var meta = [p.when || '', p.type ? TYPE[p.type] : '', p.format && p.format.toLowerCase() !== (p.type || '') ? p.format : '', p.time ? (p.kind === 'posted' ? 'went out ' : p.kind === 'yes' ? 'planned for ' : '') + p.time : ''].filter(Boolean).join(' · ');
+			var script = hasScript(p.script_id) ? '<button class="btn red" type="button" data-a="toscript" data-id="' + esc(p.script_id) + '">Open the script</button>' : '';
+			var go = GO[p.kind] ? '<button class="btn ' + (script ? 'line' : 'red') + '" type="button" data-a="go">' + GO[p.kind] + '</button>' : (p.kind === 'nudge' && /ideas/i.test(p.title) ? '<button class="btn red" type="button" data-a="toideas">Open my ideas bank</button>' : '');
+			var extra = (p.hook ? '<p class="td-hook">' + esc(p.hook) + '</p>' : '') + (p.tentpole ? '<p class="td-tent"><span>Big day</span>' + esc(p.tentpole) + '</p>' : '');
+			var week = p.theme || p.shoot_plan ? '<div class="td-week"><span class="lab">' + (p.week ? 'Week ' + p.week + ' of your plan' : 'This week') + '</span>' + (p.theme ? '<b>' + esc(p.theme) + '</b>' : '') + (p.shoot_plan ? '<p>' + esc(p.shoot_plan) + '</p>' : '') + '</div>' : '';
+			var small = p.small ? '<p class="td-small"><b>A small one for today</b>' + esc(p.small.title) + '. ' + esc(p.small.line) + '</p>' : '';
 			return '<div class="td' + (done ? ' td-done' : '') + (cover ? ' has-cover' : '') + '"><span class="tape" aria-hidden="true"></span>' +
 				'<div class="td-top"><span class="lab">Today · ' + DOW[n.dow] + ' ' + n.d + ' ' + MON[n.m] + '</span>' + (t.streak > 1 ? '<span class="td-streak"><b>' + t.streak + '</b> days in a row</span>' : '') + '</div>' +
-				'<div class="td-main">' + cover + '<div class="td-txt"><span class="td-kind">' + KIND[p.kind] + (meta ? ' <i>' + esc(meta) + '</i>' : '') + '</span><h3>' + esc(p.title) + '</h3><p>' + esc(p.line) + '</p></div></div>' +
-				'<div class="td-best"><p class="td-bt"><span class="lab">Best time today</span><b>' + esc(b.label) + '</b></p><p class="td-why">' + esc(b.line) + (b.online ? ' ' + esc(b.online) : '') + (b.basis === 'yours' ? ' ' + NI : '') + '</p></div>' +
-				'<div class="td-acts">' + go + '<button class="btn line td-tick' + (done ? ' on' : '') + '" type="button" data-a="done" aria-pressed="' + (done ? 'true' : 'false') + '"' + (done && done.auto ? ' disabled' : '') + '>' + CHECK + '<span>' + (done ? 'Done for today' : 'Done') + '</span></button>' +
+				'<div class="td-main">' + cover + '<div class="td-txt"><span class="td-kind">' + KIND[p.kind] + (meta ? ' <i>' + esc(meta) + '</i>' : '') + '</span><h3>' + esc(p.title) + '</h3>' + extra + '<p>' + esc(p.line) + '</p></div></div>' + week +
+				(p.kind === 'next' ? '' : '<div class="td-best"><p class="td-bt"><span class="lab">Best time today</span><b>' + esc(b.label) + '</b></p><p class="td-why">' + esc(b.line) + (b.online ? ' ' + esc(b.online) : '') + (b.basis === 'yours' ? ' ' + NI : '') + '</p></div>') + // nothing goes out today, so today's best hour would only be noise
+				small + '<div class="td-acts">' + script + go + '<button class="btn line td-tick' + (done ? ' on' : '') + '" type="button" data-a="done" aria-pressed="' + (done ? 'true' : 'false') + '"' + (done && done.auto ? ' disabled' : '') + '>' + CHECK + '<span>' + (done ? 'Done for today' : 'Done') + '</span></button>' +
 				(done && !done.auto ? '<button class="td-undo" type="button" data-a="undo">Undo</button>' : '') + '</div></div>';
 		}
 
@@ -109,33 +115,37 @@
 				return '<li><p class="ws-ph"><b>' + esc(p.label) + '</b>' + arrow(p.pct, prev && !prev.na ? prev.pct : null) + '<span class="ws-pts"><b>' + p.pts + '</b> of ' + p.max + '</span></p>' +
 					'<span class="ws-bar"><i style="--v:' + Math.max(2, p.pct) + '%"></i></span><p class="ws-line">' + esc(p.line) + '</p></li>';
 			}).join('') + '</ul>';
-			return '<div class="ws"><div class="ws-top">' + dial + say + '</div>' + parts + '<p class="pl-fine">Monday to Sunday, India time. Arrows compare each part with last week. “Your usual” is the middle value of your last 20 posts that are at least a week old.</p></div>';
+			var n = s.parts.length;
+			return '<div class="ws"><div class="ws-top">' + dial + say + '</div>' +
+				'<button class="ib-more ws-more" type="button" data-a="parts" aria-expanded="' + Boolean(ui.parts) + '">' + (ui.parts ? 'Hide the details' : 'See the ' + n + ' parts of this score') + '</button>' +
+				(ui.parts ? parts + '<p class="pl-fine">Monday to Sunday, India time. Arrows compare each part with last week. “Your usual” is the middle value of your last 20 posts that are at least a week old.</p>' : '') + '</div>';
 		}
 		function movers() {
-			var list = (d.movers || []).filter(function (m) { return m.reach != null; }).slice(0, 5);
-			if (!list.length) return '';
-			var u = d.usual || {};
+			var all = (d.movers || []).filter(function (m) { return m.views != null || m.reach != null; }).slice(0, 8);
+			if (!all.length) return '';
+			var u = d.usual || {}, list = all.slice(0, ui.allMovers ? 8 : 3);
+			var usual = u.views != null ? short(u.views) + ' views' + (u.reach != null ? ' (' + short(u.reach) + ' different people reached)' : '') : u.reach != null ? short(u.reach) + ' different people reached' : '';
 			return '<div class="mv"><div class="mv-h"><h3>Your new posts, <em>against your usual</em></h3>' + NI + '</div>' +
-				'<p class="pl-fine">' + (u.reach != null ? 'A post that is 2 days old is compared with what your posts usually reach at 2 days. Your usual after a week is ' + short(u.reach) + ' different people reached.' : 'This starts once 5 of your posts are a week old with numbers from Instagram.') + '</p>' +
+				'<p class="pl-fine">' + (usual ? 'Each post is compared with what your posts usually get at the same age. Your usual after a week is ' + usual + '.' : 'This starts once 5 of your posts are a week old with numbers from Instagram.') + '</p>' +
 				list.map(function (m) {
 					var r = m.ratio, tag = r == null ? '<span class="mv-x wait">too early</span>' : r >= 1.15 ? '<span class="mv-x up">' + (r >= 2 ? (Math.round(r * 10) / 10) + '× your usual' : '+' + Math.round((r - 1) * 100) + '% vs usual') + '</span>' : r <= 0.85 ? '<span class="mv-x down">−' + Math.round((1 - r) * 100) + '% vs usual</span>' : '<span class="mv-x flat">about usual</span>';
 					return '<a class="mv-row" href="' + esc(m.link) + '" target="_blank" rel="noopener">' + bg(m.thumb, 'mv-th', esc(TYPE[m.type] || '')) +
-						'<span class="mv-t"><b>' + esc(m.cap || TYPE[m.type] || 'Post') + '</b><small>' + (m.views != null ? '<u>' + short(m.views) + ' views</u> · ' : '') + short(m.reach) + ' different people reached · ' + ageWords(m.age_h) + '</small>' +
+						'<span class="mv-t"><b>' + esc(m.cap || TYPE[m.type] || 'Post') + '</b><small>' + [m.views != null ? '<u>' + short(m.views) + ' views</u>' : '', m.reach != null ? '<span' + (m.views != null ? ' class="mv-r"' : '') + '>' + short(m.reach) + ' different people reached</span>' : '', '<span>' + ageWords(m.age_h) + '</span>'].filter(Boolean).join('') + '</small>' +
 						(m.why && m.why.length ? '<span class="mv-why">' + m.why.map(function (w) { return '<i>' + esc(w) + '</i>'; }).join('') + '</span>' : '') + '</span>' + tag + '</a>';
-				}).join('') + '</div>';
+				}).join('') + (all.length > 3 ? '<button class="ib-more" type="button" data-a="allmovers" aria-expanded="' + Boolean(ui.allMovers) + '">' + (ui.allMovers ? 'Show fewer' : 'Show all ' + all.length) + '</button>' : '') + '</div>';
 		}
 		var AKIND = {takeoff: 'Taking off', best: 'Best ever', milestone: 'Milestone', quiet: 'Quiet', missed: 'Missed'};
 		function alerts() {
 			var list = d.alerts.items, seen = d.alerts.seen_at ? Date.parse(d.alerts.seen_at) : 0, n = unread();
-			var rows = list.slice(0, ui.allAlerts ? 40 : 4).map(function (x) {
+			var rows = list.slice(0, ui.allAlerts ? 40 : 3).map(function (x) {
 				var isNew = Date.parse(x.at) > seen;
 				var tail = x.link ? '<a href="' + esc(x.link) + '" target="_blank" rel="noopener">Open on Instagram</a>' : x.post_id ? '<button type="button" data-a="openpost" data-id="' + esc(x.post_id) + '">Open in my plan</button>' : '';
 				return '<li class="al-row k-' + esc(x.kind) + (isNew ? ' new' : '') + '">' + (x.thumb ? bg(x.thumb, 'al-th') : '<span class="al-th none" aria-hidden="true"></span>') +
 					'<div><p class="al-k"><span>' + (AKIND[x.kind] || 'Alert') + '</span><small>' + ago(x.at, now()) + '</small>' + (isNew ? '<i class="al-dot" aria-label="New"></i>' : '') + '</p><b>' + esc(x.title) + '</b><p class="al-t">' + esc(x.text) + '</p>' + tail + '</div></li>';
 			}).join('');
 			return '<div class="al" id="alertsBox"><div class="al-h"><h3>Alerts' + (n ? '<i class="al-dot" aria-hidden="true"></i><span class="al-n">' + n + ' new</span>' : '') + '</h3>' + NI + '</div>' +
-				(list.length ? '<ul>' + rows + '</ul>' + (list.length > 4 && !ui.allAlerts ? '<button class="ib-more" type="button" data-a="allalerts">Show all ' + list.length + '</button>' : '') :
-					'<p class="al-none">Nothing to flag right now. We check every 3 hours for a post taking off, a follower milestone, a quiet week or a missed post.</p>') + '</div>';
+				(list.length ? '<ul>' + rows + '</ul>' + (list.length > 3 ? '<button class="ib-more" type="button" data-a="allalerts" aria-expanded="' + Boolean(ui.allAlerts) + '">' + (ui.allAlerts ? 'Show fewer' : 'Show all ' + list.length) + '</button>' : '') :
+					'<p class="al-none">Nothing to flag right now. We check every 3 hours.</p>') + '</div>';
 		}
 
 		// ---------- ideas bank ----------
@@ -155,18 +165,19 @@
 			var tabs = [['all', 'All'], ['hook', 'Hooks'], ['caption', 'Captions'], ['reel', 'Reel ideas'], ['saved', 'Saved']].map(function (t) {
 				return '<button type="button" role="tab" aria-selected="' + (ui.type === t[0]) + '" class="' + (ui.type === t[0] ? 'on' : '') + '" data-a="type" data-id="' + t[0] + '">' + t[1] + ' <i>' + count(t[0]) + '</i></button>';
 			}).join('');
-			var list = bankItems(), show = list.slice(0, ui.more ? 200 : 6);
+			var list = bankItems(), show = list.slice(0, ui.more ? 200 : 5);
 			var cards = show.map(function (x) {
-				var on = stars.indexOf(x.id) >= 0, label = x.type === 'reel' && x.format && !/reel/i.test(x.format) ? 'Post idea' : TLAB[x.type];
-				return '<li class="ib-card t-' + x.type + '" data-id="' + esc(x.id) + '"><p class="ib-k"><span>' + label + '</span><small>' + (FROM[x.from] || '') + '</small></p>' +
-					'<p class="ib-text">' + esc(x.text) + '</p>' +
-					(x.why ? '<p class="ib-why"><b>Why this works for you</b>' + esc(x.why) + (x.source && x.source.url ? ' <a href="' + esc(x.source.url) + '" target="_blank" rel="noopener">See ' + esc((x.source.label || 'the post').replace(/^(\w)/, function (c) { return c.toLowerCase(); })) + '</a>' : '') + '</p>' : '') +
-					'<div class="ib-acts"><button class="btn line" type="button" data-a="copy">Copy</button><button class="btn line" type="button" data-a="cal">Put on my calendar</button>' +
-					'<button class="ib-star' + (on ? ' on' : '') + '" type="button" data-a="star" aria-pressed="' + on + '" aria-label="' + (on ? 'Remove from saved' : 'Save this idea') + '">' + STAR + '</button></div></li>';
+				var on = stars.indexOf(x.id) >= 0, label = x.type === 'reel' && x.format && !/reel/i.test(x.format) ? 'Post idea' : TLAB[x.type], open = ui.idea === x.id;
+				return '<li class="ib-card t-' + x.type + (open ? ' open' : '') + '" data-id="' + esc(x.id) + '">' +
+					'<button class="ib-head" type="button" data-a="idea" aria-expanded="' + open + '"><span class="ib-k"><span>' + label + '</span><small>' + (FROM[x.from] || '') + '</small></span>' +
+					'<span class="ib-text">' + esc(x.text) + '</span></button>' +
+					'<button class="ib-star' + (on ? ' on' : '') + '" type="button" data-a="star" aria-pressed="' + on + '" aria-label="' + (on ? 'Remove from saved' : 'Save this idea') + '">' + STAR + '</button>' +
+					(open ? '<div class="ib-open">' + (x.why ? '<p class="ib-why"><b>Why this works for you</b>' + esc(x.why) + (x.source && x.source.url ? ' <a href="' + esc(x.source.url) + '" target="_blank" rel="noopener">See ' + esc((x.source.label || 'the post').replace(/^(\w)/, function (c) { return c.toLowerCase(); })) + '</a>' : '') + '</p>' : '') +
+					'<div class="ib-acts"><button class="btn line" type="button" data-a="copy">Copy</button><button class="btn line" type="button" data-a="cal">Put on my calendar</button></div></div>' : '') + '</li>';
 			}).join('');
 			return '<div class="ib"><div class="ib-bar"><label class="ib-q"><span class="sr">Search your ideas</span><input type="search" id="ib-q" placeholder="Search your ideas" value="' + esc(ui.q) + '" autocomplete="off"></label><div class="ib-tabs" role="tablist" aria-label="Kind of idea">' + tabs + '</div></div>' +
 				(show.length ? '<ul class="ib-list">' + cards + '</ul>' : '<p class="al-none">' + (ui.type === 'saved' && !ui.q ? 'Tap the star on an idea to keep it here.' : 'Nothing matches. Try another word.') + '</p>') +
-				(list.length > 6 && !ui.more ? '<button class="ib-more" type="button" data-a="more">Show all ' + list.length + '</button>' : '') + '</div>';
+				(list.length > 5 ? '<button class="ib-more" type="button" data-a="more" aria-expanded="' + Boolean(ui.more) + '">' + (ui.more ? 'Show fewer' : 'Show all ' + list.length) + '</button>' : '') + '</div>';
 		}
 
 		// ---------- for brands ----------
@@ -178,7 +189,8 @@
 				'<div class="fb-share"><div><p class="lab">Share with a brand</p><p>Make a private, view-only link to this kit. Nothing is public until you tap the button, and you can switch it off any time.</p></div><button class="btn red" type="button" data-a="shareon">Create my brand link</button></div>';
 			var money = function (x) { return x.low && x.high && x.low !== x.high ? '₹' + full(x.low) + ' to ₹' + full(x.high) : '₹' + full(x.high || x.low); };
 			var price = !r || r.na ? '' : r.cards ? // the team's rate card wins over the formula
-				'<div class="fb-rate"><p class="lab">Your rate card <i>only you see this</i></p><ul class="fb-cards">' + r.cards.map(function (x) { return '<li><span>' + esc(x.deliverable) + (x.note ? '<small>' + esc(x.note) + '</small>' : '') + '</span><b>' + money(x) + '</b></li>'; }).join('') + '</ul><p class="pl-fine">' + (r.rates_note ? esc(r.rates_note) + ' ' : '') + 'Set by ' + esc(r.by || 'Busy Fox Marketing') + '. ' + NI + '</p></div>' :
+				'<div class="fb-rate"><p class="lab">Your rate card <i>only you see this</i></p><ul class="fb-cards">' + r.cards.slice(0, ui.rates ? 20 : 1).map(function (x) { return '<li><span>' + esc(x.deliverable) + (x.note ? '<small>' + esc(x.note) + '</small>' : '') + '</span><b>' + money(x) + '</b></li>'; }).join('') + '</ul>' + (r.cards.length > 1 ? '<button class="ib-more" type="button" data-a="rates" aria-expanded="' + Boolean(ui.rates) + '">' + (ui.rates ? 'Show fewer' : 'Show all ' + r.cards.length + ' rates') + '</button>' : '') +
+				(ui.rates || r.cards.length <= 1 ? '<p class="pl-fine">' + (r.rates_note ? esc(r.rates_note) + ' ' : '') + 'Set by ' + esc(r.by || 'Busy Fox Marketing') + '. ' + NI + '</p>' : '') + '</div>' :
 				'<div class="fb-rate"><p class="lab">What to ask for one reel <i>only you see this</i></p><p class="fb-rs"><b>' + money(r) + '</b></p><p class="pl-fine"><b>' + esc(r.label) + '</b> ' + esc(r.how) + ' Ask more for exclusivity, usage rights or more than one video. ' + NI + '</p></div>';
 			return '<div class="fb"><div class="fb-kit' + (ui.full ? ' open' : '') + '">' + K.html(d.kit, {compact: !ui.full}) + '<button class="fb-toggle" type="button" data-a="full" aria-expanded="' + ui.full + '">' + (ui.full ? 'Show less' : 'See everything a brand will see') + '</button></div>' + share + price + '</div>';
 		}
@@ -186,11 +198,11 @@
 		function draw(first) {
 			if (els.strip) els.strip.innerHTML = strip();
 			if (els.party && window.Party && !els.party.dataset.pt) window.Party.mount(els.party, d.anniv, {planner: planner, req: o.req, toast: toast, toIdea: function (idea) {
-				ui.type = 'all'; ui.q = idea.text.slice(0, 24); ui.more = false; keep(); redraw(els.ideas, ideas);
+				ui.type = 'all'; ui.q = idea.text.slice(0, 24); ui.more = false; ui.idea = idea.id || null; keep(); redraw(els.ideas, ideas);
 				document.getElementById('ideasSec').scrollIntoView({behavior: still ? 'auto' : 'smooth', block: 'start'});
 			}});
 			if (els.today) els.today.innerHTML = today();
-			if (els.score) els.score.innerHTML = score() + movers() + alerts();
+			if (els.score) els.score.innerHTML = scoreAll();
 			if (els.ideas) els.ideas.innerHTML = ideas();
 			if (els.brands) els.brands.innerHTML = brands();
 			[els.today, els.score, els.brands].forEach(function (el) { if (el) K.wire(el); });
@@ -201,6 +213,19 @@
 			watchAlerts();
 		}
 		function redraw(el, fn) { el.innerHTML = fn(); K.wire(el); var dial = el.querySelector('.ws-dial'); if (dial) dial.classList.add('on'); }
+		// the same, with the control she tapped kept where it was on the screen (and in view), so a block that opens or closes never jumps
+		function redrawAt(el, fn, sel) {
+			var a = el.querySelector(sel), y0 = a ? a.getBoundingClientRect().top : null;
+			redraw(el, fn);
+			var b = el.querySelector(sel);
+			if (!b) { var r0 = el.getBoundingClientRect(); if (r0.top < 0) window.scrollBy({top: r0.top - 16, behavior: 'instant'}); return; }
+			if (y0 != null) { var dy = b.getBoundingClientRect().top - y0; if (Math.abs(dy) > 1) window.scrollBy({top: dy, behavior: 'instant'}); }
+			var top = b.getBoundingClientRect().top;
+			if (top < 8) window.scrollBy({top: top - 16, behavior: 'instant'});
+			else if (top > window.innerHeight - 70) window.scrollBy({top: top - (window.innerHeight - 110), behavior: 'instant'});
+			try { b.focus({preventScroll: true}); } catch (e) {}
+		}
+		function scoreAll() { return score() + movers() + alerts(); }
 
 		// the unread dot goes once the alerts have been on screen for a moment
 		var seenTimer = null, io = null;
@@ -251,6 +276,7 @@
 				if (!pl || !pl.open(p.post_id)) toast('Find it in your content plan below');
 				return;
 			}
+			if (a === 'toscript') { if (!o.script || !o.script.open(id)) toast('Find it under Reel scripts below'); return; }
 			if (a === 'toideas') return document.getElementById('ideasSec').scrollIntoView({behavior: still ? 'auto' : 'smooth', block: 'start'});
 			if (a === 'openpost') { if (!pl || !pl.open(id)) toast('Find it in your content plan below'); return; }
 			if (a === 'done' || a === 'undo') {
@@ -263,9 +289,13 @@
 					if (on) { if (window.Fun && !still) window.Fun.confetti(at.x, at.y); toast(r.streak > 1 ? r.streak + ' days in a row' : 'Done for today'); }
 				});
 			}
-			if (a === 'allalerts') { ui.allAlerts = true; keep(); return redraw(els.score, function () { return score() + movers() + alerts(); }); }
-			if (a === 'type') { ui.type = id; ui.more = false; keep(); return redraw(els.ideas, ideas); }
-			if (a === 'more') { ui.more = true; keep(); return redraw(els.ideas, ideas); }
+			if (a === 'allalerts') { ui.allAlerts = !ui.allAlerts; keep(); return redrawAt(els.score, scoreAll, '[data-a="allalerts"]'); }
+			if (a === 'allmovers') { ui.allMovers = !ui.allMovers; keep(); return redrawAt(els.score, scoreAll, '[data-a="allmovers"]'); }
+			if (a === 'parts') { ui.parts = !ui.parts; keep(); return redrawAt(els.score, scoreAll, '[data-a="parts"]'); }
+			if (a === 'rates') { ui.rates = !ui.rates; keep(); return redrawAt(els.brands, brands, '[data-a="rates"]'); }
+			if (a === 'type') { ui.type = id; ui.more = false; ui.idea = null; keep(); return redrawAt(els.ideas, ideas, '.ib-tabs [data-id="' + id + '"]'); }
+			if (a === 'more') { ui.more = !ui.more; if (!ui.more) ui.idea = null; keep(); return redrawAt(els.ideas, ideas, '[data-a="more"]'); }
+			if (a === 'idea') { var li = b.closest('.ib-card'), iid = li.getAttribute('data-id'); ui.idea = ui.idea === iid ? null : iid; keep(); return redrawAt(els.ideas, ideas, '.ib-card[data-id="' + iid + '"] .ib-head'); }
 			var card = b.closest('.ib-card'), item = card ? d.bank.items.filter(function (x) { return x.id === card.getAttribute('data-id'); })[0] : null;
 			if (a === 'copy' && item) return copy(item.text, toast, 'Copied');
 			if (a === 'star' && item) {
@@ -285,7 +315,7 @@
 				if (!ok) toast('Your content plan is still loading');
 				return;
 			}
-			if (a === 'full') { ui.full = !ui.full; keep(); redraw(els.brands, brands); if (!ui.full) els.brands.scrollIntoView({block: 'nearest'}); return; }
+			if (a === 'full') { ui.full = !ui.full; keep(); return redrawAt(els.brands, brands, '[data-a="full"]'); }
 			if (a === 'shareon') return post('kit-share', {on: true}).then(function (r) { if (r) { d.share = r.share; redraw(els.brands, brands); toast('Your brand link is ready'); } });
 			if (a === 'shareoff') { if (!window.confirm('Switch this link off? Brands who have it will not be able to open it any more.')) return; return post('kit-share', {on: false}).then(function (r) { if (r) { d.share = r.share; redraw(els.brands, brands); toast('The link is off'); } }); }
 			if (a === 'copylink') return copy(d.share.url, toast, 'Link copied');
@@ -293,7 +323,7 @@
 		var typing = null;
 		document.addEventListener('input', function (e) {
 			if (e.target.id !== 'ib-q' || !d) return;
-			ui.q = e.target.value; ui.more = false; keep();
+			ui.q = e.target.value; ui.more = false; ui.idea = null; keep();
 			clearTimeout(typing);
 			typing = setTimeout(function () {
 				var pos = e.target.selectionStart;

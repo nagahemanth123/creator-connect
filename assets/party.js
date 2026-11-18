@@ -1,8 +1,9 @@
 /* Busy Fox Creator Connect: her Instagram anniversary (5 years or more, when it is within 90 days or was in the last 7).
    Party.mount(el, anniv, {planner(), req(sub, opt), toast, toIdea(id)})
    1) a ticket-style strip at the top of the dashboard: the number, the date, a live countdown, her first post, counts that roll up
-   2) for about 25 seconds after the page opens, paper-cut pieces float up BEHIND the page's cards (never over text, never
-      catching a tap); then the layer is removed from the page, and only the candle on the strip keeps moving
+   2) for about 25 seconds after the page opens, paper-cut pieces pop up from behind the top edge of the ticket and dance
+      along it, and on wide screens more float up the empty margins beside the page: only where there is no text, never
+      catching a tap, every piece whole from the moment it appears; then they leave, and only the candle keeps moving
    3) "Plan my N-year reel" opens the planner's add-post form on that date; "Ask Busy Fox" stores a request for the team
    With ?still or reduced motion: the calm final state, no floating layer. */
 (function () {
@@ -35,23 +36,46 @@
 			['0 0 44 44', '<circle cx="22" cy="22" r="22" fill="' + C.butter + '"/>' + serif(22, 30, n.length > 1 ? 24 : 28, C.cocoa, n), 38]
 		];
 	}
-	// the floating layer: every piece rises once or twice with a slow sway; after ~25 s the whole layer leaves the page
-	function air(a) {
-		if (calm || document.querySelector('.pt-air')) return;
-		var set = pieces(a), wide = window.innerWidth >= 900, count = wide ? 24 : 15, layer = document.createElement('div');
-		layer.className = 'pt-air';
-		layer.setAttribute('aria-hidden', 'true');
+	// The celebration, about 25 seconds, in two places where there is never any text:
+	// 1) the pieces pop up from behind the top edge of the ticket and dance along it (the gap above the ticket is empty);
+	// 2) on screens wide enough to have empty margins beside the page, more pieces float up those margins.
+	// Every piece appears whole (it pops in, it never slides in from off screen) and fades before it reaches an edge.
+	function air(a, host) {
+		if (calm || host.querySelector('.pt-air')) return;
+		var set = pieces(a), w = window.innerWidth, wide = w >= 720;
 		var seed = 7, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-		var html = '';
-		for (var i = 0; i < count; i++) {
-			var p = set[i % set.length], lane = (i * 0.618034) % 1, dur = 9 + rnd() * 5, delay = i < 6 ? rnd() * 1.2 : (i / count) * 14 + rnd() * 1.5;
-			html += '<i style="--x:' + (lane * 94 + 1).toFixed(1) + 'vw;--w:' + Math.round(p[2] * (wide ? 1.15 : .92)) + 'px;--d:' + dur.toFixed(1) + 's;--dl:' + delay.toFixed(1) + 's;--sw:' + Math.round(18 + rnd() * 30) * (i % 2 ? 1 : -1) + 'px;--r0:' + Math.round(-24 + rnd() * 48) + 'deg;--r1:' + Math.round(-30 + rnd() * 60) + 'deg;--y0:' + (i < 6 ? Math.round(20 + rnd() * 70) + 'vh' : '104vh') + '">' + svg(p[0], p[1]) + '</i>';
+		var row = document.createElement('div');
+		row.className = 'pt-air';
+		row.setAttribute('aria-hidden', 'true');
+		// which pieces stand on the ticket, left to right: [piece, share of its height that shows above the edge]
+		var cast = wide ? [[1, .78], [3, .8], [0, .7], [7, .8], [2, .78], [6, .72], [4, .85], [9, .7], [8, .9]] : [[1, .78], [3, .8], [0, .68], [7, .8], [2, .78]];
+		var from = wide ? 30 : 47, to = wide ? 93 : 91, html = '';
+		cast.forEach(function (c, i) {
+			var p = set[c[0]], box = p[0].split(' '), width = Math.round(p[2] * (wide ? 1 : .8)), height = width * Number(box[3]) / Number(box[2]);
+			html += '<i style="--x:' + (from + (to - from) * i / (cast.length - 1)).toFixed(1) + '%;--w:' + width + 'px;--sink:' + Math.round(height * (1 - c[1])) + 'px;--dl:' + (0.75 + i * 0.11).toFixed(2) + 's;--d:' + (2.2 + rnd() * 1.6).toFixed(2) + 's;--hop:' + Math.round(4 + rnd() * 5) + 'px;--r0:' + Math.round(-9 + rnd() * 6) + 'deg;--r1:' + Math.round(3 + rnd() * 7) + 'deg">' + svg(p[0], p[1]) + '</i>';
+		});
+		row.innerHTML = html;
+		host.insertBefore(row, host.firstChild);
+		var layers = [row];
+		// the empty margins beside the page: only when each is at least 64px wide
+		var page = document.querySelector('.wrap'), gutter = page ? Math.round(page.getBoundingClientRect().left + parseFloat(getComputedStyle(page).paddingLeft)) : 0;
+		if (gutter >= 64) {
+			var side = document.createElement('div');
+			side.className = 'pt-side';
+			side.setAttribute('aria-hidden', 'true');
+			var out = '', count = 14;
+			for (var i = 0; i < count; i++) {
+				var q = set[(i * 3 + 1) % set.length], width2 = Math.min(Math.round(q[2] * 1.05), gutter - 20), room = gutter - 20 - width2;
+				var x = 10 + rnd() * room, y0 = 52 + rnd() * 34, rise = 34 + rnd() * 26;
+				out += '<i style="' + (i % 2 ? 'right' : 'left') + ':' + x.toFixed(0) + 'px;--w:' + width2 + 'px;--y0:' + y0.toFixed(0) + 'vh;--y1:' + (y0 - rise).toFixed(0) + 'vh;--d:' + (7 + rnd() * 4).toFixed(1) + 's;--dl:' + (0.6 + (i / count) * 12 + rnd()).toFixed(1) + 's;--r0:' + Math.round(-16 + rnd() * 32) + 'deg;--r1:' + Math.round(-16 + rnd() * 32) + 'deg">' + svg(q[0], q[1]) + '</i>';
+			}
+			side.innerHTML = out;
+			document.documentElement.classList.add('pt-on');
+			document.body.insertBefore(side, document.body.firstChild);
+			layers.push(side);
 		}
-		layer.innerHTML = html;
-		document.documentElement.classList.add('pt-on');
-		document.body.insertBefore(layer, document.body.firstChild);
-		setTimeout(function () { layer.classList.add('pt-out'); }, 24500);
-		setTimeout(function () { layer.remove(); document.documentElement.classList.remove('pt-on'); }, 26500);
+		setTimeout(function () { layers.forEach(function (l) { l.classList.add('pt-out'); }); }, 24500);
+		setTimeout(function () { layers.forEach(function (l) { l.remove(); }); document.documentElement.classList.remove('pt-on'); }, 26500);
 	}
 	function roll(el, to, wait) { // count up from zero, then leave the exact text in place
 		var done = el.getAttribute('data-text');
@@ -128,7 +152,7 @@
 			// the countdown changes once a minute; the candle sleeps when the strip is off screen
 			setInterval(function () { var s = el.querySelector('.pt-left'); if (s && !document.hidden) s.innerHTML = left(); }, 60000);
 			if ('IntersectionObserver' in window && !calm) new IntersectionObserver(function (es) { es.forEach(function (x) { el.classList.toggle('pt-sleep', !x.isIntersecting); }); }).observe(el);
-			air(a);
+			air(a, el);
 		}
 	}
 	window.Party = {mount: mount};

@@ -88,8 +88,9 @@
 		var d = both[0];
 		if (!d || !d.ok) return fail(d && d.message);
 		var k = d.kit;
-		$('who').textContent = '@' + k.username + '’s';
-		document.title = '@' + k.username + ' · verified numbers | Busy Fox';
+		// the clean name the worker sends (set by the team, or her own name when it is plain letters); else the handle
+		$('who').textContent = (k.name || '@' + k.username) + '’s';
+		document.title = (k.name ? k.name + ' (@' + k.username + ')' : '@' + k.username) + ' · verified numbers | Busy Fox';
 		$('kit').innerHTML = window.Kit.html(k, {});
 		window.Kit.wire($('kit'));
 		$('page').hidden = false;

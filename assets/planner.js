@@ -23,11 +23,12 @@
 	function time(ms) { var t = ist(ms), h = t.h % 12 || 12; return h + (t.min ? ':' + pad(t.min) : '') + (t.h < 12 ? ' am' : ' pm'); }
 	function dayLong(ms) { var t = ist(ms); return DOW[t.dow] + ' ' + t.d + ' ' + MONTHS[t.m].slice(0, 3); }
 	function fromIst(date, tm) { return Date.parse(date + 'T' + tm + ':00+05:30'); }
+	var calm = /[?&]still\b/.test(location.search) || !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 	function mount(root, o) {
 		var me = o.voice !== 'team', toast = o.toast || function () {};
 		var now0 = ist(Date.now());
-		var st = {d: null, y: now0.y, m: now0.m, open: null, form: null, ask: false, busy: false, up: null, ig: {}, fresh: true, deal: true, sheet: '', ideas: null};
+		var st = {d: null, y: now0.y, m: now0.m, open: null, form: null, ask: false, busy: false, up: null, ig: {}, fresh: true, deal: true, sheet: '', ideas: null, all: {}, aud: false};
 		var LABEL = me ?
 			{idea: 'Planned', review: 'Waiting for your yes', changes: 'Change asked', approved: 'Approved', posting: 'Going live', posted: 'Posted', failed: 'Didn’t post', due: 'Post it now', missed: 'Time passed'} :
 			{idea: 'Idea', review: 'Waiting for her yes', changes: 'She asked for a change', approved: 'Approved', posting: 'Going live', posted: 'Posted', failed: 'Failed', due: 'Due: she posts it', missed: 'Missed its time'};
@@ -45,6 +46,7 @@
 				if (!d || !d.ok) throw new Error((d && d.error) || 'error');
 				var first = !st.d;
 				st.d = d; render(); loadIg();
+				if (o.onData) o.onData(d); // the script rows show each script's date
 				if (!first && o.onChange) o.onChange(d); // the Today card follows the plan
 			}).catch(function () { if (!st.d) root.innerHTML = '<p class="pl-none">Could not load the plan. Check your connection and try again.</p>'; else toast('Could not refresh'); });
 		}
@@ -106,8 +108,9 @@
 		}
 		function row(p) {
 			var t = Date.parse(p.at);
-			return '<button class="pl-row" type="button" data-a="open" data-id="' + esc(p.id) + '">' + thumb(p) +
-				'<span class="pl-rt"><b>' + esc(p.hook || p.caption || TYPE[p.type]) + '</b><small>' + time(t) + ' · ' + TYPE[p.type] + ' · ' + how(p) + '</small></span>' + tag(p) + '</button>';
+			return '<button class="pl-row' + (p.tentpole ? ' tp' : '') + '" type="button" data-a="open" data-id="' + esc(p.id) + '">' + thumb(p) +
+				'<span class="pl-rt"><b>' + esc(p.title || p.hook || p.caption || TYPE[p.type]) + '</b><small>' + [p.series ? esc(p.series) : '', time(t), TYPE[p.type], p.series ? '' : how(p)].filter(Boolean).join(' · ') + '</small>' +
+				(p.tentpole ? '<i class="pl-tp">' + esc(p.tentpole) + '</i>' : '') + '</span>' + (me && look(p) === 'idea' ? '' : tag(p)) + '</button>'; // "Planned" on every row says nothing: a tag shows only when a post needs her or has moved on
 		}
 		function needs() {
 			if (!me) {
@@ -136,23 +139,31 @@
 				for (j = 0; j < on.length && !shot; j++) if (on[j].type !== 'story') shot = igPic(on[j]);
 				for (j = 0; j < on.length && !shot; j++) shot = igPic(on[j]);
 				var stor = on.some(function (x) { return x.type === 'story'; });
-				cells += '<button type="button" class="pl-cell' + (k === today ? ' today' : '') + (k < today ? ' past' : '') + (all ? ' has' : (k < today ? '' : ' free')) + (shot ? ' pic' : '') + (stor ? ' st' : '') + '"' + ' style="--k:' + d + (all ? ';--i:' + (seq++) : '') + '" data-a="day" data-id="' + k + '" aria-label="' + d + ' ' + MONTHS[st.m] + ', ' + say + '">' +
-					(shot ? '<span class="pl-shot">' + shot + '</span>' : '') + '<b>' + d + '</b><span class="pl-dots">' + (shot && !list.length ? '' : dots) + '</span>' + (shot && all > 1 ? '<em>' + all + '</em>' : '') + '</button>';
+				var named = list.filter(function (p) { return p.title || p.hook; })[0], big = list.filter(function (p) { return p.tentpole; })[0];
+				if (named) say += ': ' + list.map(function (p) { return (p.series ? p.series + ', ' : '') + (p.title || p.hook || TYPE[p.type]); }).join('; ') + (big ? '. Big day: ' + big.tentpole : '');
+				cells += '<button type="button" class="pl-cell' + (k === today ? ' today' : '') + (k < today ? ' past' : '') + (all ? ' has' : (k < today ? '' : ' free')) + (shot ? ' pic' : '') + (stor ? ' st' : '') + (big ? ' tp' : '') + '"' + ' style="--k:' + d + (all ? ';--i:' + (seq++) : '') + '" data-a="day" data-id="' + k + '" aria-label="' + esc(d + ' ' + MONTHS[st.m] + ', ' + say) + '"' + (named ? ' title="' + esc((named.series ? named.series + ': ' : '') + (named.title || named.hook)) + '"' : '') + '>' +
+					(shot ? '<span class="pl-shot">' + shot + '</span>' : '') + '<b>' + d + '</b>' + (named && !shot ? '<span class="pl-ct">' + esc(named.title || named.hook) + '</span>' : '') + '<span class="pl-dots">' + (shot && !list.length ? '' : dots) + '</span>' + (shot && all > 1 ? '<em>' + all + '</em>' : '') + '</button>';
 			}
 			var turn = st.turn; st.turn = '';
-			return '<div class="pl-cal' + (fresh ? ' pl-fresh' : '') + (turn ? ' pl-' + turn : '') + '"><div class="pl-calhd"><button type="button" class="pl-nav" data-a="prev" aria-label="Previous month">‹</button><div class="pl-calt"><h3>' + MONTHS[st.m] + ' <em>' + st.y + '</em></h3>' + (planned || onIg ? '<p class="pl-calsub">' + [planned ? planned + ' planned' : '', onIg ? onIg + ' on Instagram' : ''].filter(Boolean).join(' · ') + '</p>' : '') + '</div><button type="button" class="pl-nav" data-a="next" aria-label="Next month">›</button></div><div class="pl-grid">' + cells + '</div>' +
-				'<div class="pl-calft"><p class="pl-key">' + (planned ? '<span><i class="s-idea"></i>Planned</span><span><i class="s-review"></i>' + (me ? 'Needs your yes' : 'Needs her yes') + '</span><span><i class="s-approved"></i>Approved</span><span><i class="s-posted"></i>Posted</span>' : '') + (anyStory ? '<span><i class="s-story"></i>Story that day</span>' : '') + '</p><p class="pl-tip">Tap a free day to add a post</p></div></div>';
+			return '<div class="pl-cal' + (fresh ? ' pl-fresh' : '') + (turn ? ' pl-turn-' + turn : '') + '"><div class="pl-calhd"><button type="button" class="pl-nav" data-a="prev" aria-label="Previous month">‹</button><div class="pl-calt"><h3>' + MONTHS[st.m] + ' <em>' + st.y + '</em></h3>' + (planned || onIg ? '<p class="pl-calsub">' + [planned ? planned + ' planned' : '', onIg ? onIg + ' on Instagram' : ''].filter(Boolean).join(' · ') + '</p>' : '') + '</div><button type="button" class="pl-nav" data-a="next" aria-label="Next month">›</button></div><div class="pl-grid">' + cells + '</div>' +
+				'<div class="pl-calft"><p class="pl-key">' + (planned ? '<span><i class="s-idea"></i>Planned</span><span><i class="s-review"></i>' + (me ? 'Needs your yes' : 'Needs her yes') + '</span><span><i class="s-approved"></i>Approved</span><span><i class="s-posted"></i>Posted</span>' : '') + (posts().some(function (p) { var t = ist(Date.parse(p.at)); return p.tentpole && t.y === st.y && t.m === st.m; }) ? '<span><i class="s-tp"></i>Big day</span>' : '') + (anyStory ? '<span><i class="s-story"></i>Story that day</span>' : '') + '</p><p class="pl-tip">Tap a free day to add a post</p></div></div>';
 		}
 		function agenda() {
 			var list = posts().filter(function (p) { var t = ist(Date.parse(p.at)); return t.y === st.y && t.m === st.m; }); // planned posts only; what is already on Instagram lives on the calendar
 			if (!list.length) return '<div class="pl-empty"><span class="pl-emptyart" aria-hidden="true"><svg viewBox="0 0 64 36" focusable="false"><path class="trail" d="M3 27c9 5 15-13 23-8s2 13 12 5" /><g class="pp"><path d="M38 17L61 6 50 30l-3.500-8z"/><path class="fold" d="M61 6L46.500 22 50 30z"/></g></svg></span><b>Nothing planned for ' + MONTHS[st.m] + ' yet</b><p>' + (me ? (ideas().length ? 'Pick an idea from your 90-day plan, or add a post of your own. Your team adds posts here too.' : 'Your team adds the month’s posts here, and you can add your own.') : 'Add a post, or fill the month from her audit plan.') + '</p></div>';
-			var out = '', last = '';
+			var out = '', last = '', total = list.length, showAll = st.all[mKey()] || total <= 6, from = 0;
+			if (!showAll) {
+				var today = dayKey(Date.now());
+				while (from < total && dayKey(Date.parse(list[from].at)) < today) from++;
+				from = Math.max(0, Math.min(from, total - 5));
+				list = list.slice(from, from + 5);
+			}
 			list.forEach(function (p) {
 				var t = Date.parse(p.at), k = dayKey(t);
 				if (k !== last) { out += (last ? '</div>' : '') + '<div class="pl-day" id="pl-d-' + k + '"><p class="pl-dl">' + dayLong(t) + '</p>'; last = k; }
 				out += p.ig ? igRow(p.ig) : row(p);
 			});
-			return '<div class="pl-agenda">' + out + '</div></div>';
+			return '<div class="pl-agenda">' + out + '</div></div>' + (total > 6 ? '<button type="button" class="pl-linkb pl-more" data-a="allposts" aria-expanded="' + Boolean(st.all[mKey()]) + '">' + (st.all[mKey()] ? 'Show fewer' : 'Show all ' + total + ' posts in ' + MONTHS[st.m]) + '</button>' : '');
 		}
 		// men and women: Instagram gives this for the whole account over 30 days, never for one post
 		function splitRow(label, v) {
@@ -167,7 +178,10 @@
 			var a = st.d.audience;
 			if (!a) return '';
 			var rows = splitRow(me ? 'People you reached' : 'People she reached', a.reach) + splitRow(me ? 'People who liked, commented, saved or shared' : 'People who engaged', a.engaged) + splitRow(me ? 'Your followers' : 'Her followers', a.followers);
-			return rows ? '<div class="pl-box pl-aud"><p class="hand">last 30 days</p><h3>Men and <em>women</em></h3>' + rows + '<p class="pl-fine">Instagram shares this for the whole account, not for a single post. “Not specified” are people who have not told Instagram.</p></div>' : '';
+			if (!rows) return '';
+			var r = a.reach || a.followers || a.engaged, tot = r.men + r.women + r.other, lead = tot ? 'Men ' + Math.round(r.men / tot * 100) + '% · Women ' + Math.round(r.women / tot * 100) + '%' : '';
+			return '<div class="pl-box pl-aud' + (st.aud ? ' open' : '') + '"><button type="button" class="pl-audh" data-a="aud" aria-expanded="' + Boolean(st.aud) + '"><span>' + (st.aud ? '<span class="hand">last 30 days</span>' : '') + '<h3>Men and <em>women</em></h3>' + (st.aud ? '' : '<small>' + lead + ' of the people ' + (me ? 'you' : 'she') + ' reached in 30 days</small>') + '</span><i aria-hidden="true"></i></button>' +
+				(st.aud ? rows + '<p class="pl-fine">Instagram shares this for the whole account, not for a single post. “Not specified” are people who have not told Instagram.</p>' : '') + '</div>';
 		}
 		function weekSplit(w) {
 			var a = w.audience || st.d.audience;
@@ -210,7 +224,7 @@
 				'<button type="button" class="pl-ninety" data-a="ideas">' +
 				'<span class="pl-lab">' + (me ? 'Your' : 'Her') + ' 90-day plan</span>' + (me && left ? '<span class="hand pl-start">start here</span>' : '') +
 				'<span class="pl-big"><b class="pl-n">' + (left || all.length) + '</b><span class="pl-nt">' + (left ? (left === 1 ? 'idea is' : 'ideas are') + ' waiting for <em>a date' + MARK + '</em>' : 'ideas, all on <em>the calendar' + MARK + '</em>') + '</span></span>' +
-				'<small>' + (!left ? 'Every idea has its day. Open the plan to see them.' : done ? done + ' of ' + all.length + ' already ' + (done === 1 ? 'has' : 'have') + ' a day. Pick the next one.' : (me ? 'Pick an idea, then choose the day you want to make it.' : 'Pick an idea and give it a date.')) + '</small>' +
+				(!left ? '' : '<small>') + (!left ? '' : done ? done + ' of ' + all.length + ' already ' + (done === 1 ? 'has' : 'have') + ' a day. Pick the next one.' : (me ? 'Pick an idea, then choose the day you want to make it.' : 'Pick an idea and give it a date.')) + (!left ? '' : '</small>') +
 				'<span class="pl-cta">' + (left ? 'See all ' + all.length + ' ideas' : 'Open the plan') + '<i aria-hidden="true">' + ARROW + '</i></span>' +
 				'</button>' +
 				(peek ? '<div class="pl-peek"><p class="pl-lab">' + (soon.length ? 'Next up' : 'Ready to go') + ' <span>tap one to pick its date</span></p>' + peek + '</div>' : '') + '</div>';
@@ -220,7 +234,7 @@
 			ideas().forEach(function (x) {
 				if (x.week !== last) { out += (last >= 0 ? '</div>' : '') + '<div class="pl-wk"><p class="pl-wkh"><span>Week ' + x.week + '</span>' + (x.theme ? '<b>' + esc(x.theme) + '</b>' : '') + '</p>'; last = x.week; }
 				var p = usedBy(x), t = Date.parse(x.at);
-				out += '<div class="pl-idea' + (p ? ' used' : '') + '"><span class="pl-rt"><b>' + esc(x.hook) + '</b><small>' + esc(x.format || TYPE[x.type]) + (x.pillar ? ' · ' + esc(x.pillar) : '') + ' · suggested ' + dayLong(t) + ', ' + time(t) + '</small></span>' +
+				out += '<div class="pl-idea' + (p ? ' used' : '') + '"><span class="pl-rt"><b>' + esc(x.hook) + '</b><small>' + (x.series ? esc(x.series) + ' · ' : '') + esc(x.format || TYPE[x.type]) + (x.pillar && !x.series ? ' · ' + esc(x.pillar) : '') + ' · suggested ' + dayLong(t) + ', ' + time(t) + '</small></span>' +
 					(p ? '<button type="button" class="pl-tag s-approved" data-a="open" data-id="' + esc(p.id) + '">On ' + dayLong(Date.parse(p.at)).slice(4) + '</button>' :
 						'<button type="button" class="btn red small" data-a="useidea" data-id="' + esc(x.key) + '">' + (day ? 'Use this' : 'Pick a date') + '</button>') + '</div>';
 			});
@@ -254,7 +268,11 @@
 			var notes = (p.notes || []).map(function (x) { return '<li><b>' + (x.by === 'creator' ? (me ? 'You' : 'Her') : (me ? 'Your team' : 'Team')) + '</b> ' + esc(x.text) + '</li>'; }).join('');
 			return '<div class="pl-sheet" role="dialog" aria-modal="true" aria-label="Post"><button class="pl-x" type="button" data-a="close" aria-label="Close">×</button>' +
 				'<p class="pl-when">' + dayLong(t) + ', ' + time(t) + ' <span>IST</span></p>' + tag(p) +
-				(p.hook ? '<h3>' + esc(p.hook) + '</h3>' : '') + media(p) +
+				(p.series ? '<p class="pl-series">' + esc(p.series) + '</p>' : '') +
+				(p.title || p.hook ? '<h3>' + esc(p.title || p.hook) + '</h3>' : '') +
+				(p.tentpole ? '<p class="pl-tent"><span>Big day</span>' + esc(p.tentpole) + '</p>' : '') +
+				(p.title && p.hook ? '<p class="pl-h">The hook</p><p class="pl-cap pl-hookp">' + esc(p.hook) + '</p>' : '') +
+				(p.script_id && o.script && o.script.has(p.script_id) ? '<div class="pl-acts"><button class="btn red" type="button" data-a="script" data-id="' + esc(p.script_id) + '">Open the script</button></div>' : '') + media(p) +
 				(p.caption ? '<p class="pl-h">Caption</p><p class="pl-cap">' + esc(p.caption) + '</p>' : '') +
 				'<p class="pl-meta">' + TYPE[p.type] + ' · ' + how(p) + (p.pillar ? ' · ' + esc(p.pillar) : '') + (p.by === 'creator' ? ' · added by ' + (me ? 'you' : 'her') : '') + '</p>' +
 				(p.error && s !== 'posted' ? '<p class="pl-err">' + esc(p.error) + '</p>' : '') +
@@ -352,6 +370,10 @@
 		}
 
 		function spot(el) { var r = el.getBoundingClientRect(); return {x: r.left + r.width / 2, y: r.top + r.height / 2}; }
+		function scroller() { // the page, or the sheet the plan sits in on the team page
+			for (var n = root.parentElement; n && n !== document.body; n = n.parentElement) { var oy = getComputedStyle(n).overflowY; if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) return n; }
+			return window;
+		}
 		function useIdea(id) { // an idea from the 90-day plan, straight into "give it a date"
 			var x = ideas().filter(function (i) { return i.key === id; })[0];
 			if (!x) return false;
@@ -388,13 +410,23 @@
 			if (a === 'prev' || a === 'next') { st.m += a === 'next' ? 1 : -1; if (st.m > 11) { st.m = 0; st.y++; } if (st.m < 0) { st.m = 11; st.y--; } st.fresh = true; st.deal = true; st.turn = a; render(); return loadIg(); }
 			if (a === 'day') {
 				var el = root.querySelector('#pl-d-' + id);
-				if (el) return el.scrollIntoView({behavior: 'smooth', block: 'center'});
+				if (!el && !st.all[mKey()] && posts().some(function (p) { return dayKey(Date.parse(p.at)) === id; })) { st.all[mKey()] = true; render(); el = root.querySelector('#pl-d-' + id); } // its row was folded away: open the list first
+				if (el) return el.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'center'});
 				var onIg = igOnly().filter(function (x) { return dayKey(Date.parse(x.at)) === id && x.permalink && (x.type !== 'story' || x.live); })[0];
 				if (onIg) return window.open(onIg.permalink, '_blank', 'noopener');
 				if (id < dayKey(Date.now())) return;
 				st.form = blank(id); return render();
 			}
 			if (a === 'open') { st.open = id; st.ask = false; st.ideas = null; return render(); }
+			if (a === 'script') { st.open = null; st.ask = false; render(); if (!o.script || !o.script.open(id)) toast('Find it under Reel scripts'); return; }
+			if (a === 'allposts' || a === 'aud') { // the tapped line stays where it is on the screen
+				var y0 = b.getBoundingClientRect().top;
+				if (a === 'aud') st.aud = !st.aud; else st.all[mKey()] = !st.all[mKey()];
+				render();
+				var again = root.querySelector('[data-a="' + a + '"]');
+				if (again) { var box = scroller(), dy = again.getBoundingClientRect().top - y0; if (Math.abs(dy) > 1) box.scrollBy({top: dy, behavior: 'instant'}); var top = again.getBoundingClientRect().top; if (top < 8) box.scrollBy({top: top - 16, behavior: 'instant'}); try { again.focus({preventScroll: true}); } catch (x) {} }
+				return;
+			}
 			if (a === 'ideas') { st.ideas = {day: null}; return render(); }
 			if (a === 'ideasfor') { readForm(); st.ideas = {day: st.form.date}; st.form = null; return render(); }
 			if (a === 'useidea') return useIdea(id);
@@ -425,6 +457,7 @@
 		load();
 		return {
 			reload: load,
+			data: function () { return st.d; },
 			// used by the Today card, the ideas bank and the anniversary strip (assets/dash.js, assets/party.js)
 			open: function (id) { if (!st.d || !byId(id) || st.up) return false; st.open = id; st.ask = false; st.ideas = null; st.form = null; render(); return true; },
 			idea: function (key) { return Boolean(st.d) && !st.up && useIdea(key); },

@@ -72,6 +72,8 @@
 				h += '<div class="adm-warn">Comment alerts aren’t subscribed for this account yet. <button class="btn line small" type="button" data-a="sub">Try again</button></div>';
 			}
 			var camps = d.campaigns || [];
+			var bare = me && !d.can_dm && !camps.length && !(d.log || []).length && !st.edit; // off and never used: the one card that turns it on is enough
+			if (bare) { root.innerHTML = h; return; }
 			h += '<div class="adm-box"><div class="adm-head"><h3>' + (me ? 'Your campaigns' : 'Campaigns') + '</h3>' + (d.can_dm ? '<button class="btn red small" type="button" data-a="new">+ New campaign</button>' : '') + '</div>' +
 				(camps.length ? camps.map(campRow).join('') : '<p class="adm-none">' + (d.can_dm ? 'No campaigns yet. Pick a post, choose a keyword like LINK and the link to send.' : 'Campaigns appear here once auto-replies are on.') + '</p>') + '</div>';
 			if (st.edit) h += formHtml(st.edit);

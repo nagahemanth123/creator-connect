@@ -1,5 +1,5 @@
 /* Busy Fox Creator Connect: the Instagram anniversary strip and its floating paper pieces (assets/party.js).
-   The strip is a cocoa ticket with a butter number. The pieces float BEHIND the cards for ~25 s, then the layer is removed. */
+   The strip is a cocoa ticket with a butter number. For ~25 s the pieces dance along its top edge (and float up the empty page margins on wide screens), then they leave. */
 .pt { grid-column: 1 / -1; min-width: 0; }
 .pt-card { position: relative; background: var(--cocoa); color: var(--cream); border-radius: 20px; box-shadow: 5px 6px 0 var(--cherry); margin: 8px 6px 6px 0; padding: 18px 16px 12px; display: grid; gap: 9px; grid-template-columns: minmax(0, 1fr); }
 .pt-card > .tape { top: -13px; left: 26px; --w: 96px; --r: -4deg; mix-blend-mode: normal; opacity: 1; }
@@ -55,17 +55,26 @@
 	.pt-ob { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 0 16px 14px; }
 }
 
-/* the floating layer sits behind the page: cards cover it, so it can never sit on top of words or catch a tap */
-.pt-air { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; contain: strict; }
+/* the celebration pieces live only where there is no text: standing behind the top edge of the ticket (the gap above it is
+   empty), and floating up the empty margins beside the page on wide screens. They pop in whole and never catch a tap. */
+.pt { position: relative; }
+.pt-card { z-index: 1; }
+.pt-air { position: absolute; left: 0; right: 6px; top: -36px; height: 44px; z-index: 0; pointer-events: none; }
+.pt-air i { position: absolute; left: var(--x); bottom: 0; width: var(--w); margin-left: calc(var(--w) / -2); transform: translateY(110%); transform-origin: 50% 100%; }
+.pt-air svg, .pt-side svg { display: block; width: 100%; height: auto; }
+.pt-side { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; contain: strict; }
 .pt-on .wrap { position: relative; z-index: 1; }
-.pt-air i { position: absolute; left: var(--x); top: 0; width: var(--w); transform: translateY(110vh); will-change: transform; }
-.pt-air svg { display: block; width: 100%; height: auto; }
+.pt-side i { position: absolute; top: 0; width: var(--w); opacity: 0; will-change: transform, opacity; }
+@media (max-width: 1263px) { .pt-side { display: none; } }
 @media (prefers-reduced-motion: no-preference) {
-	.pt-air i { animation: pt-rise var(--d) linear var(--dl) 2 both; }
-	.pt-air i svg { animation: pt-sway calc(var(--d) / 3) ease-in-out var(--dl) infinite alternate; }
-	.pt-air.pt-out { transition: opacity 1.8s ease; opacity: 0; }
-	@keyframes pt-rise { from { transform: translateY(var(--y0)); } to { transform: translateY(-14vh); } }
-	@keyframes pt-sway { from { transform: translateX(calc(var(--sw) * -1)) rotate(var(--r0)); } to { transform: translateX(var(--sw)) rotate(var(--r1)); } }
+	.pt-air i { animation: pt-pop .6s cubic-bezier(.3, 1.6, .5, 1) var(--dl) both, pt-bob var(--d) ease-in-out calc(var(--dl) + .6s) infinite alternate; }
+	.pt-air.pt-out i { animation: pt-sink .7s cubic-bezier(.6, 0, .8, .4) both; animation-delay: 0s; }
+	@keyframes pt-pop { from { transform: translateY(110%) rotate(var(--r0)); } to { transform: translateY(var(--sink)) rotate(var(--r0)); } }
+	@keyframes pt-bob { from { transform: translateY(var(--sink)) rotate(var(--r0)); } to { transform: translateY(calc(var(--sink) - var(--hop))) rotate(var(--r1)); } }
+	@keyframes pt-sink { from { transform: translateY(var(--sink)) rotate(var(--r0)); } to { transform: translateY(115%) rotate(var(--r0)); } }
+	.pt-side i { animation: pt-rise var(--d) ease-in-out var(--dl) 2 both; }
+	.pt-side.pt-out { transition: opacity 1.4s ease; opacity: 0; }
+	@keyframes pt-rise { 0% { opacity: 0; transform: translateY(var(--y0)) scale(.4) rotate(var(--r0)); } 9% { opacity: 1; transform: translateY(var(--y0)) scale(1) rotate(var(--r0)); } 82% { opacity: 1; } 100% { opacity: 0; transform: translateY(var(--y1)) scale(1) rotate(var(--r1)); } }
 	/* the calm state: only the candle flame keeps moving, and it sleeps off screen */
 	.pt-flame { animation: pt-flick 1.7s ease-in-out infinite; }
 	@keyframes pt-flick { 0%, 100% { transform: scale(1) rotate(-3deg); } 35% { transform: scale(.88, 1.08) rotate(4deg); } 70% { transform: scale(1.06, .94) rotate(-1deg); } }
@@ -76,5 +85,5 @@
 }
 
 /* decoration is never selectable, and the buttons answer a tap at once */
-.pt-air, .pt-candle, .pt-num { -webkit-user-select: none; user-select: none; }
+.pt-air, .pt-side, .pt-candle, .pt-num { -webkit-user-select: none; user-select: none; }
 .pt-card button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

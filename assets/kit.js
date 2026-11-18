@@ -53,7 +53,7 @@
 			tile('Average views per reel', rv, rv && !rv.na ? short(rv.v) : '', rv && !rv.na ? esc(rv.period) + (rv.v30 != null ? ' · ' + short(rv.v30) + ' over the last ' + rv.n30 : '') : '') +
 			'</div>';
 		var trust = '<p class="kt-trust">These numbers were read directly from Instagram’s own data with the creator’s permission' + (read ? ' on <b>' + esc(read) + '</b>' : '') + '. They are not typed in or edited by the creator.</p>';
-		if (o.compact) return '<article class="kt kt-compact">' + seal + who + heads + trust + '</article>';
+		if (o.compact) return '<article class="kt kt-compact">' + seal + who + heads + '</article>';
 
 		var more = '<div class="kt-grid">' +
 			tile('Engagement rate', er, er && !er.na ? er.v + '%' : '', er && !er.na ? esc(er.formula) + ' · ' + esc(er.period) + (er.by_reach != null ? ' · ' + er.by_reach + '% when divided by people reached' : '') : '') +

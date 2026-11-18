@@ -31,9 +31,11 @@
 .wrap { overflow-x: clip; } /* the tape line runs off both edges on a phone */
 .page { padding: 8px 0 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; align-items: start; }
 .page > * { min-width: 0; }
+.page { overflow-anchor: none; } /* blocks redraw themselves and keep the tapped line where it was; the browser's own scroll anchoring would move it a second time */
 .page > .side { order: 9; } /* on a phone the quieter side notes come after everything else */
 .page > .side:not(:has(.sec:not([hidden]), .out)) { display: none; }
 .col { display: grid; gap: 52px; min-width: 0; }
+@media (max-width: 480px) { .col { gap: 44px; } }
 @media (min-width: 980px) {
 	.page { grid-template-columns: minmax(0, 1fr) 320px; gap: 40px 56px; padding-top: 24px; }
 	.hello, .stats, .pt, #only { grid-column: 1 / -1; }
@@ -170,7 +172,7 @@
 
 			<section class="sec" id="ideasSec">
 				<div class="hd"><p class="hand">from your own best posts</p><h2>Ideas <em>bank</em></h2></div>
-				<p class="sub">Hooks, caption starters and reel ideas that have already worked <b>for you</b>. Copy one, save it, or put it on your calendar.</p>
+				<p class="sub">Hooks, captions and reel ideas that have already worked <b>for you</b>. Tap one to copy it or put it on your calendar.</p>
 				<div id="ideas"></div>
 			</section>
 
@@ -253,6 +255,20 @@
 	}
 	function fail(msg) { $('page').hidden = true; $('err').hidden = false; $('errMsg').textContent = msg; }
 
+	// A reload or back/forward comes back to where she was. The page is drawn after its data arrives, which is too late for the
+	// browser's own scroll restoring, so the place is kept here and put back once the blocks are in (unless she has moved already).
+	var backY = 0, moved = false, saveT = null;
+	try {
+		var nav = (performance.getEntriesByType('navigation')[0] || {}).type;
+		if (nav === 'reload' || nav === 'back_forward') backY = Number(sessionStorage.getItem('cc_me_y')) || 0;
+		history.scrollRestoration = 'manual';
+	} catch (e) {}
+	function keepPlace() { try { sessionStorage.setItem('cc_me_y', String(Math.round(window.scrollY))); } catch (e) {} }
+	function comeBack() { if (backY > 0 && !moved && !$('page').hidden) window.scrollTo({top: backY, behavior: 'instant'}); }
+	['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) { window.addEventListener(ev, function () { moved = true; }, {passive: true}); });
+	window.addEventListener('scroll', function () { if (backY > 0 && !moved) return; clearTimeout(saveT); saveT = setTimeout(keepPlace, 150); }, {passive: true});
+	window.addEventListener('pagehide', function () { if (!(backY > 0 && !moved)) keepPlace(); });
+
 	function spark(points) {
 		var v = points.map(function (p) { return p.followers; }).filter(function (x) { return x != null; });
 		if (v.length < 2) return '';
@@ -271,8 +287,9 @@
 		if (!d || !d.ok) { if (d && d.error === 'not_found') store(KEY, ''); return fail((d && d.message) || 'This link is not valid any more. Ask Busy Fox for a new one.'); }
 		var p = d.profile || {};
 		$('page').hidden = false;
-		var first = (p.name || p.username || '').trim().split(/[\s|·,]+/)[0] || p.username;
-		$('hiName').textContent = first;
+		// her first name as the worker cleaned it (set by the team, from her report, or from her own name when it is plain letters); never the decorated Instagram name
+		$('hiName').textContent = p.first || 'there';
+		if (p.first) document.title = p.first + '’s dashboard | Busy Fox';
 		$('handle').innerHTML = '<a href="https://www.instagram.com/' + esc(p.username) + '/" target="_blank" rel="noopener">@' + esc(p.username) + '</a>' + (p.connected_at ? '<span>connected ' + new Date(p.connected_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) + '</span>' : '');
 		$('pic').textContent = (p.username || '?').charAt(0).toUpperCase();
 		if (p.profile_picture_url) { var img = new Image(); img.alt = ''; img.referrerPolicy = 'no-referrer'; img.onload = function () { $('pic').textContent = ''; $('pic').appendChild(img); }; img.src = p.profile_picture_url; }
@@ -306,16 +323,21 @@
 			}
 		}
 
-		var packs = d.scripts || [];
-		if (packs.length && window.Scripts) { // script packs from the team: the first thing in the main column, the newest unpicked one called out under her name
+		var packs = d.scripts || [], plan = null, lib = null;
+		var script = {has: function (id) { return Boolean(lib && lib.has(id)); }, open: function (id) { return Boolean(lib && lib.open(id)); }}; // a planned post opens its script
+		if (packs.length && window.Scripts) { // script packs from the team: a closed library, the newest unpicked pack called out under her name
 			$('scriptsSec').hidden = false;
-			window.Scripts.mount($('scripts'), {voice: 'creator', packs: packs, toast: toast, req: meReq});
+			lib = window.Scripts.mount($('scripts'), {
+				voice: 'creator', packs: packs, toast: toast, req: meReq,
+				plan: function () { return (plan && plan.data()) || d.studio || {}; },
+				openPost: function (id) { return Boolean(plan && plan.open(id)); }
+			});
 			var fresh = packs.filter(function (x) { return !Object.keys(x.picks || {}).length; })[0];
 			if (fresh) {
 				var chip = document.createElement('button');
 				chip.type = 'button'; chip.className = 'newchip';
 				chip.innerHTML = '<b>New</b> ' + esc(String(fresh.title || 'Reel scripts').replace(/<[^>]+>/g, '')) + ' ↓';
-				chip.onclick = function () { $('scriptsSec').scrollIntoView({behavior: 'smooth', block: 'start'}); };
+				chip.onclick = function () { lib.openPack(fresh.id); }; // opens that pack and brings its title to the top of the screen
 				$('handle').parentNode.appendChild(chip);
 			}
 		}
@@ -327,16 +349,17 @@
 		}
 
 		var dash = null;
-		var plan = window.Planner.mount($('planner'), {
+		plan = window.Planner.mount($('planner'), {
 			voice: 'creator', who: p.username, toast: toast,
 			postConnect: (d.links && d.links.post_connect) || '../?mode=post',
-			req: meReq,
+			req: meReq, script: script,
+			onData: function () { if (lib) lib.update(); comeBack(); },
 			onChange: function () { if (dash) dash.reload(); }
 		});
 		// what Instagram's own Insights does not show: today's one thing, the weekly score and alerts, the ideas bank, the brand kit
 		if (window.Dash) dash = window.Dash.mount({
 			req: pre ? meReq : function (sub, o) { return sub === 'dash' && dashFirst ? (function (p) { dashFirst = null; return p.then(function (r) { return r || meReq('dash'); }); })(dashFirst) : meReq(sub, o); }, // slow first read: reuse the request already on its way
-			first: pre, toast: toast, planner: function () { return plan; },
+			first: pre, toast: toast, planner: function () { return plan; }, script: script,
 			els: {party: $('party'), strip: $('only'), today: $('today'), score: $('score'), ideas: $('ideas'), brands: $('brands')},
 			onAlerts: function (n) {
 				var old = document.getElementById('alertChip');
@@ -350,6 +373,9 @@
 			}
 		});
 
+		comeBack();
+		if (dash && dash.ready) dash.ready.then(comeBack, function () {});
+		setTimeout(function () { comeBack(); moved = true; keepPlace(); }, 2500); // after this the place is hers again
 		window.AutoDM.mount($('autodm'), {
 			voice: 'creator', who: p.username, toast: toast,
 			connectLink: (d.links && d.links.dm_connect) || '../?mode=dm',

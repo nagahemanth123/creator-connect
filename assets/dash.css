@@ -33,6 +33,15 @@
 .td-kind i { font: 500 13px/1.35 var(--sans); letter-spacing: 0; text-transform: none; color: var(--hint); margin-left: 6px; white-space: nowrap; }
 .td h3 { font-size: clamp(28px, 7vw, 40px); line-height: 1.06; letter-spacing: -.022em; margin-top: 8px; overflow-wrap: anywhere; }
 .td-txt p { color: var(--warm); font-size: var(--t-body); line-height: 1.55; margin-top: 10px; max-width: 34em; }
+/* the next planned post leads the card: its hook, a big-day tag, the week it belongs to, and a small thing for today */
+.td-txt .td-hook { font: 500 16.5px/1.45 var(--sans), 'Noto Sans Telugu', sans-serif; color: var(--ink); margin-top: 10px; padding-left: 12px; box-shadow: inset 3px 0 0 var(--pink); overflow-wrap: anywhere; }
+.td-txt .td-tent { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: var(--t-small); font-weight: 600; color: var(--cocoa); margin-top: 10px; }
+.td-tent span { font: 700 10.5px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px 4px; border-radius: 999px; background: var(--butter); color: var(--cocoa); white-space: nowrap; }
+.td-week { display: grid; gap: 3px; padding: 12px 14px 13px; border-radius: 12px; background: var(--tint); min-width: 0; }
+.td-week b { font: 400 20px/1.2 var(--serif), 'Noto Sans Telugu', serif; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.td-week p { font-size: var(--t-small); line-height: 1.5; color: var(--warm); margin: 2px 0 0; }
+.td-small { font-size: var(--t-small); line-height: 1.5; color: var(--warm); margin: 0; }
+.td-small b { display: block; font: 700 11.5px/1.3 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--hint); margin-bottom: 2px; }
 .td-best { display: grid; gap: 8px 24px; padding-top: 16px; border-top: 1px dashed var(--field-line); grid-template-columns: minmax(0, 1fr); align-items: center; }
 .td-bt b { display: block; font: 400 clamp(26px, 6.4vw, 34px)/1.05 var(--serif); letter-spacing: -.02em; color: var(--cherry); white-space: nowrap; margin-top: 4px; }
 .td-why { font-size: var(--t-small); line-height: 1.5; color: var(--warm); max-width: 36em; }
@@ -70,6 +79,7 @@
 .ws-delta svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .ws-delta.up { color: #1F6B41; } .ws-delta.down { color: var(--cherry-dark); } .ws-delta.down svg { transform: rotate(180deg); }
 .ws-say .ni { margin-top: 4px; }
+.ws-more { margin: -6px 0 -8px; }
 .ws-parts { list-style: none; margin: 4px 0 0; padding: 0; display: grid; }
 .ws-parts li { display: grid; gap: 8px; padding: 14px 0; border-top: 1px solid var(--line); }
 .ws-ph { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -98,6 +108,9 @@
 .mv-t > b { font: 600 15px/1.3 var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mv-t small { font-size: var(--t-fine); line-height: 1.45; color: var(--hint); }
 .mv-t small u { text-decoration: none; color: var(--ink); font-weight: 700; }
+.mv-t small > * + *::before { content: '·'; margin: 0 6px; color: var(--hint); font-weight: 400; }
+.mv-t small > * { display: inline-block; }
+@media (max-width: 639px) { .mv-t small .mv-r { display: none; } } /* views lead on a phone; the reach sits beside them from 640px */
 .mv-why { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
 .mv-why i { font: 600 12px/1.25 var(--sans); padding: 5px 9px; border-radius: 999px; background: var(--tint); color: var(--warm); }
 .mv-x { grid-area: x; justify-self: start; font: 700 12.5px/1.2 var(--sans); padding: 6px 11px; border-radius: 999px; white-space: nowrap; }
@@ -122,6 +135,7 @@
 .al-t { font-size: var(--t-small); line-height: 1.5; color: var(--warm); }
 .al-row a, .al-row button { font: 600 14px/1.3 var(--sans); color: var(--ink); text-decoration: underline; text-decoration-color: var(--pink-deep); text-underline-offset: 3px; background: none; border: 0; padding: 4px 0; cursor: pointer; }
 .al-none { font-size: var(--t-small); line-height: 1.5; color: var(--hint); }
+.al:has(> .al-none) { gap: 6px; padding-block: 16px; }
 
 /* ---------- ideas bank ---------- */
 .ib { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
@@ -136,20 +150,28 @@
 .ib-tabs button.on { background: var(--cocoa); color: var(--cream); box-shadow: none; }
 .ib-tabs button.on i { color: var(--cream-mute); }
 .ib-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
-.ib-card { background: var(--card); border-radius: 16px; box-shadow: var(--soft); padding: 18px 18px 16px; display: grid; gap: 12px; align-content: start; grid-template-columns: minmax(0, 1fr); }
+/* an idea is a short row (what it is, three lines of it, the star); a tap opens the why and the two buttons */
+.ib-card { background: var(--card); border-radius: 16px; box-shadow: var(--soft); display: grid; align-content: start; align-items: start; grid-template-columns: minmax(0, 1fr) 52px; min-width: 0; }
+.ib-head { grid-column: 1; min-width: 0; display: grid; gap: 8px; justify-items: start; text-align: left; border: 0; background: none; color: inherit; font: inherit; padding: 14px 2px 14px 16px; border-radius: 16px; cursor: pointer; }
+.ib-head:focus-visible { outline-offset: -3px; border-radius: 16px; }
+.ib-open { grid-column: 1 / -1; display: grid; gap: 12px; padding: 0 16px 16px; min-width: 0; }
 .ib-k { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .ib-k span { font: 700 11.5px/1 var(--sans); letter-spacing: .09em; text-transform: uppercase; padding: 6px 10px 5px; border-radius: 999px; background: var(--pink-soft); color: var(--cherry-dark); }
 .ib-card.t-caption .ib-k span { background: var(--cocoa); color: var(--cream); }
 .ib-card.t-reel .ib-k span { background: var(--butter); color: var(--cocoa); }
 .ib-k small { font-size: 12.5px; color: var(--hint); }
-.ib-text { font: 400 22px/1.25 var(--serif), 'Noto Sans Telugu', serif; letter-spacing: -.01em; overflow-wrap: anywhere; }
-.ib-card.t-caption .ib-text { font: 500 16px/1.55 var(--sans), 'Noto Sans Telugu', sans-serif; letter-spacing: 0; padding-left: 14px; box-shadow: inset 3px 0 0 var(--pink); }
+.ib-text { font: 400 19px/1.3 var(--serif), 'Noto Sans Telugu', serif; letter-spacing: -.01em; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ib-card.t-caption .ib-text { font: 500 15.5px/1.5 var(--sans), 'Noto Sans Telugu', sans-serif; letter-spacing: 0; padding-left: 12px; box-shadow: inset 3px 0 0 var(--pink); }
+@media (max-width: 639px) { .ib-card:not(.t-caption):not(.open) .ib-text { -webkit-line-clamp: 2; } }
+.ib-card.open .ib-text { display: block; -webkit-line-clamp: unset; overflow: visible; font-size: 21px; }
+.ib-card.open.t-caption .ib-text { font-size: 16px; }
+.ib-head:hover .ib-text { color: var(--cherry-dark); }
 .ib-why { font-size: var(--t-small); line-height: 1.5; color: var(--warm); }
 .ib-why b { display: block; font: 700 11.5px/1.3 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--hint); margin-bottom: 3px; }
 .ib-why a { color: var(--ink); font-weight: 600; text-decoration-color: var(--pink-deep); text-underline-offset: 3px; white-space: nowrap; }
-.ib-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: auto; }
+.ib-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ib-acts .btn { height: 42px; padding: 0 16px; font-size: 14px; }
-.ib-star { margin-left: auto; width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--tint); color: var(--warm); display: grid; place-items: center; cursor: pointer; }
+.ib-star { grid-column: 2; justify-self: end; margin: 10px 10px 0 0; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--tint); color: var(--warm); display: grid; place-items: center; cursor: pointer; }
 .ib-star svg { width: 21px; height: 21px; fill: none; }
 .ib-star.on { background: var(--butter); color: var(--cocoa); }
 .ib-star.on svg { fill: var(--cocoa); }
@@ -207,7 +229,7 @@
 .sec { scroll-margin-top: 18px; } #alertsBox { scroll-margin-block: 24px; }
 /* a long press or a drag-select picks words, never the decoration */
 .tape, .ni::before, .ws-dial svg, .al-dot, .mv-th, .al-th, .td-cover, .ib-star, .ws-ar { -webkit-user-select: none; user-select: none; }
-.td button, .ib button, .fb button, .al button, .mv-row { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.td button, .ib button, .fb button, .al button, .mv button, .ws button, .mv-row { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 .fb-cards { list-style: none; margin: 0; padding: 0; display: grid; }
 .fb-cards li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 16px; padding: 11px 0; border-top: 1px solid var(--line); }

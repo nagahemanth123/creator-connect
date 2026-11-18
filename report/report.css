@@ -227,6 +227,7 @@ table.tbl{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeri
   .pm{padding-top:7px;gap:6px 4px}.pm dd{font-size:13px}
   .po{margin-top:6px;font-size:12.5px}
 }
+@media (max-width:380px){.post{grid-template-columns:88px minmax(0,1fr);column-gap:10px}.pm{gap:6px 3px}.pm dt{font-size:8px;letter-spacing:.04em}.pm dd{font-size:12.5px}}
 .mini{list-style:none;margin:0;padding:0}
 .mini li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 14px;padding:10px 0;font-size:14px}
 .mini li+li{border-top:1px solid var(--line-2)}
@@ -363,6 +364,56 @@ ol.only li p{font-size:14.5px;color:var(--warm)}
 .tsp .n{grid-column:1/-1;font-size:12.5px;color:var(--hint)}
 .rates-note{background:#FBF0C9;border-radius:12px;padding:14px 16px;margin:0 0 var(--gap);font-size:15px;color:var(--ink);max-width:none;break-inside:avoid}
 .rates-note b{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+
+/* calendar extras: big dates, week notes, the stories plan, the shelf of ready reels; tags on the open questions */
+.tpl{list-style:none;margin:0;padding:0}
+.tpl li{display:grid;grid-template-columns:84px minmax(0,1fr);gap:2px 12px;padding:8px 0;font-size:14.5px;color:var(--warm)}
+.tpl li+li{border-top:1px solid var(--line-2)}
+.tpl .d{font-weight:600;color:var(--ink);white-space:nowrap;font-size:13.5px}
+.tpl li.big{background:var(--butter);border-radius:10px;padding:10px 12px;margin:4px -12px;color:var(--ink)}
+.tpl li.big,.tpl li.big+li{border-top:0}
+.wk.big{box-shadow:var(--soft),inset 0 4px 0 var(--butter-deep)}
+.wk-big{display:inline-block;margin:0 0 10px;padding:4px 10px;border-radius:999px;background:var(--butter);font:700 11px/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.wk-tp{list-style:none;margin:0 0 4px;padding:0;font-size:13.5px;color:var(--warm)}
+.wk-tp li{padding:3px 0}
+.wk-tp .tpk{display:inline-block;font:700 9px/1.3 var(--sans);font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);background:var(--butter);padding:2px 6px;border-radius:3px;margin-right:4px;vertical-align:1px;white-space:nowrap}
+.wk-n{margin:10px 0 0;padding-top:10px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--warm)}
+.wk-n b{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ink);margin-bottom:3px}
+.wk-st{margin:12px 0 0;padding:12px 14px;border-radius:12px;background:var(--tint)}
+.wk-st .k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ink);margin:0 0 2px}
+.wk-st .sd{font-weight:600;font-size:13.5px;color:var(--cherry-dark);margin:10px 0 2px}
+.wk-st li{font-size:13.5px}
+.shelf{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:0 28px}
+@media (min-width:760px){.shelf{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1100px){.shelf{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.shelf li{padding:12px 0;border-top:1px solid var(--line-2);break-inside:avoid;min-width:0}
+.shelf b{display:block;font-family:var(--serif);font-weight:400;font-size:19px;line-height:1.2;color:var(--ink)}
+.shelf small{display:block;font-size:12.5px;margin:3px 0 4px}
+.shelf .sr{font-style:normal;font-weight:600;color:var(--cherry-dark)}
+.shelf .okm{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:999px;background:var(--pink-soft);color:var(--cherry-dark);font:600 9px/1.5 var(--sans);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.shelf p{font-size:13.5px;color:var(--warm);margin:6px 0 0}
+.shelf .k{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ink);margin-bottom:1px}
+ol.qs .qf{display:block;font:700 10px/1.4 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--cherry-dark);margin-bottom:1px}
+ol.qs li{break-inside:avoid}
+@media (min-width:900px){ol.qs{columns:2;column-gap:40px}}
+
+/* ---------- tables on a phone: the first column stays put while the numbers scroll; text tables become stacked rows */
+.tw-hint{display:none}
+@media screen and (max-width:640px){
+  table.tbl{font-size:13px}
+  .tbl th,.tbl td{padding:8px 8px}
+  .tbl:not(.stk) th:first-child,.tbl:not(.stk) td:first-child{white-space:normal;min-width:92px;max-width:40vw;position:sticky;left:0;z-index:1;background:var(--card);box-shadow:8px 0 8px -8px rgba(61,37,33,.18)}
+  .tw.sx+.tw-hint{display:block;margin:8px 0 0;font-size:12px;color:var(--hint)}
+  .tbl.stk,.tbl.stk tbody,.tbl.stk tr,.tbl.stk td{display:block;width:auto}
+  .tbl.stk thead{display:none}
+  .tbl.stk tr{padding:12px 0;border-bottom:1px solid var(--line-2)}
+  .tbl.stk tr:first-child{padding-top:2px}
+  .tbl.stk tr:last-child{border-bottom:0;padding-bottom:2px}
+  .tbl.stk td,.tbl.stk td.w{border:0;padding:0;text-align:left;white-space:normal;min-width:0;font-size:14px;color:var(--warm)}
+  .tbl.stk td:first-child{font-weight:600;font-size:15.5px;color:var(--ink)}
+  .tbl.stk td:not(:first-child)::before{content:attr(data-l);display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ink);margin:8px 0 1px}
+  .tbl.stk td:empty{display:none}
+}
 
 /* ---------- FoxCut Creator Connect watermark (../assets/watermark.css) + view online only */
 .cv-wm,.hero-wm{margin:24px 0 0}
@@ -566,6 +617,13 @@ ol.only li p{font-size:14.5px;color:var(--warm)}
   .cal .tpk{font-size:5.6pt;padding:.3mm 1.2mm;margin-bottom:.6mm}
   .cal .h small.hk{font-size:7.4pt}
   .cal .okm{font-size:5.4pt;padding:0 1.2mm}
+  .wk-st,.tw-hint{display:none!important}
+  .wk-n{font-size:7.2pt;margin-top:1.4mm;padding-top:1.2mm}.wk-n b{font-size:5.8pt;margin-bottom:.4mm}
+  .wk-big{font-size:6pt;padding:.4mm 1.6mm;margin-bottom:1mm}.wk-tp{font-size:7.2pt}.wk-tp .tpk{font-size:5.6pt;padding:.3mm 1.2mm}
+  .tpl li{font-size:8pt;padding:1mm 0;grid-template-columns:54px minmax(0,1fr)}.tpl .d{font-size:7.6pt}.tpl li.big{padding:1.2mm 2mm;margin:1mm -2mm}
+  .shelf{grid-template-columns:repeat(3,minmax(0,1fr));gap:0 5mm}.shelf li{padding:1.6mm 0}.shelf b{font-size:10pt}.shelf small,.shelf p{font-size:7.4pt;margin-top:.8mm}.shelf .k{font-size:5.6pt}
+  ol.qs .qf{font-size:5.8pt}
+  ol.qs{columns:3;column-gap:6mm}
   .tsp li{padding:1.4mm 0;font-size:8.8pt;gap:1mm 3mm}
   .tsp i{height:3px}.tsp .n{font-size:7.6pt}
   .rates-note{column-span:all;font-size:9.2pt;padding:3mm 4mm;border-radius:10px}
@@ -588,6 +646,7 @@ ol.only li p{font-size:14.5px;color:var(--warm)}
 @media screen{
 html:has(.story){scroll-behavior:smooth;scroll-padding-top:76px}
 .story{overflow-x:clip}
+@supports not (overflow:clip){html:has(.story){overflow-x:hidden}}
 .story .cover,.story .dup{display:none}
 .story .fig:has(>.toc){display:none}
 .story .sec:not(#glance) .reading.end{display:none}
@@ -615,6 +674,7 @@ html:has(.story){scroll-behavior:smooth;scroll-padding-top:76px}
 
 .hero-s{min-width:0}
 .stage{position:relative;height:clamp(290px,36vw,410px);perspective:1250px;--cw:clamp(88px,11.6vw,140px)}
+@media (max-width:359px){.stage{--cw:74px;height:250px}}
 .fan-tilt,.fan{position:absolute;inset:0;transform-style:preserve-3d}
 .fan-tilt{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s ease-out}
 .fan{animation:rp-sway 12s ease-in-out infinite alternate}
@@ -646,6 +706,7 @@ html:has(.story){scroll-behavior:smooth;scroll-padding-top:76px}
 .year h2 em{font-style:italic;color:var(--pink)}
 .yr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 22px}
 @media (min-width:900px){.yr{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:374px){.yr{grid-template-columns:minmax(0,1fr);gap:24px}}
 .yr b{display:block;font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-height:1;letter-spacing:-.012em;font-variant-numeric:tabular-nums lining-nums}
 .yr p{font-size:14.5px;color:var(--cream-mute);margin:9px 0 5px}
 .yr small{display:block;font-family:var(--hand);font-size:21px;line-height:1.1;color:var(--butter)}

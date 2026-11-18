@@ -10,12 +10,13 @@
 <link rel="icon" type="image/png" href="../assets/fox.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&family=Noto+Sans+Telugu:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="../assets/cc.css">
 <link rel="stylesheet" href="../assets/autodm.css">
 <link rel="stylesheet" href="../assets/planner.css">
 <link rel="stylesheet" href="../assets/fun.css">
 <link rel="stylesheet" href="../assets/visits.css">
+<link rel="stylesheet" href="../assets/scripts.css">
 <style>
 .top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin: 18px 0 26px; }
 .top h1 { font-size: clamp(40px, 5vw, 64px); }
@@ -120,6 +121,7 @@
 <script src="../assets/fun.js"></script>
 <script src="../assets/visits.js"></script>
 <script src="../assets/planner.js"></script>
+<script src="../assets/scripts.js"></script>
 <script>
 (function () {
 	var cc = window.CC || {};
@@ -187,6 +189,7 @@
 				'<div class="picks">' + picks + '</div>' +
 				'<div class="acts">' + (a.report ? '<a class="btn red" href="' + esc(a.report.url) + '" target="_blank" rel="noopener">Open report</a><button class="btn line" data-copy="' + esc(a.report.url) + '" data-msg="Report link copied" type="button">Copy report link</button>' : '<span class="none">No report yet</span>') +
 					'<button class="btn line" data-plan="' + esc(a.username) + '" type="button">Content plan</button>' +
+					'<button class="btn line" data-scripts="' + esc(a.username) + '" type="button">Scripts</button>' +
 					'<button class="btn line" data-visits="' + esc(a.username) + '" type="button">Visits</button>' +
 					'<button class="btn line" data-dm="' + esc(a.username) + '" type="button">Auto-DM</button>' +
 					'<button class="btn line" data-portal="' + esc(a.username) + '" type="button">Copy her dashboard link</button>' +
@@ -259,6 +262,20 @@
 			}
 		});
 	}
+	function openScripts(who) {
+		var q = 'id=' + encodeURIComponent(who);
+		$('dm').innerHTML = '<button class="x" type="button" data-dmclose aria-label="Close">×</button><p class="hand">what she picked, what she asked</p><h2>Scripts for <em>@' + esc(who) + '</em></h2><p class="none">Upload a pack with <b>tools/push-scripts.py</b>. She sees it at the top of her dashboard.</p><div class="dm-stack" id="dmMount"></div>';
+		$('dmBack').classList.add('on');
+		window.Scripts.mount($('dmMount'), {
+			voice: 'team', who: who, toast: toast,
+			req: function (sub, o) {
+				o = o || {};
+				var opt = {method: o.method || 'GET'};
+				if (o.json) { opt.headers = {'content-type': 'application/json'}; opt.body = JSON.stringify(o.json); }
+				return api('/admin/' + sub + '?' + q, opt);
+			}
+		});
+	}
 	function openVisits(who) {
 		var q = '?id=' + encodeURIComponent(who);
 		$('dm').innerHTML = '<button class="x" type="button" data-dmclose aria-label="Close">×</button><p class="hand">who opened it, from where, for how long</p><h2>Visits for <em>@' + esc(who) + '</em></h2><p><a class="btn line small" href="visits/?id=' + encodeURIComponent(who) + '">Open the full visits page</a></p><div class="dm-stack" id="dmMount"></div>';
@@ -271,9 +288,10 @@
 	}
 	function closeDm() { $('dmBack').classList.remove('on'); $('dm').innerHTML = ''; }
 	document.addEventListener('click', function (e) {
-		var t = e.target.closest('[data-dm],[data-dmclose],[data-portal],[data-plan],[data-visits]');
+		var t = e.target.closest('[data-dm],[data-dmclose],[data-portal],[data-plan],[data-visits],[data-scripts]');
 		if (!t) { if (e.target === $('dmBack')) closeDm(); return; }
 		if (t.hasAttribute('data-plan')) return openPlan(t.getAttribute('data-plan'));
+		if (t.hasAttribute('data-scripts')) return openScripts(t.getAttribute('data-scripts'));
 		if (t.hasAttribute('data-visits')) return openVisits(t.getAttribute('data-visits'));
 		if (t.hasAttribute('data-dm')) return openDm(t.getAttribute('data-dm'));
 		if (t.hasAttribute('data-dmclose')) return closeDm();

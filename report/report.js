@@ -122,7 +122,7 @@
   }
   function table(head, rows, o) {
     o = o || {};
-    return '<div class="tw"><table class="tbl' + (o.stack ? ' stk' : '') + '"><thead><tr>' + head.map(function (h, i) {
+    return '<div class="tw"><table class="tbl' + (o.stack ? ' stk' + (o.stack === 'all' ? ' stk-all' : '') : '') + '"><thead><tr>' + head.map(function (h, i) {
       return '<th' + (o.wide && o.wide.indexOf(i) >= 0 ? ' class="w"' : '') + '>' + esc(h) + '</th>';
     }).join('') + '</tr></thead><tbody>' + rows.map(function (r) {
       var cls = r.cls ? ' class="' + r.cls + '"' : '';
@@ -406,7 +406,7 @@
     if (o.center) s += '<text x="' + cx + '" y="' + (cy + 2) + '" text-anchor="middle" style="font-family:var(--serif);font-size:22px;fill:' + C.ink + '">' + esc(o.center) + '</text>' +
       (o.centerSub ? '<text x="' + cx + '" y="' + (cy + 18) + '" text-anchor="middle" style="font-size:10px">' + esc(o.centerSub) + '</text>' : '');
     var leg = '<ul class="legend">' + items.map(function (it, k) {
-      return '<li><i style="background:' + (it.color || PALETTE[k % PALETTE.length]) + '"></i>' + esc(it.label) + '<b>' + pct(it.value / tot, 0) + '</b><span style="color:var(--mute);font-size:12px;margin-left:4px">' + compact(it.value) + '</span></li>';
+      return '<li><i style="background:' + (it.color || PALETTE[k % PALETTE.length]) + '"></i>' + esc(it.label) + '<b>' + pct(it.value / tot, 0) + '</b><span style="color:var(--mute);font-size:12px;margin-left:4px;white-space:nowrap">' + compact(it.value) + '</span></li>';
     }).join('') + '</ul>';
     return '<div class="donut"><svg viewBox="0 0 150 150" role="img" xmlns="http://www.w3.org/2000/svg">' + s + '</svg>' + leg + '</div>';
   }
@@ -871,7 +871,7 @@
     if ((Pl.posting_rules && Pl.posting_rules.length) || (Pl.best_slots && Pl.best_slots.length)) {
       h += '<h3 class="sub span">When and how to post</h3><div class="two">' +
         fig('Posting rules', listItems(Pl.posting_rules, 'ticks') || naBox('Nothing to show yet.')) +
-        fig('Your slots', Pl.best_slots && Pl.best_slots.length ? table(['Day', 'Time (IST)', 'Format', 'Why'], Pl.best_slots.map(function (s) { return [s.day, s.time_ist, s.format, s.why || '']; }), { wide: [3], stack: true }) : naBox('Nothing to show yet.')) + '</div>';
+        fig('Your slots', Pl.best_slots && Pl.best_slots.length ? table(['Day', 'Time (IST)', 'Format', 'Why'], Pl.best_slots.map(function (s) { return [s.day, s.time_ist, s.format, s.why || '']; }), { wide: [3], stack: 'all' }) : naBox('Nothing to show yet.')) + '</div>';
     }
     if (Pl.series && Pl.series.length) {
       h += '<h3 class="sub span">Your series</h3>' + rows4(Pl.series.map(function (x) {

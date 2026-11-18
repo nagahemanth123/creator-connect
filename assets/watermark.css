@@ -1,0 +1,37 @@
+/* FoxCut Creator Connect — shared watermark (audit report + creator dashboard).
+
+   HOW TO USE
+   1. <link rel="stylesheet" href="../assets/watermark.css">
+   2. <html class="wm-on">              → a fixed, full-screen, faint diagonal "FoxCut Creator Connect" pattern
+                                          above the page. It never takes taps or scrolling (pointer-events:none).
+   3. <span class="wm-mark"><b>FoxCut</b> Creator Connect</span>
+                                        → the small solid lockup for a footer or corner.
+        .wm-mark.fox    adds the fox icon (assets/fox.png) before the words
+        .wm-mark.light  cream version for dark grounds (the cocoa band)
+   4. class="wm-tile" on any box        → the same pattern inside that box only (it must be able to take
+        .wm-tile.light                    position:relative). Used for PDF pages and for dark bands, where the
+                                          dark pattern would not show.
+
+   No JS, no extra image files: the pattern is an inline SVG. Colours follow cc.css (cocoa ink on blush paper).
+   The pattern uses Georgia because an SVG background cannot load the page's web fonts. */
+:root{
+  --wm-tile:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='440' height='260' viewBox='0 0 440 260'%3E%3Cg fill='%233D2521' fill-opacity='.07' font-family='Georgia,serif' font-size='15' letter-spacing='.6' text-anchor='middle'%3E%3Ctext transform='rotate(-24 110 65)' x='110' y='70'%3EFoxCut Creator Connect%3C/text%3E%3Ctext transform='rotate(-24 330 195)' x='330' y='200'%3EFoxCut Creator Connect%3C/text%3E%3C/g%3E%3C/svg%3E");
+  --wm-tile-light:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='440' height='260' viewBox='0 0 440 260'%3E%3Cg fill='%23FBEDE8' fill-opacity='.08' font-family='Georgia,serif' font-size='15' letter-spacing='.6' text-anchor='middle'%3E%3Ctext transform='rotate(-24 110 65)' x='110' y='70'%3EFoxCut Creator Connect%3C/text%3E%3Ctext transform='rotate(-24 330 195)' x='330' y='200'%3EFoxCut Creator Connect%3C/text%3E%3C/g%3E%3C/svg%3E");
+  --wm-fox:url(fox.png);
+}
+
+/* full-screen overlay */
+html.wm-on body::after{content:"";position:fixed;inset:0;z-index:2147483000;pointer-events:none;background-image:var(--wm-tile);background-repeat:repeat;background-position:0 0;-webkit-user-select:none;user-select:none}
+@media (max-width:480px){html.wm-on body::after{background-size:352px 208px}}
+
+/* the same pattern inside one box */
+.wm-tile{position:relative}
+.wm-tile::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;border-radius:inherit;background-image:var(--wm-tile);background-repeat:repeat}
+.wm-tile.light::after{background-image:var(--wm-tile-light)}
+
+/* solid lockup */
+.wm-mark{display:inline-flex;align-items:center;gap:.6em;margin:0;font:600 10px/1 var(--sans,'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif);letter-spacing:.16em;text-transform:uppercase;color:var(--warm,#6E5551);white-space:nowrap;-webkit-user-select:none;user-select:none}
+.wm-mark b{font:500 1.55em/1 var(--serif,'Playfair Display',Georgia,'Times New Roman',serif);letter-spacing:-.01em;text-transform:none;color:var(--ink,#2B1A17)}
+.wm-mark.fox::before{content:"";flex:0 0 auto;width:1.5em;height:2.18em;background:var(--wm-fox) center/contain no-repeat}
+.wm-mark.light{color:var(--cream-mute,#D9BFB8)}
+.wm-mark.light b{color:var(--cream,#FBEDE8)}

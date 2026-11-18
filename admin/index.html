@@ -43,6 +43,15 @@
 .tag.ok { background: var(--pink-soft); color: var(--cherry-dark); }
 .tag.post { background: var(--butter); color: var(--ink); }
 .tag.bad { background: var(--cocoa); color: var(--cream); }
+/* one-tap requests from her dashboard ("Ask Busy Fox"): open ones are loud until someone marks them done */
+.asks { display: grid; gap: 8px; background: var(--butter); border-radius: 14px; padding: 12px 14px; }
+.asks > b { font: 700 12px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--cocoa); display: flex; align-items: center; gap: 8px; }
+.asks > b i { font-style: normal; min-width: 22px; height: 22px; border-radius: 999px; background: var(--cherry); color: #fff; display: inline-grid; place-items: center; font-size: 12px; letter-spacing: 0; padding: 0 6px; }
+.asks p { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; font-size: 14px; line-height: 1.4; color: var(--ink); }
+.asks p small { display: block; color: var(--warm); font-size: 12.5px; }
+.asks p.done { opacity: .6; }
+.asks button { height: 34px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--cocoa); color: var(--cream); font: 600 13px var(--sans); cursor: pointer; }
+.asks.quiet { background: var(--tint); }
 .picks { border-top: 1.5px dashed var(--line); padding-top: 14px; display: grid; gap: 10px; }
 .row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; font-size: 14px; align-items: baseline; }
 .row > span:first-child { color: var(--hint); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
@@ -160,6 +169,7 @@
 			})
 			.catch(function () { $('refresh').disabled = false; $('refresh').textContent = 'Refresh'; toast('No connection'); });
 	}
+	var ASK = {'anniversary-template': 'Wants a customised anniversary video template'}; // what she asked for with one tap on her dashboard
 	function chips(arr) { return (arr || []).map(function (v) { return '<i>' + esc(String(v).replace(/^Other: /, '')) + '</i>'; }).join(''); }
 	function row(label, html) { return html ? '<div class="row"><span>' + label + '</span><div class="chips">' + html + '</div></div>' : ''; }
 	function text(v) { return v ? '<i>' + esc(v) + '</i>' : ''; }
@@ -183,9 +193,14 @@
 				'<div class="row"><span>Saved</span><div class="none">' + fmtDate(p.saved_at) + '</div></div>'
 			) : '<p class="none">No choices saved yet.</p>';
 			var initial = esc((a.username || '?').charAt(0).toUpperCase());
+			var askList = (a.asks || []).filter(function (x) { return x.status !== 'done' || Date.now() - Date.parse(x.done_at || x.at) < 14 * 86400000; }), askOpen = askList.filter(function (x) { return x.status !== 'done'; }).length;
+			var asks = askList.length ? '<div class="asks' + (askOpen ? '' : ' quiet') + '"><b>Requests' + (askOpen ? '<i>' + askOpen + '</i>' : '') + '</b>' + askList.map(function (x) {
+				return '<p class="' + (x.status === 'done' ? 'done' : '') + '"><span>' + esc(ASK[x.kind] || x.kind) + '<small>' + (x.note ? esc(x.note) + ' · ' : '') + 'asked ' + fmtDate(x.at) + (x.status === 'done' ? ' · done ' + fmtDate(x.done_at) : '') + '</small></span>' +
+					(x.status === 'done' ? '' : '<button type="button" data-askdone="' + esc(a.username) + '" data-rid="' + esc(x.id) + '">Mark done</button>') + '</p>';
+			}).join('') + '</div>' : '';
 			return '<article class="cr"><span class="tape"></span>' +
 				'<div class="who"><div class="pic" data-src="' + esc(a.profile_picture_url || '') + '">' + initial + '</div><div class="t"><h2><a href="https://www.instagram.com/' + esc(a.username) + '/" target="_blank" rel="noopener">@' + esc(a.username) + '</a></h2><p title="' + esc(a.name) + '">' + esc(a.name || '') + '</p></div></div>' +
-				'<div class="tags">' + tags + '</div>' +
+				'<div class="tags">' + tags + '</div>' + asks +
 				'<div class="picks">' + picks + '</div>' +
 				'<div class="acts">' + (a.report ? '<a class="btn red" href="' + esc(a.report.url) + '" target="_blank" rel="noopener">Open report</a><button class="btn line" data-copy="' + esc(a.report.url) + '" data-msg="Report link copied" type="button">Copy report link</button>' : '<span class="none">No report yet</span>') +
 					'<button class="btn line" data-plan="' + esc(a.username) + '" type="button">Content plan</button>' +
@@ -288,6 +303,15 @@
 	}
 	function closeDm() { $('dmBack').classList.remove('on'); $('dm').innerHTML = ''; }
 	document.addEventListener('click', function (e) {
+		var ask = e.target.closest('[data-askdone]');
+		if (ask) { // she has been answered: the request goes quiet
+			ask.disabled = true;
+			return api('/admin/ask-done?id=' + encodeURIComponent(ask.getAttribute('data-askdone')) + '&rid=' + encodeURIComponent(ask.getAttribute('data-rid')), {method: 'POST'}).then(function (r) {
+				if (!r || !r.ok) { ask.disabled = false; return toast('That did not work'); }
+				data.forEach(function (a) { if (a.username === ask.getAttribute('data-askdone')) a.asks = r.asks; });
+				render(); toast('Marked done');
+			}, function () { ask.disabled = false; toast('No connection'); });
+		}
 		var t = e.target.closest('[data-dm],[data-dmclose],[data-portal],[data-plan],[data-visits],[data-scripts]');
 		if (!t) { if (e.target === $('dmBack')) closeDm(); return; }
 		if (t.hasAttribute('data-plan')) return openPlan(t.getAttribute('data-plan'));

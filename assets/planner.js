@@ -43,7 +43,9 @@
 		function load() {
 			return o.req('posts').then(function (d) {
 				if (!d || !d.ok) throw new Error((d && d.error) || 'error');
+				var first = !st.d;
 				st.d = d; render(); loadIg();
+				if (!first && o.onChange) o.onChange(d); // the Today card follows the plan
 			}).catch(function () { if (!st.d) root.innerHTML = '<p class="pl-none">Could not load the plan. Check your connection and try again.</p>'; else toast('Could not refresh'); });
 		}
 		// what is already on Instagram this month (so past dates show the real reel or photo)
@@ -350,6 +352,14 @@
 		}
 
 		function spot(el) { var r = el.getBoundingClientRect(); return {x: r.left + r.width / 2, y: r.top + r.height / 2}; }
+		function useIdea(id) { // an idea from the 90-day plan, straight into "give it a date"
+			var x = ideas().filter(function (i) { return i.key === id; })[0];
+			if (!x) return false;
+			var sug = Date.parse(x.at), ti = ist(sug), f0 = blank(st.ideas && st.ideas.day ? st.ideas.day : (sug > Date.now() ? dayKey(sug) : undefined));
+			f0.time = pad(ti.h) + ':' + pad(ti.min); f0.type = x.type; f0.hook = x.hook; f0.pillar = x.pillar; f0.idea = x.key;
+			st.ideas = null; st.open = null; st.form = f0; render();
+			return true;
+		}
 		// ---------- draw ----------
 		function render() {
 			var p = st.open ? byId(st.open) : null;
@@ -387,13 +397,7 @@
 			if (a === 'open') { st.open = id; st.ask = false; st.ideas = null; return render(); }
 			if (a === 'ideas') { st.ideas = {day: null}; return render(); }
 			if (a === 'ideasfor') { readForm(); st.ideas = {day: st.form.date}; st.form = null; return render(); }
-			if (a === 'useidea') {
-				var x = ideas().filter(function (i) { return i.key === id; })[0];
-				if (!x) return;
-				var sug = Date.parse(x.at), ti = ist(sug), f0 = blank(st.ideas && st.ideas.day ? st.ideas.day : (sug > Date.now() ? dayKey(sug) : undefined));
-				f0.time = pad(ti.h) + ':' + pad(ti.min); f0.type = x.type; f0.hook = x.hook; f0.pillar = x.pillar; f0.idea = x.key;
-				st.ideas = null; st.form = f0; return render();
-			}
+			if (a === 'useidea') return useIdea(id);
 			if (a === 'close') { if (st.up) return toast('Wait for the upload to finish'); st.open = null; st.form = null; st.ask = false; st.ideas = null; return render(); }
 			if (a === 'new') { st.form = blank(); return render(); }
 			if (a === 'edit' && p) { st.form = toForm(p); return render(); }
@@ -419,7 +423,19 @@
 
 		root.innerHTML = '<p class="pl-none">Loading…</p>';
 		load();
-		return {reload: load};
+		return {
+			reload: load,
+			// used by the Today card, the ideas bank and the anniversary strip (assets/dash.js, assets/party.js)
+			open: function (id) { if (!st.d || !byId(id) || st.up) return false; st.open = id; st.ask = false; st.ideas = null; st.form = null; render(); return true; },
+			idea: function (key) { return Boolean(st.d) && !st.up && useIdea(key); },
+			add: function (pre) { // the add-post form with some fields already filled: {date, time, type, hook, caption, pillar}
+				if (!st.d || st.up) return false;
+				var f = blank(pre && pre.date);
+				['time', 'type', 'hook', 'caption', 'pillar'].forEach(function (k) { if (pre && pre[k]) f[k] = pre[k]; });
+				st.open = null; st.ideas = null; st.ask = false; st.form = f; render();
+				return true;
+			}
+		};
 	}
 	window.Planner = {mount: mount};
 })();

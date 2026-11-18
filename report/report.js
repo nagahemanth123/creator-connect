@@ -14,8 +14,14 @@
   };
   var PALETTE = [C.ink2, C.fox, C.pinkDeep, C.stone, C.butter, C.mute2];
   var NA_TITLE = 'Not available from Instagram';
+  // The team's PDF build (report/build.py, report/render.cjs) sets window.__CC_PDF_BUILD before the page loads.
+  // Only then may the page print: report.css blanks every other print (Ctrl/Cmd+P, the browser menu) to one line.
+  var PDF_BUILD = window.__CC_PDF_BUILD === true;
+  if (PDF_BUILD) document.documentElement.classList.add('cc-pdf');
   // true while the PDF is rendered (Playwright emulates print media before the page loads); screen layout ignores it
-  var PRINT = !!(window.matchMedia && window.matchMedia('print').matches);
+  var PRINT = PDF_BUILD && !!(window.matchMedia && window.matchMedia('print').matches);
+  // "FoxCut Creator Connect" lockup (../assets/watermark.css)
+  function wm(cls) { return '<span class="wm-mark' + (cls ? ' ' + cls : '') + '"><b>FoxCut</b> Creator Connect</span>'; }
 
   /* ------------------------------------------------------------------ formatting */
   var NF = new Intl.NumberFormat('en-IN');
@@ -339,7 +345,8 @@
     var vs = valid.map(function (x) { return x.v; });
     var vmax = Math.max.apply(null, vs), vmin = Math.min.apply(null, vs);
     var posMax = Math.max(0.0001, vmax), negMax = Math.max(0.0001, -vmin);
-    var top = valid.slice().sort(function (a, b) { return b.v - a.v; }).slice(0, o.top || 3);
+    // o.topMin: only boxes resting on that many posts may be outlined as "best"
+    var top = valid.filter(function (x) { return !o.topMin || !N || (N[x.r][x.c] || 0) >= o.topMin; }).sort(function (a, b) { return b.v - a.v; }).slice(0, o.top || 3);
     var topKey = {};
     top.forEach(function (x) { if (f !== 'signed' || x.v > 0) topKey[x.r + ':' + x.c] = 1; });
     function color(v) {
@@ -417,9 +424,10 @@
   function postCard(p, rank, o) {
     o = o || {};
     if (!p) return '';
+    // views first (the number on her profile), then how many different people that was
     var m = [
-      ['ER reach', pct(p.er_r, 1), o.hi === 'er'], ['Reach', compact(p.reach), o.hi === 'reach'], ['Likes', compact(p.likes), o.hi === 'likes'],
-      ['Comments', compact(p.comments)], ['Views', compact(p.views)], [o.hi === 'shares' ? 'Shares' : 'Saves', compact(o.hi === 'shares' ? p.shares : p.saves), o.hi === 'saves' || o.hi === 'shares']
+      ['Views', compact(p.views), o.hi === 'views'], ['People reached', compact(p.reach), o.hi === 'reach'], ['Likes', compact(p.likes), o.hi === 'likes'],
+      ['Comments', compact(p.comments)], [o.hi === 'shares' ? 'Shares' : 'Saves', compact(o.hi === 'shares' ? p.shares : p.saves), o.hi === 'saves' || o.hi === 'shares'], ['Engaged', pct(p.er_r, 1), o.hi === 'er']
     ];
     var img = p.thumb ? '<img src="' + esc(p.thumb) + '" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\');this.remove()">' : '';
     return '<article class="post"><a class="ph' + (p.thumb ? '' : ' noimg') + '" data-fmt="' + esc(p.fmt) + '"' + (p.url ? ' href="' + esc(p.url) + '" target="_blank" rel="noopener"' : '') + '>' + img +
@@ -443,7 +451,7 @@
   /* ------------------------------------------------------------------ sections */
   function head(num, eyebrow, title, lead) {
     // .sh is display:contents on screen; in print it becomes the full-width section band
-    return '<div class="sh"><p class="eb">' + (num ? '<span class="hand">' + num + '</span>' : '') + '<span class="ex">' + esc(eyebrow) + '</span></p><h2 class="h">' + title + '</h2>' + (lead ? '<p class="lead">' + esc(lead) + '</p>' : '') + '</div>';
+    return '<div class="sh"><p class="eb">' + (num ? '<span class="hand">' + num + '</span>' : '') + '<span class="ex">' + esc(eyebrow) + '</span>' + wm('print-only') + '</p><h2 class="h">' + title + '</h2>' + (lead ? '<p class="lead">' + esc(lead) + '</p>' : '') + '</div>';
   }
 
   function secAudience(A, R) {
@@ -501,12 +509,12 @@
     var W = P.windows || [];
     h += fig('Totals and averages by period', table(['Metric'].concat(W.map(function (w) { return w.label; })), (P.kpi_rows || []).map(function (r) {
       return [r[0]].concat(W.map(function (w) { return fv(w[r[1]], r[2] === 'dec' ? 'dec' : r[2]); }));
-    })), { note: 'Reach, views, saves and shares exist only for posts with insights. Engagement rate uses followers today.' });
+    })), { note: 'Views = times played or seen (the number on your profile). People reached = different people. Both exist only for posts with insights. Engagement rate uses followers today.' });
     h += '<div class="g2">' + figOrNA('Posts by type, all time', P.by_type, function () {
       var tot = P.by_type.items.reduce(function (a, i) { return a + i.value; }, 0);
       return ch('donut', P.by_type, { center: nint(tot), centerSub: 'posts' });
-    }) + fig('Typical post by format', table(['Format', 'Posts', 'Reach', 'Likes', 'Views', 'ER reach'], (P.by_format.rows || []).map(function (r) {
-      return [r.format, nint(r.posts), compact(r.reach), compact(r.likes), compact(r.views), pct(r.er_r)];
+    }) + fig('Typical post by format', table(['Format', 'Posts', 'Views', 'People reached', 'Likes', 'Engaged'], (P.by_format.rows || []).map(function (r) {
+      return [r.format, nint(r.posts), compact(r.views), compact(r.reach), compact(r.likes), pct(r.er_r)];
     })), { right: 'Median, ' + P.by_format.window }) + '</div>';
     h += figOrNA('Posts per month by format', P.monthly_types, function () { return ch('stack', P.monthly_types, { h: 200 }); });
     h += fig('More per format', table(['Format', 'Comments', 'Saves', 'Shares', 'ER followers', 'Reach rate'], (P.by_format.rows || []).map(function (r) {
@@ -514,7 +522,7 @@
     })), { right: 'Median, ' + P.by_format.window });
     // top posts
     var T = P.top || {}, lists = T.lists || {}, cards = T.cards || {};
-    var keys = ['er', 'reach', 'saves', 'shares', 'likes'].filter(function (k) { return lists[k] && lists[k].ids && lists[k].ids.length; });
+    var keys = ['views', 'reach', 'er', 'saves', 'shares', 'likes'].filter(function (k) { return lists[k] && lists[k].ids && lists[k].ids.length; });
     h += '<h3 class="sub span">Top posts</h3>';
     if (!keys.length) h += naBox('No posts to rank yet.');
     else {
@@ -522,8 +530,8 @@
         return '<button class="tab" role="tab" type="button" data-tab="' + k + '" aria-selected="' + (i === 0) + '">' + esc(lists[k].label) + '</button>';
       }).join('') + '</div>';
       keys.forEach(function (k, i) {
-        var hiMap = { er: 'er', reach: 'reach', saves: 'saves', shares: 'shares', likes: 'likes' };
-        h += '<div class="tp-list' + (k === 'er' || k === 'reach' ? '' : ' np') + '" data-list="' + k + '"' + (i === 0 ? '' : ' hidden') + '>' +
+        var hiMap = { views: 'views', er: 'er', reach: 'reach', saves: 'saves', shares: 'shares', likes: 'likes' };
+        h += '<div class="tp-list' + (k === keys[0] || (k === 'reach' && keys[0] === 'views') || (k === 'er' && keys[0] !== 'views') ? '' : ' np') + '" data-list="' + k + '"' + (i === 0 ? '' : ' hidden') + '>' +
           '<p class="fig-t tp-title">Top posts by ' + esc(lists[k].label.toLowerCase()) + '</p><div class="posts">' +
           lists[k].ids.map(function (id, j) { return postCard(cards[id], j + 1, { hi: hiMap[k] }); }).join('') + '</div></div>';
       });
@@ -532,16 +540,24 @@
     return h;
   }
 
-  function secOpt(O) {
+  function secOpt(O, R) {
     if (isNA(O)) return naBox(O);
     var h = '<p class="sub-lead">Based on ' + nint(O.n) + ' posts with insights from ' + esc(O.window) + '. ' + esc(O.method) + '</p>';
-    h += '<div class="g2">' + fig('Best time for reach', ch('heat', O.heat_reach, { h: 230 }), { right: 'IST, 3-hour blocks' }) +
-      fig('Best time for engagement', ch('heat', O.heat_er, { h: 230 }), { right: 'IST, 3-hour blocks' }) + '</div>';
+    // the charts are a record of the past, not advice: a slot is only recommended from 8+ posts, or by the plan
+    var boxN = (O.heat_reach && O.heat_reach.min_n) || 3, recN = O.rec_min_n || 8;
+    var planSlots = R && R.plan && !isNA(R.plan) && R.plan.best_slots && R.plan.best_slots.length ? R.plan.best_slots : null;
+    h += '<div class="g2">' + fig('What your past posts show: people reached', ch('heat', O.heat_reach, { h: 230, topMin: recN }), { right: 'IST, 3-hour blocks', note: 'Against your usual for the format. A box is drawn from ' + boxN + ' or more posts; only boxes with ' + recN + ' or more are outlined.' }) +
+      fig('What your past posts show: engagement', ch('heat', O.heat_er, { h: 230, topMin: recN }), { right: 'IST, 3-hour blocks', note: 'A record of the past, not a recommendation: most boxes rest on only a few posts.' }) + '</div>';
     function slots(arr) {
-      if (!arr || !arr.length) return naBox('No slot has enough posts yet.');
-      return '<ol class="steps">' + arr.map(function (b) { return '<li><strong>' + esc(b.slot) + '</strong>' + esc(b.text) + ' \u00b7 ' + b.n + ' posts</li>'; }).join('') + '</ol>';
+      if (!arr || !arr.length) return naBox('No slot has ' + recN + ' or more posts with a clear lift, so we do not recommend one from the numbers alone.', 'Not enough posts in one slot yet', true);
+      return '<ol class="steps">' + arr.map(function (b) { return '<li><strong>' + esc(b.slot) + '</strong>' + esc(b.text) + (/posts/.test(b.text) ? '' : ' \u00b7 ' + b.n + ' posts') + '</li>'; }).join('') + '</ol>';
     }
-    h += '<div class="g2">' + fig('Top slots for reach', slots(O.best_reach)) + fig('Top slots for engagement', slots(O.best_er)) + '</div>';
+    if (planSlots) {
+      h += fig('Your recommended slots', table(['Day', 'Time (IST)', 'Format', 'Why'], planSlots.map(function (x) { return [x.day, x.time_ist, x.format, x.why || '']; }), { wide: [3] }), { cls: 'wide', right: 'From your plan', note: 'Chosen by our strategist from these numbers, your followers\u2019 online hours and what you told us.' });
+      if ((O.best_reach && O.best_reach.length) || (O.best_er && O.best_er.length)) h += '<div class="g2">' + fig('Past posts: strongest slots for people reached', slots(O.best_reach), { right: recN + '+ posts each' }) + fig('Past posts: strongest slots for engagement', slots(O.best_er), { right: recN + '+ posts each' }) + '</div>';
+    } else {
+      h += '<div class="g2">' + fig('Top slots for people reached', slots(O.best_reach), { right: recN + '+ posts each' }) + fig('Top slots for engagement', slots(O.best_er), { right: recN + '+ posts each' }) + '</div>';
+    }
     h += '<div class="g2">' + fig('Reach by hour posted', ch('bars', O.by_hour, { h: 180, lw: 40, values: false }), { right: 'vs usual for the format' }) +
       fig('Reach by weekday', ch('bars', O.by_weekday, { h: 180, lw: 26 }), { right: 'vs usual for the format' }) + '</div>';
     var tr = (O.types && O.types.rows) || [];
@@ -610,14 +626,14 @@
     var c = M.compare || {};
     var h = stats([
       { label: 'Verdict', value: M.verdict, fmt: 'text' },
-      { label: 'Reach vs prior 90 days', value: c.reach && c.reach.vs_prev, fmt: 'signed', sub: c.reach && c.reach.now != null ? 'median ' + nint(c.reach.now) + ' per post' : null },
-      { label: 'Engagement vs prior 90 days', value: c.er_r && c.er_r.vs_prev, fmt: 'signed', sub: c.er_r && c.er_r.now != null ? pct(c.er_r.now) + ' by reach' : null },
+      { label: 'Views vs prior 90 days', value: c.views && c.views.vs_prev, fmt: 'signed', sub: c.views && c.views.now != null ? nint(c.views.now) + ' on a usual post' : null },
+      { label: 'People reached vs prior 90 days', value: c.reach && c.reach.vs_prev, fmt: 'signed', sub: c.reach && c.reach.now != null ? nint(c.reach.now) + ' different people, usual post' : null },
       { label: 'Likes vs a year ago', value: c.likes && c.likes.vs_year, fmt: 'signed', sub: c.likes && c.likes.now != null ? 'median ' + nint(c.likes.now) + ' per post' : null }
     ]);
-    h += figOrNA('Median likes per post, by month', M.likes, function () { return ch('line', M.likes, { h: 210 }); }, { right: 'Since the first post' });
-    h += '<div class="g2">' + figOrNA('Median reach per post', M.reach, function () { return ch('line', M.reach, { h: 190 }); }) +
-      figOrNA('Median engagement by reach', M.er_r, function () { return ch('line', M.er_r, { h: 190, fmt: 'pct' }); }) + '</div>';
-    h += figOrNA('Median views per post', M.views, function () { return ch('line', M.views, { h: 190 }); });
+    h += figOrNA('Views on a usual post, by month', M.views, function () { return ch('line', M.views, { h: 210 }); }, { right: 'Median' });
+    h += '<div class="g2">' + figOrNA('Different people reached, usual post', M.reach, function () { return ch('line', M.reach, { h: 190 }); }, { right: 'Median' }) +
+      figOrNA('Engagement by people reached', M.er_r, function () { return ch('line', M.er_r, { h: 190, fmt: 'pct' }); }, { right: 'Median' }) + '</div>';
+    h += figOrNA('Median likes per post, by month', M.likes, function () { return ch('line', M.likes, { h: 190 }); }, { right: 'Since the first post' });
     h += reading(M.notes);
     return h;
   }
@@ -686,7 +702,7 @@
       return [r.format, nint(r.posts), fv(r.shares_r, 'per1k'), fv(r.saves_r, 'per1k'), fv(r.follows_k, 'dec'), fv(r.pv_k, 'dec'), pct(r.pv_to_follow, 0)];
     })), { cls: 'w2', right: V.window, desc: 'Per 1,000 accounts reached. Shares and saves spread a post; follows and profile visits turn reach into an audience.' });
     h += '<div class="g2">' + figOrNA('Who the reach came from', V.follow_type, function () { return ch('donut', V.follow_type, {}); }, { right: 'Last 30 days' }) +
-      fig('Follower magnets', V.magnets && V.magnets.length ? miniList(V.magnets, [['Follows', function (c) { return nint(c.follows); }], ['Reach', function (c) { return compact(c.reach); }]]) : naBox(V.magnets_na || 'Not available.'), { desc: 'Posts that brought the most new followers.' }) + '</div>';
+      fig('Follower magnets', V.magnets && V.magnets.length ? miniList(V.magnets, [['Follows', function (c) { return nint(c.follows); }], ['Views', function (c) { return compact(c.views); }], ['Reached', function (c) { return compact(c.reach); }]]) : naBox(V.magnets_na || 'Not available.'), { desc: 'Posts that brought the most new followers.' }) + '</div>';
     h += reading(V.notes);
     return h;
   }
@@ -702,7 +718,7 @@
     h += '<div class="g2">' + fig('Reels by average watch time', ch('bars', Rl.dist, { h: 180, unit: 'reels' }), { right: 'Number of reels' }) +
       fig('Reach by watch time', ch('bars', Rl.reach_by_watch, { h: 180, unit: 'reels' }), { right: 'vs your usual reel' }) + '</div>';
     h += fig('Average watch time, by month', ch('line', Rl.trend, { h: 180, fmt: 'dec' }), { right: 'Median, seconds' });
-    var cols = [['Watched', function (c) { return c.watch_s != null ? c.watch_s.toFixed(1) + ' s' : '\u2014'; }], ['Reach', function (c) { return compact(c.reach); }]];
+    var cols = [['Watched', function (c) { return c.watch_s != null ? c.watch_s.toFixed(1) + ' s' : '\u2014'; }], ['Views', function (c) { return compact(c.views); }], ['Reached', function (c) { return compact(c.reach); }]];
     h += '<div class="g2">' + fig('Held attention longest', miniList(Rl.best, cols)) + fig('Lost people fastest', miniList(Rl.worst, cols)) + '</div>';
     h += '<p class="fig-n">' + esc(Rl.limit) + '</p>';
     h += reading(Rl.notes);
@@ -795,32 +811,72 @@
     return h;
   }
 
+  // plan.goal {main, second, why}: shown with the headline
+  function goalBlock(g) {
+    if (!g || (!g.main && !g.second)) return '';
+    var why = Array.isArray(g.why) ? g.why.filter(Boolean) : (g.why ? [g.why] : []);
+    return '<dl class="goal">' + (g.main ? '<div><dt>Main goal</dt><dd>' + esc(g.main) + '</dd></div>' : '') +
+      (g.second ? '<div><dt>Second goal</dt><dd>' + esc(g.second) + '</dd></div>' : '') +
+      (why.length ? '<div class="gw"><dt>Why these</dt><dd>' + (why.length > 1 ? listItems(why, 'dash') : esc(why[0])) + '</dd></div>' : '') + '</dl>';
+  }
+  // cards in rows of four: one grid on screen, but each row is its own block for the PDF so a long set can break across pages
+  function rows4(cards) {
+    var h = '';
+    for (var i = 0; i < cards.length; i += 4) h += '<div class="pillars">' + cards.slice(i, i + 4).join('') + '</div>';
+    return h;
+  }
+  function finding(k, ev) {
+    if (typeof k === 'string') return '<li>' + esc(k) + '</li>';
+    return '<li><strong>' + esc(k.title) + (k.only_here ? ' <span class="tag-ni">Not in Instagram</span>' : '') + '</strong>' + esc(k.detail || '') +
+      (ev && k.evidence ? '<span class="ev">' + esc(k.evidence) + '</span>' : '') + '</li>';
+  }
+  // plan.only_here [{title, detail}]: its own band right after the short version
+  function secOnlyHere(Pl) {
+    var a = Pl && Array.isArray(Pl.only_here) ? Pl.only_here.filter(Boolean) : [];
+    if (!a.length) return '';
+    return '<section class="sec flow" id="onlyhere" data-keep="300">' + head(null, 'Only in this audit', 'What Instagram\u2019s own dashboard <em>does not</em> show you', 'Worked out from every post you have made. You will not find these in the Instagram app.') +
+      '<ol class="only span">' + a.map(function (x) {
+        return typeof x === 'string' ? '<li class="fig"><p>' + esc(x) + '</p></li>' : '<li class="fig"><b>' + esc(x.title || '') + '</b>' + (x.detail ? '<p>' + esc(x.detail) + '</p>' : '') + '</li>';
+      }).join('') + '</ol>' + '<p class="sec-wm no-print">' + wm() + '</p></section>';
+  }
+
   function secPlan(Pl, R) {
     if (!Pl || isNA(Pl)) return naBox('Your growth plan is being written by our strategist from these numbers and will appear here.', 'Coming next', true);
     var h = '';
-    if (Pl.headline || Pl.summary) h += '<div class="verdict-card dup"><span class="tape" aria-hidden="true"></span>' + (Pl.headline ? '<p class="verdict">' + esc(Pl.headline) + '</p>' : '') + (Pl.summary ? '<p class="vsum">' + esc(Pl.summary) + '</p>' : '') + '</div>';
+    if (Pl.headline || Pl.summary) h += '<div class="verdict-card dup"><span class="tape" aria-hidden="true"></span>' + (Pl.headline ? '<p class="verdict">' + esc(Pl.headline) + '</p>' : '') + (Pl.summary ? '<p class="vsum">' + esc(Pl.summary) + '</p>' : '') + goalBlock(Pl.goal) + '</div>';
+    else if (Pl.goal) h += fig('Your goal', goalBlock(Pl.goal), { cls: 'dup' });
     if (Pl.key_findings && Pl.key_findings.length) {
-      h += fig('Key findings', '<ol class="steps">' + Pl.key_findings.map(function (k) {
-        return typeof k === 'string' ? '<li>' + esc(k) + '</li>' : '<li><strong>' + esc(k.title) + '</strong>' + esc(k.detail || '') + (k.evidence ? '<span class="ev">' + esc(k.evidence) + '</span>' : '') + '</li>';
-      }).join('') + '</ol>', { cls: 'dup' });
+      h += fig('Key findings', '<ol class="steps">' + Pl.key_findings.map(function (k) { return finding(k, true); }).join('') + '</ol>', { cls: 'dup' });
     }
     if ((Pl.working && Pl.working.length) || (Pl.not_working && Pl.not_working.length)) {
       h += '<div class="two">' + fig('What is working', listItems(Pl.working, 'ticks') || naBox('—')) + fig('What is not', listItems(Pl.not_working, 'cross') || naBox('—')) + '</div>';
     }
     if (Pl.pillars && Pl.pillars.length) {
-      h += '<h3 class="sub">Content pillars</h3><div class="pillars">' + Pl.pillars.map(function (p) {
+      h += '<h3 class="sub">Content pillars</h3>' + rows4(Pl.pillars.map(function (p) {
         return '<div class="fig pillar"><h4>' + esc(p.name) + (p.share_pct != null ? '<span>' + esc(p.share_pct) + '% of posts</span>' : '') + '</h4>' +
           (p.why ? '<p>' + esc(p.why) + '</p>' : '') +
           (p.evidence ? '<p class="k">Evidence</p><p>' + esc(p.evidence) + '</p>' : '') +
           (p.from_prefs ? '<p class="k">From what you told us</p><p>' + esc(p.from_prefs) + '</p>' : '') +
           (p.formats && p.formats.length ? '<p class="k">Formats</p><ul class="chips">' + p.formats.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' : '') +
           (p.examples && p.examples.length ? '<p class="k">Ideas</p>' + listItems(p.examples, 'dash') : '') + '</div>';
-      }).join('') + '</div>';
+      }));
     }
+    if (Pl.stop && Pl.stop.length) h += fig('What to stop or cut down', listItems(Pl.stop, 'cross'), { cls: 'wide stop' });
     if ((Pl.posting_rules && Pl.posting_rules.length) || (Pl.best_slots && Pl.best_slots.length)) {
       h += '<h3 class="sub span">When and how to post</h3><div class="two">' +
         fig('Posting rules', listItems(Pl.posting_rules, 'ticks') || naBox('—')) +
         fig('Your slots', Pl.best_slots && Pl.best_slots.length ? table(['Day', 'Time (IST)', 'Format', 'Why'], Pl.best_slots.map(function (s) { return [s.day, s.time_ist, s.format, s.why || '']; }), { wide: [3] }) : naBox('—')) + '</div>';
+    }
+    if (Pl.series && Pl.series.length) {
+      h += '<h3 class="sub span">Your series</h3>' + rows4(Pl.series.map(function (x) {
+        var ep = x.episodes, n = Array.isArray(ep) ? ep.length : ep;
+        return '<div class="fig pillar"><h4>' + esc(x.name || '') + (n != null && n !== '' ? '<span>' + esc(n) + (isNum(+n) ? ' episode' + (+n === 1 ? '' : 's') : '') + '</span>' : '') + '</h4>' +
+          (x.logline ? '<p>' + esc(x.logline) + '</p>' : '') +
+          (x.slot ? '<p class="k">When</p><p>' + esc(x.slot) + '</p>' : '') +
+          (x.proof ? '<p class="k">Why it will work</p><p>' + esc(x.proof) + '</p>' : '') +
+          (Array.isArray(ep) && ep.length ? '<p class="k">Episodes</p>' + listItems(ep.map(function (e) { return typeof e === 'string' ? e : (e && (e.title || e.name)) || ''; }), 'dash') : '') +
+          (x.episodes_note ? '<p class="k">Episodes</p><p>' + esc(x.episodes_note) + '</p>' : '') + '</div>';
+      }));
     }
     var cal = Pl.calendar;
     if (cal && cal.weeks && cal.weeks.length) {
@@ -828,9 +884,14 @@
       h += '<div class="weeks">' + cal.weeks.map(function (w) {
         return '<div class="fig wk"><div class="fig-h"><b>Week ' + esc(w.week) + '</b><span class="fig-r">' + esc([w.dates, w.theme].filter(Boolean).join(' \u00b7 ')) + '</span></div>' +
           '<ul class="cal">' + (w.posts || []).map(function (p) {
-            return '<li><span class="d">' + esc(p.day || '') + (p.date ? ' ' + esc(p.date) : '') + '<small>' + esc(p.time_ist || '') + ' IST</small></span>' +
-              '<span class="h"><b>' + esc(p.hook || '') + '</b><small>' + esc([p.format, p.pillar].filter(Boolean).join(' \u00b7 ')) + '</small>' +
-              (p.notes ? '<small class="nt">' + esc(p.notes) + '</small>' : '') + '</span></li>';
+            var tp = p.tentpole ? (typeof p.tentpole === 'string' ? p.tentpole : 'Big day') : '';
+            var chk = p.needs_check ? (typeof p.needs_check === 'string' ? p.needs_check : 'To confirm with you') : '';
+            return '<li' + (tp ? ' class="tp"' : '') + '><span class="d">' + esc(p.day || '') + (p.date ? ' ' + esc(p.date) : '') + '<small>' + esc(p.time_ist || '') + ' IST</small></span>' +
+              '<span class="h">' + (tp ? '<i class="tpk">' + esc(tp) + '</i>' : '') + '<b>' + esc(p.title || p.hook || '') + '</b>' +
+              (p.title && p.hook ? '<small class="hk">' + esc(p.hook) + '</small>' : '') +
+              '<small>' + (p.series ? '<em class="sr">' + esc(p.series) + '</em> \u00b7 ' : '') + esc([p.format, p.pillar].filter(Boolean).join(' \u00b7 ')) +
+              (p.script_id ? ' <span class="okm" title="Script ' + esc(p.script_id) + '">script ready</span>' : '') + '</small>' +
+              (p.notes ? '<small class="nt">' + esc(p.notes) + '</small>' : '') + (chk ? '<small class="ck">' + esc(chk) + '</small>' : '') + '</span></li>';
           }).join('') + '</ul></div>';
       }).join('') + '</div>';
     }
@@ -847,11 +908,24 @@
         (br.summary ? '<p class="vsum" style="font-size:15.5px;margin-top:0">' + esc(br.summary) + '</p>' : '') + '</div><div>' +
         (br.strengths && br.strengths.length ? fig('Strengths', listItems(br.strengths, 'ticks')) : '') +
         (br.gaps && br.gaps.length ? fig('Fix before pitching', listItems(br.gaps, 'cross')) : '') + '</div></div>';
+      var ts = br.trust_score, nf = br.not_fit && br.not_fit.length ? br.not_fit : null;
+      if (ts != null && typeof ts !== 'object') ts = { score: ts, out_of: br.trust_out_of, parts: br.trust_parts };
+      if (ts || nf) {
+        var tparts = (ts && ts.parts) || [];
+        h += '<div class="two">' + (ts ? fig('Brand trust score', '<div class="score"><b>' + esc(ts.score) + '</b><span>out of ' + esc(ts.out_of || 100) + '</span></div>' +
+          (tparts.length ? '<ul class="tsp">' + tparts.map(function (t) {
+            var mx = t.max != null ? t.max : t.out_of, w = isNum(+t.score) && +mx > 0 ? Math.max(0, Math.min(100, +t.score / +mx * 100)) : 0;
+            return '<li><span class="l">' + esc(t.label || t.part || '') + '</span><span class="v">' + esc(t.score) + (mx != null ? '<small> / ' + esc(mx) + '</small>' : '') + '</span>' +
+              '<i><u style="width:' + w.toFixed(1) + '%"></u></i>' + (t.note ? '<small class="n">' + esc(t.note) + '</small>' : '') + '</li>';
+          }).join('') + '</ul>' : ''), { desc: 'How safe a brand would feel putting money behind this page today.' }) : '') +
+          (nf ? fig('Not a fit right now', listItems(nf, 'cross'), { desc: 'Categories to say no to, or leave for later.' }) : '') + '</div>';
+      }
       if (br.rates && br.rates.length) {
+        h += '<p class="rates-note span"><b>Read this first</b>' + esc(br.rates_note || 'These are a starting range, not a quote. The views are yours; the price per view is our assumption for the Indian market at this size. Final rates depend on usage rights, exclusivity and deliverables.') + '</p>';
         h += fig('Rate guidance', table(['Deliverable', 'Range', 'Notes'], br.rates.map(function (r) {
           var cur = r.currency === 'INR' || !r.currency ? '\u20b9' : r.currency + ' ';
           return [r.deliverable, cur + nint(r.low) + '\u2013' + nint(r.high), r.note || ''];
-        }), { wide: [2] }), { cls: 'wide', note: br.rates_note || 'Guidance ranges for the Indian market at this size; final rates depend on usage rights, exclusivity and deliverables.' });
+        }), { wide: [2] }), { cls: 'wide' });
       }
       if (br.pitch_list && br.pitch_list.length) {
         h += fig('Who to pitch', table(['Category', 'Why you fit', 'Examples'], br.pitch_list.map(function (p) {
@@ -866,6 +940,7 @@
       })));
     }
     if (Pl.next_steps && Pl.next_steps.length) h += fig('This week', '<ol class="steps">' + Pl.next_steps.map(function (s) { return '<li>' + esc(typeof s === 'string' ? s : (s.title || '') + ' ' + (s.detail || '')) + '</li>'; }).join('') + '</ol>');
+    if (Pl.open_questions && Pl.open_questions.length) h += fig('Questions only you can answer', '<ol class="steps">' + Pl.open_questions.map(function (q) { return '<li>' + esc(typeof q === 'string' ? q : (q.question || q.title || '')) + '</li>'; }).join('') + '</ol>', { desc: 'Your answers make the next version of this plan sharper. Reply to us on any of them.' });
     if (Pl.author || Pl.written_at) h += '<p class="fig-n">Plan by ' + esc(Pl.author || 'Busy Fox') + (Pl.written_at ? ', ' + esc(Pl.written_at) : '') + '.</p>';
     return h;
   }
@@ -889,7 +964,7 @@
     { id: 'optimisation', key: 'optimization', eyebrow: 'Optimisation', title: 'When and how to <em>post</em>', lead: 'The days, hours, formats and hashtags that work best for you.', fn: secOpt, flow: true },
     { id: 'stories', key: 'stories', eyebrow: 'Stories', title: '<em>Stories</em>', lead: 'Reach, views, replies and drop-off for the stories we collected.', fn: secStories, flow: true, keep: 360 },
     { id: 'profile', key: 'profile_activity', eyebrow: 'Profile', title: 'Profile and <em>account</em> activity', lead: 'Accounts reached, views, link taps and engagement, in 30-day windows.', fn: secProfile, flow: true },
-    { id: 'momentum', key: 'momentum', eyebrow: 'Momentum', title: 'Are you <em>growing</em>?', lead: 'Monthly medians since your first post: reach, engagement, likes and views.', fn: secMomentum, flow: true },
+    { id: 'momentum', key: 'momentum', eyebrow: 'Momentum', title: 'Are you <em>growing</em>?', lead: 'Monthly medians since your first post: views, people reached, engagement and likes.', fn: secMomentum, flow: true },
     { id: 'consistency', key: 'consistency', eyebrow: 'Consistency', title: 'Rhythm and <em>breaks</em>', lead: 'How often you post, the longest gaps, and what happened to reach after them.', fn: secConsistency, flow: true },
     { id: 'patterns', key: 'patterns', eyebrow: 'Patterns', title: 'What your <em>best</em> posts share', lead: 'Your top 10% against your bottom 25%: format, timing, captions, hooks and words.', fn: secPatterns, flow: true, keep: 600 },
     { id: 'virality', key: 'virality', eyebrow: 'Virality and conversion', title: 'Shares, saves and <em>new followers</em>', lead: 'Which posts travel beyond your followers, and which turn viewers into followers.', fn: secVirality, flow: true },
@@ -907,7 +982,7 @@
      Adds: a 3D fan of her most-seen posts, a year-in-numbers band, a sticky chapter bar, charts that draw in when
      scrolled to, numbers that count up. ?still or reduced-motion shows everything in its final state. */
   var CHAPTERS = [
-    { id: 'today', label: 'Today', secs: ['glance'] },
+    { id: 'today', label: 'Today', secs: ['glance', 'onlyhere'] },
     { id: 'people', label: 'Your people', secs: ['audience', 'quality'] },
     { id: 'content', label: 'Your content', secs: ['posts', 'patterns', 'reels', 'virality'] },
     { id: 'timing', label: 'Timing', secs: ['optimisation', 'consistency', 'momentum', 'forecast', 'profile'] },
@@ -941,13 +1016,14 @@
   }
   function storyHero(R, ST) {
     var P = R.profile || {}, top = (R.posts && R.posts.top) || {}, cards = top.cards || {};
-    var ids = ((top.lists || {}).reach || {}).ids || [];
+    var byViews = !!((top.lists || {}).views && top.lists.views.ids && top.lists.views.ids.length);
+    var ids = ((top.lists || {})[byViews ? 'views' : 'reach'] || {}).ids || [];
     var best = ids.map(function (id) { return cards[id]; }).filter(function (c) { return c && c.thumb; }).slice(0, 5);
     // the most-seen post sits in the middle of the fan
     var order = best.length === 5 ? [best[3], best[1], best[0], best[2], best[4]] : best;
     var fan = order.map(function (c) {
       return '<a class="fc" href="' + esc(c.url || '#') + '" target="_blank" rel="noopener" aria-label="Open the post from ' + esc(c.date) + ' on Instagram">' +
-        '<img src="' + esc(c.thumb) + '" alt="" decoding="async"><span class="fc-n"><b>' + esc(lakh(c.reach)) + '</b>reached</span></a>';
+        '<img src="' + esc(c.thumb) + '" alt="" decoding="async"><span class="fc-n"><b>' + esc(lakh(byViews ? c.views : c.reach)) + '</b>' + (byViews ? 'views' : 'reached') + '</span></a>';
     }).join('');
     var name = ST.first_name || (P.name || '').split(' ')[0] || '';
     var me = '<div class="me"><span class="tape" aria-hidden="true"></span>' +
@@ -961,7 +1037,7 @@
       '<div class="hero-m"><div><p>Followers today</p><b data-count>' + nint(P.followers) + '</b></div>' +
       (net && isNum(net.value) ? '<div><p>Last 30 days</p><b data-count>' + esc(fv(net.value, 'signed_int')) + '</b></div>' : '') +
       '<div><p>Posts we read</p><b data-count>' + nint(P.posts_found) + '</b></div></div>' +
-      '<a class="btn solid" href="#plan">See your 90-day plan</a></div>' +
+      '<a class="btn solid" href="#plan">See your 90-day plan</a><p class="hero-wm">' + wm('fox') + '</p></div>' +
       '<div class="hero-s"><div class="stage"><div class="fan-tilt"><div class="fan">' + fan + me + '</div></div></div>' +
       (order.length ? '<p class="hand hero-cap">Your five most-seen posts. Tap one to open it.</p>' : '') + '</div></header>';
   }
@@ -1085,24 +1161,23 @@
     root.classList.toggle('still', !!ST && STILL);
     var gen = R.generated_at ? new Date(R.generated_at) : null;
     var genLabel = gen && !isNaN(gen) ? gen.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }) : (P.today_label || '');
-    var h = '<header class="head">' + logo('Marketing') + '<div class="head-r"><span class="when">Instagram audit · ' + esc(genLabel) + '</span>' +
-      '<button class="btn" type="button" data-print>Save as PDF</button></div></header>';
+    var h = '<header class="head">' + logo('Marketing') + '<div class="head-r"><span class="when">Instagram audit · ' + esc(genLabel) + '</span></div></header>';
     h += '<header class="cover">' + tapes() + '<div class="cv-logo">' + logo('Marketing') + '</div>' +
       '<div class="cv-main">' + tapes() + '<p class="hand cv-kind">Your Instagram growth audit</p><h1 class="cv-name">' + esc(P.name || ('@' + (P.username || ''))) + '</h1>' +
       '<p class="cv-handle">@' + esc(P.username || '') + '</p>' +
-      '<p class="cv-period"><span><b>' + esc(P.period || '') + '</b></span><span>' + nint(P.followers) + ' followers · ' + nint(P.posts_found) + ' posts</span><span class="no-print">Prepared by ' + esc(AGENCY.name) + '</span></p></div>' +
+      '<p class="cv-period"><span><b>' + esc(P.period || '') + '</b></span><span>' + nint(P.followers) + ' followers · ' + nint(P.posts_found) + ' posts</span><span class="no-print">Prepared by ' + esc(AGENCY.name) + '</span></p><p class="cv-wm">' + wm('fox') + '</p></div>' +
       '<div class="cv-foot"><span>Prepared by <b>' + esc(AGENCY.name) + '</b> · ' + esc(genLabel) + '</span><span>' + esc(AGENCY.email) + '</span></div></header>';
     if (ST) h += storyNav(secs) + storyHero(R, ST);
     // glance
     var G = R.glance || {}, Pl = R.plan && !isNA(R.plan) ? R.plan : null;
+    // screen only: the lockup closes every section (in the PDF it sits in the section band and every page is tiled)
+    var secWm = '<p class="sec-wm no-print">' + wm() + '</p>';
     h += '<section class="sec" id="glance">' + head(null, 'At a glance', 'The <em>short</em> version', null);
-    if (Pl && Pl.headline) h += '<div class="verdict-card"><span class="tape" aria-hidden="true"></span><p class="verdict">' + esc(Pl.headline) + '</p>' + (Pl.summary ? '<p class="vsum">' + esc(Pl.summary) + '</p>' : '') + '</div>';
+    if (Pl && Pl.headline) h += '<div class="verdict-card"><span class="tape" aria-hidden="true"></span><p class="verdict">' + esc(Pl.headline) + '</p>' + (Pl.summary ? '<p class="vsum">' + esc(Pl.summary) + '</p>' : '') + goalBlock(Pl.goal) + '</div>';
     else if (R.momentum && R.momentum.verdict) h += '<div class="verdict-card"><span class="tape" aria-hidden="true"></span><p class="verdict">Momentum: <em>' + esc(R.momentum.verdict.toLowerCase()) + '</em>.</p></div>';
     if (!isNA(G)) h += stats((G.items || []).map(function (i) { return { label: i.label, value: i.value, fmt: i.fmt, sub: i.sub }; }));
     if (Pl && Pl.key_findings && Pl.key_findings.length) {
-      h += fig('Key findings', '<ol class="steps">' + Pl.key_findings.slice(0, 5).map(function (k) {
-        return typeof k === 'string' ? '<li>' + esc(k) + '</li>' : '<li><strong>' + esc(k.title) + '</strong>' + esc(k.detail || '') + '</li>';
-      }).join('') + '</ol>');
+      h += fig('Key findings', '<ol class="steps">' + Pl.key_findings.slice(0, 5).map(function (k) { return finding(k, false); }).join('') + '</ol>');
     } else if (G.facts && G.facts.length) h += reading(G.facts, 'Key facts');
     h += fig('Contents', '<ol class="toc">' + SECTIONS.map(function (s, i) {
       return '<li><span>' + (i + 1) + '</span><a href="#' + s.id + '">' + esc(s.eyebrow) + '</a></li>';
@@ -1110,7 +1185,8 @@
     h += fig('Contents', '<ol class="toc toc-print">' + SECTIONS.map(function (s, i) {
       return '<li data-sec="' + s.id + '"><span>' + (i + 1) + '</span>' + esc(s.eyebrow) + '<b class="pg"></b></li>';
     }).join('') + '<li data-sec="notes"><span>·</span>Notes on the data<b class="pg"></b></li></ol>', { cls: 'print-only toc-fig' });
-    h += '</section>';
+    h += secWm + '</section>';
+    h += secOnlyHere(Pl);
     if (ST) h += storyYear(R, ST);
     secs.forEach(function (s, i) {
       var num = String(i + 1).padStart(2, '0');
@@ -1125,15 +1201,16 @@
         body = m >= 0 && (f < 0 || m < f) ? body.slice(0, m) + lead + body.slice(m) : lead + body;
       }
       // .pbk is print-only: an unbreakable spacer that starts the section on a new page when too little of the page is left
-      h += (s.flow ? '<div class="pbk" aria-hidden="true"' + (s.keep ? ' style="--keep:' + s.keep + 'px"' : '') + '></div>' : '') + '<section class="sec' + (s.flow ? ' flow' : '') + '" id="' + s.id + '"' + (s.flow ? '' : ' data-newpage="1"') + (s.keep ? ' data-keep="' + s.keep + '"' : '') + '>' + head(num, s.eyebrow, s.title, s.lead) + body + '</section>';
+      h += (s.flow ? '<div class="pbk" aria-hidden="true"' + (s.keep ? ' style="--keep:' + s.keep + 'px"' : '') + '></div>' : '') + '<section class="sec' + (s.flow ? ' flow' : '') + '" id="' + s.id + '"' + (s.flow ? '' : ' data-newpage="1"') + (s.keep ? ' data-keep="' + s.keep + '"' : '') + '>' + head(num, s.eyebrow, s.title, s.lead) + body + secWm + '</section>';
     });
-    h += '<section class="sec flow" id="notes" data-keep="360">' + head(null, 'Notes on the data', 'How to read this <em>report</em>', 'Definitions, time zones and the things Instagram does not share.') + secNotes(R.data_notes) + '</section>';
-    h += '<footer class="band" style="page:back">' + logo('Marketing') +
+    h += '<section class="sec flow" id="notes" data-keep="360">' + head(null, 'Notes on the data', 'How to read this <em>report</em>', 'Definitions, time zones and the things Instagram does not share.') + secNotes(R.data_notes) + secWm + '</section>';
+    h += '<footer class="band wm-tile light" style="page:back">' + logo('Marketing') +
       '<p class="hand">Thank you for connecting</p>' +
       '<h2>Questions about your audit, or want us to run the plan <em>with you</em>?</h2>' +
       '<p>Write to ' + esc(AGENCY.name) + ' and we will get back to you.</p>' +
       '<p class="ct">' + contactLine() + '</p>' +
-      '<small>Numbers come from Instagram with your permission, as of ' + esc(P.today_label || '') + '. Times are India time (IST). This report is private to you; ask us any time to delete your data.</small></footer>';
+      '<small>Numbers come from Instagram with your permission, as of ' + esc(P.today_label || '') + '. Times are India time (IST). This report is private to you; ask us any time to delete your data.</small>' +
+      '<p class="band-wm">' + wm('light') + '</p></footer>';
     root.innerHTML = h;
     wire(root);
     if (ST) storyWire(root);
@@ -1155,7 +1232,7 @@
      (shortest of three columns) into fixed landscape pages; full-width blocks cross all columns; headings stay with
      the block after them; a section continues on the same page only if data-keep px (default 430) are still free. */
   var PAGE_H = 840, GAP = 13, SEC_GAP = 20, COLS = 3;  // A4 landscape content box is 843.5 css px tall at print scale .82
-  var SPAN = '.sh,.stats,.wide,.pair,.quad,.tp-list,.pillars,.kit,.verdict-card,.prefs,.quote,.dn,h3.span,.sub-lead.span';
+  var SPAN = '.sh,.stats,.wide,.pair,.quad,.tp-list,.pillars,.kit,.verdict-card,.prefs,.quote,.dn,h3.span,.sub-lead.span,ol.only,.rates-note';
   function paginate(root) {
     var secs = Array.prototype.slice.call(root.querySelectorAll('section.sec'));
     if (!secs.length) return;
@@ -1286,7 +1363,7 @@
     pages.forEach(function (pg) {
       if (!pg.length) return;
       var d = document.createElement('div');
-      d.className = 'pp';
+      d.className = 'pp wm-tile';  // every PDF page carries the watermark
       pg.forEach(function (it) {
         it.b.wrap.style.left = it.x + 'px';
         it.b.wrap.style.top = it.y + 'px';
@@ -1322,9 +1399,24 @@
         sec.querySelectorAll('.tp-list').forEach(function (l) { l.hidden = l.getAttribute('data-list') !== key; });
       });
     });
-    var pb = root.querySelector('[data-print]');
-    if (pb) pb.addEventListener('click', function () { window.print(); });
+    root.querySelectorAll('img').forEach(function (i) { i.draggable = false; });
   }
+
+  /* ------------------------------------------------------------------ view online only
+     The live page gives no way to keep a copy: no print (report.css blanks it), no Save page / Print shortcuts,
+     no right-click, long-press or drag on pictures and charts. Links and text selection stay as they are.
+     Screenshots cannot be stopped from a web page; the watermark is there for those. */
+  function guard() {
+    var pic = 'img,svg,canvas,picture,.ph,.fc,.me';
+    var hit = function (e) { var t = e.target; return t && t.closest ? t.closest(pic) : null; };
+    document.addEventListener('keydown', function (e) {
+      var k = (e.key || '').toLowerCase();
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && (k === 's' || k === 'p')) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+    document.addEventListener('contextmenu', function (e) { if (hit(e)) e.preventDefault(); }, true);
+    document.addEventListener('dragstart', function (e) { if (hit(e)) e.preventDefault(); }, true);
+  }
+  if (!PDF_BUILD) guard();
 
   function state(root, title, text, loading, retry) {
     root.innerHTML = '<header class="head">' + logo('Marketing') + '</header>' +

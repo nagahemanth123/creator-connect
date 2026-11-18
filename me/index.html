@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="wm-on">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -16,6 +16,11 @@
 <link rel="stylesheet" href="../assets/planner.css">
 <link rel="stylesheet" href="../assets/fun.css">
 <link rel="stylesheet" href="../assets/scripts.css">
+<link rel="stylesheet" href="../assets/kit.css">
+<link rel="stylesheet" href="../assets/dash.css">
+<link rel="stylesheet" href="../assets/party.css">
+<link rel="stylesheet" href="../assets/watermark.css">
+<script>if (/[?&]still\b/.test(location.search)) document.documentElement.classList.add("still");</script>
 <style>
 /* Type scale (tokens live in planner.css): display = greeting · h2 = section · h3 = card · body 16 · small 14.5 · fine 13 · label 12.5 caps · hand 22.
    Playfair for display and numbers, DM Sans for reading, Caveat only for the small hand notes. */
@@ -26,10 +31,13 @@
 .wrap { overflow-x: clip; } /* the tape line runs off both edges on a phone */
 .page { padding: 8px 0 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; align-items: start; }
 .page > * { min-width: 0; }
+.page > .side { order: 9; } /* on a phone the quieter side notes come after everything else */
+.page > .side:not(:has(.sec:not([hidden]), .out)) { display: none; }
 .col { display: grid; gap: 52px; min-width: 0; }
 @media (min-width: 980px) {
 	.page { grid-template-columns: minmax(0, 1fr) 320px; gap: 40px 56px; padding-top: 24px; }
-	.hello, .stats { grid-column: 1 / -1; }
+	.hello, .stats, .pt, #only { grid-column: 1 / -1; }
+	.page > .side { order: 0; }
 	.col { gap: 64px; }
 	.side { position: sticky; top: 24px; }
 }
@@ -105,6 +113,8 @@
 .newchip:hover { background: var(--cocoa-2); }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--cocoa); color: var(--cream); padding: 12px 20px; border-radius: 999px; font-size: 14.5px; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 95; max-width: calc(100vw - 32px); }
 .toast.on { opacity: 1; }
+/* while the page is loading the footer waits out of sight, so it does not jump down when the page appears */
+.wrap:has(#page[hidden]):has(#err[hidden]) .foot { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 </style>
 </head>
@@ -120,18 +130,54 @@
 			<div><p class="hand">your dashboard</p><h1><span class="hi">Hi,</span> <em id="hiName">there</em></h1><p id="handle"></p></div>
 		</section>
 
-		<div class="stats" id="stats"></div>
+		<section class="pt" id="party" aria-label="Your Instagram anniversary" hidden></section>
 
 		<div class="col">
+			<section class="sec" id="todaySec">
+				<div class="hd"><p class="hand">one thing, not ten</p><h2>Your <em>today</em></h2></div>
+				<div id="today"></div>
+			</section>
+
+			<section class="sec" id="scoreSec">
+				<div class="hd"><p class="hand">how the week is going</p><h2>Weekly <em>score</em></h2></div>
+				<p class="sub">One number for your week, with the reasons. <b>Each post is judged against your own usual</b>, not against anyone else.</p>
+				<div id="score"></div>
+			</section>
+		</div>
+
+		<aside class="col side">
+			<section class="sec" id="choicesSec" hidden>
+				<div class="hd"><p class="hand">what you love making</p><h2>Your <em>choices</em></h2></div>
+				<div class="pick" id="choices"></div>
+			</section>
+		</aside>
+
+		<div class="stats" id="stats"></div>
+
+		<div id="only"></div>
+
+		<div class="col">
+			<section class="sec" id="planSec">
+				<div class="hd"><p class="hand">planned, edited, posted</p><h2>Your <em>content plan</em></h2></div>
+				<p class="sub">Every post for the month, with its date and time. <b>Nothing goes live without your yes.</b></p>
+				<div id="planner"></div>
+			</section>
+
 			<section class="sec" id="scriptsSec" hidden>
 				<div class="hd"><p class="hand">fresh from Busy Fox</p><h2>Reel <em>scripts</em></h2></div>
 				<div id="scripts"></div>
 			</section>
 
-			<section class="sec">
-				<div class="hd"><p class="hand">planned, edited, posted</p><h2>Your <em>content plan</em></h2></div>
-				<p class="sub">Every post for the month, with its date and time. <b>Nothing goes live without your yes.</b></p>
-				<div id="planner"></div>
+			<section class="sec" id="ideasSec">
+				<div class="hd"><p class="hand">from your own best posts</p><h2>Ideas <em>bank</em></h2></div>
+				<p class="sub">Hooks, caption starters and reel ideas that have already worked <b>for you</b>. Copy one, save it, or put it on your calendar.</p>
+				<div id="ideas"></div>
+			</section>
+
+			<section class="sec" id="brandsSec">
+				<div class="hd"><p class="hand">what brands ask for</p><h2>For <em>brands</em></h2></div>
+				<p class="sub">The numbers a brand wants before it pays a creator, <b>read straight from Instagram</b> so they can trust them.</p>
+				<div id="brands"></div>
 			</section>
 
 			<section class="sec">
@@ -147,10 +193,6 @@
 		</div>
 
 		<aside class="col side">
-			<section class="sec" id="choicesSec" hidden>
-				<div class="hd"><p class="hand">what you love making</p><h2>Your <em>choices</em></h2></div>
-				<div class="pick" id="choices"></div>
-			</section>
 			<p class="out"><b>Keep this link private.</b> Anyone with it can see this page. To disconnect, open Instagram → Settings → Apps and websites → Busy Fox Insights → Remove. Questions? Write to <a href="mailto:admin@busyfox.in">admin@busyfox.in</a>.</p>
 		</aside>
 	</main>
@@ -166,6 +208,7 @@
 
 	<footer class="foot">
 		<span><b>Busy Fox Marketing</b></span>
+		<span class="wm-mark">FoxCut Creator Connect</span>
 		<span><a href="../privacy/">Privacy</a></span>
 	</footer>
 </div>
@@ -175,6 +218,9 @@
 <script src="../assets/fun.js"></script>
 <script src="../assets/planner.js"></script>
 <script src="../assets/scripts.js"></script>
+<script src="../assets/kit.js"></script>
+<script src="../assets/party.js"></script>
+<script src="../assets/dash.js"></script>
 <script src="../assets/track.js" data-kind="me"></script>
 <script>
 (function () {
@@ -215,7 +261,13 @@
 		return '<svg class="spark" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="#F2B8C6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
 	}
 
-	api('/me').then(function (d) {
+	// asked for at the same moment as /me: when it is back in time the new blocks are drawn before the page shows, so nothing jumps
+	var dashFirst = meReq('dash').catch(function () { return null; });
+	var soon = new Promise(function (res) { setTimeout(function () { res(null); }, 2500); });
+	// the page shows once its fonts are in (at most 1.5 s), so headings do not re-wrap and push things down a moment later
+	var fontsIn = document.fonts && document.fonts.load ? Promise.race([Promise.all(['400 20px "Playfair Display"', 'italic 400 20px "Playfair Display"', 'italic 500 20px "Playfair Display"', '400 16px "DM Sans"', '600 16px "DM Sans"', '700 16px "DM Sans"', '600 22px "Caveat"'].map(function (f) { return document.fonts.load(f); })).catch(function () {}), new Promise(function (res) { setTimeout(res, 1500); })]) : Promise.resolve();
+	Promise.all([api('/me'), Promise.race([dashFirst, soon]), fontsIn]).then(function (both) {
+		var d = both[0], pre = both[1];
 		if (!d || !d.ok) { if (d && d.error === 'not_found') store(KEY, ''); return fail((d && d.message) || 'This link is not valid any more. Ask Busy Fox for a new one.'); }
 		var p = d.profile || {};
 		$('page').hidden = false;
@@ -233,14 +285,14 @@
 			$('page').dataset.fun = '1';
 			window.Fun.doodles(document.querySelector('.hello'));
 			$('pic').classList.add('fun-ring');
-			$('stats').parentNode.insertBefore(window.Fun.ticker(['plan it', 'shoot it', 'post it', 'watch it grow', 'do it again']), $('stats').nextSibling);
+			$('only').parentNode.insertBefore(window.Fun.ticker(['plan it', 'shoot it', 'post it', 'watch it grow', 'do it again']), $('only').nextSibling);
 			window.Fun.intro($('page'));
 			window.Fun.arrive('#stats .stat', 620);
 			window.Fun.count('#stats .stat b', 760);
 		}
 
 		$('report').innerHTML = d.report ?
-			'<span class="stamp" aria-hidden="true">Ready</span><h3>Everything we found on your Instagram</h3><p>Who follows you, when they’re online, which posts worked, and your 90-day plan. Open it any time. Tap “Save as PDF” at the top to keep a copy.</p><div class="row"><a class="btn dark" href="' + esc(d.report.url) + '" target="_blank" rel="noopener">Open my report</a></div>' :
+			'<span class="stamp" aria-hidden="true">Ready</span><h3>Everything we found on your Instagram</h3><p>Who follows you, when they’re online, which posts worked, and your 90-day plan. Open it any time.</p><div class="row"><a class="btn dark" href="' + esc(d.report.url) + '" target="_blank" rel="noopener">Open my report</a></div>' :
 			'<h3>Your report is being prepared</h3><p>We’re going through every post since your first one. We’ll message you on WhatsApp the moment it’s ready, and it will appear right here.</p>';
 
 		var pr = d.prefs;
@@ -274,10 +326,28 @@
 			window.Fun.when('.rep .stamp', 'fun-thunk');
 		}
 
-		window.Planner.mount($('planner'), {
+		var dash = null;
+		var plan = window.Planner.mount($('planner'), {
 			voice: 'creator', who: p.username, toast: toast,
 			postConnect: (d.links && d.links.post_connect) || '../?mode=post',
-			req: meReq
+			req: meReq,
+			onChange: function () { if (dash) dash.reload(); }
+		});
+		// what Instagram's own Insights does not show: today's one thing, the weekly score and alerts, the ideas bank, the brand kit
+		if (window.Dash) dash = window.Dash.mount({
+			req: pre ? meReq : function (sub, o) { return sub === 'dash' && dashFirst ? (function (p) { dashFirst = null; return p.then(function (r) { return r || meReq('dash'); }); })(dashFirst) : meReq(sub, o); }, // slow first read: reuse the request already on its way
+			first: pre, toast: toast, planner: function () { return plan; },
+			els: {party: $('party'), strip: $('only'), today: $('today'), score: $('score'), ideas: $('ideas'), brands: $('brands')},
+			onAlerts: function (n) {
+				var old = document.getElementById('alertChip');
+				if (old) old.remove();
+				if (!n) return;
+				var chip = document.createElement('button');
+				chip.type = 'button'; chip.className = 'newchip alert'; chip.id = 'alertChip';
+				chip.innerHTML = '<b>' + n + ' new</b> ' + (n === 1 ? 'alert' : 'alerts') + ' ↓';
+				chip.onclick = function () { var box = document.getElementById('alertsBox'); if (box) box.scrollIntoView({behavior: 'smooth', block: 'center'}); };
+				$('handle').parentNode.appendChild(chip);
+			}
 		});
 
 		window.AutoDM.mount($('autodm'), {

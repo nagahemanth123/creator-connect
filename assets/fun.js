@@ -11,7 +11,7 @@
    Fun.planner(root, opt)     called by planner.js after every redraw: plays each entrance once, keeps loops asleep off screen */
 (function () {
 	'use strict';
-	var calm = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+	var calm = /[?&]still\b/.test(location.search) || !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); // ?still = the finished look, no motion
 	var hasIO = 'IntersectionObserver' in window;
 	var C = {cherry: '#C42847', dark: '#A11F3A', pink: '#F2B8C6', rose: '#D98799', butter: '#E2C35A', cocoa: '#3D2521', cream: '#FFF9F7'};
 	var STAR = '<path d="M12 1.5l2.6 6.7 7 .5-5.4 4.6 1.8 6.9L12 16.4 5.9 20.2l1.9-6.9L2.4 8.7l7-.5z"/>';

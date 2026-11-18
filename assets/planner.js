@@ -394,7 +394,7 @@
 				agenda() + '</div>' + audience() + weekly() + '</div>' +
 				(sheetKey ? '<div class="pl-back on' + (opening ? ' pl-open' : '') + '">' + (st.ideas ? ideasSheet() : st.form ? form(st.form) : sheet(p)) + '</div>' : '');
 			if (window.Fun && window.Fun.planner) window.Fun.planner(root, {deal: deal});
-			window.scrollTo(0, keepY);
+			if (Math.abs(window.scrollY - keepY) > 1) window.scrollTo({top: keepY, behavior: 'instant'}); // only when the redraw moved the page: a scroll that is on its way somewhere (to a script, to a day) must not be stopped
 			document.documentElement.classList.toggle('pl-lock', Boolean(st.form || p || st.ideas));
 		}
 

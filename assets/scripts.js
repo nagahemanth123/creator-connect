@@ -153,7 +153,23 @@
 		}
 		function seen(p) { if (!team && p && !p.opened_at) { p.opened_at = new Date().toISOString(); o.req('scripts-open', {method: 'POST', json: {pack: p.id}}).catch(function () {}); } }
 		function refresh() { return o.req('scripts').then(function (r) { if (r && r.ok) { packs = r.packs || []; draw(); if (o.onChange) o.onChange(packs); } }); }
-		function bring(node) { if (node) node.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'start'}); }
+		// bring a pack or a script to the top of the screen. The page above it can still be settling (blocks arriving, sections
+		// rising into place), so the landing is checked a few times and corrected, unless she has started scrolling herself.
+		var bringN = 0;
+		function bring(node) {
+			if (!node) return;
+			var id = node.id, n = ++bringN, hers = false, stop = function () { hers = true; };
+			['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) { window.addEventListener(ev, stop, {passive: true, once: true}); });
+			node.scrollIntoView({behavior: calm ? 'auto' : 'smooth', block: 'start'});
+			[700, 1300, 2100].forEach(function (ms) {
+				setTimeout(function () {
+					var now = document.getElementById(id);
+					if (n !== bringN || hers || !now) return;
+					var want = parseFloat(getComputedStyle(now).scrollMarginTop) || 0, off = now.getBoundingClientRect().top - want;
+					if (Math.abs(off) > 5) scroller().scrollBy({top: off, behavior: 'instant'});
+				}, ms);
+			});
+		}
 		function packBtn(pid) { return '[data-a="pack"][data-p="' + pid + '"]'; }
 		function actBtn(act, pid, iid) { return '#scs-' + iid + ' .sc-acts'; } // the row of buttons, not the button: a pressed button is drawn a little smaller, which would skew the measure
 		function itemBtn(pid, iid) { return '[data-a="toggle"][data-p="' + pid + '"][data-i="' + iid + '"]'; }

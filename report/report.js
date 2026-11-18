@@ -1507,7 +1507,7 @@
   var FONTS = null;
   function fontsReady() {
     if (!FONTS) {
-      var F = document.fonts, list = ['400 1em "Playfair Display"', 'italic 400 1em "Playfair Display"', '400 1em "DM Sans"', '600 1em "DM Sans"', '700 1em "Caveat"'];
+      var F = document.fonts, list = ['400 1em "Playfair Display"', 'italic 400 1em "Playfair Display"', '500 1em "Playfair Display"', '400 1em "DM Sans"', '600 1em "DM Sans"', '700 1em "Caveat"'];
       var all = F && F.load ? Promise.all(list.map(function (f) { return F.load(f).catch(function () {}); })) : Promise.resolve();
       FONTS = Promise.race([all, new Promise(function (ok) { setTimeout(ok, 1800); })]);
     }

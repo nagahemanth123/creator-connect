@@ -344,13 +344,18 @@
 	var api = window.CC && window.CC.api, box = document.getElementById('inv-status'), done = document.getElementById('done'), igEl = document.getElementById('done-ig');
 	if (!api || !box || !done || !('MutationObserver' in window)) return;
 	var timer = 0, tries = 0;
+	function acceptUrl() { // our own page: it opens Instagram in the browser, where invitations show (the app has no such screen)
+		var u = (igEl.textContent || '').replace(/^@/, '').trim().toLowerCase(), n = (document.getElementById('name').value || '').trim();
+		return '../accept/?for=' + encodeURIComponent(n || u) + '&ig=' + encodeURIComponent(u);
+	}
 	function show(sent) {
+		[].forEach.call(document.querySelectorAll('.js-accept'), function (x) { x.href = acceptUrl(); });
 		box.hidden = false; box.classList.add('show');
 		box.textContent = '';
 		if (!sent) { box.textContent = 'Waiting for your invitation to be sent\u2026'; return; }
 		var b = document.createElement('b'); b.textContent = 'Your invitation is ready. ';
-		var a = document.createElement('a'); a.href = 'https://www.instagram.com/accounts/manage_access/'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open your Instagram invitations';
-		box.appendChild(b); box.appendChild(a); box.appendChild(document.createTextNode(', tap Accept, then come back and tap Continue with Instagram.'));
+		var a = document.createElement('a'); a.href = acceptUrl(); a.textContent = 'Open your invitation page';
+		box.appendChild(b); box.appendChild(a); box.appendChild(document.createTextNode(' for the two last taps: accept, then connect.'));
 	}
 	function check() {
 		var u = (igEl.textContent || '').replace(/^@/, '').trim().toLowerCase();

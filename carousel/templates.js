@@ -31,24 +31,6 @@
 
 	var T = [];
 
-	/* 1 ─ CAMERA ROLL · y2k · camera frame on top of a photo, a new texture every slide */
-	T.push({id: 'camera-roll', name: 'Camera Roll', family: 'y2k', blurb: 'Digital-camera frame, Y2K stickers, a new texture on every slide',
-		make: function () {
-			var b = B(), tex = ['green-tiles', 'blue-tiles', 'red-croc', 'navy-cord', 'disco'];
-			var tops = ['y2k-swing', 'r1-latte', 'y2k-red', 'y2k-rocks', 'r1-rooftop'], bots = ['r1-flowers', 'cafe-pink', 'r1-brunch', 'sum-sea', 'r1-walk'];
-			var stick = [['cinnamon-roll', 'chrome-star'], ['cherries', 'sticky-note'], ['vinyl', 'puffy-heart'], ['ticket', 'butterfly'], ['cassette', 'chrome-star']];
-			for (var i = 0; i < 5; i++) {
-				b.photo(X(i), 1010, W, 690, 'ph/' + bots[i], {hint: 'any', fit: {s: 1, oy: .3}});
-				b.photo(X(i, -60), 360, 640, 640, 'ph/' + tops[i], {frame: 'camera-silver', hint: 'portrait', rot: i % 2 ? 4 : -4, anim: i ? null : F.pop(.1)});
-				b.stk(stick[i][0], X(i, 360), 210, 230, {rot: 12, shadow: true, anim: F.wig});
-				b.stk(stick[i][1], X(i, 380), 560, 150, {rot: -10, anim: F.float});
-			}
-			b.text(X(0), 820, 900, 'DUMP', 250, 'chunky', {wt: 800, c: '$c1', shadow: '$c2', ls: 6, anim: F.pop(.4)});
-			b.text(X(0, -260), 1250, 400, 'october', 64, 'hand', {wt: 700, c: '#fff', rot: -6});
-			b.text(X(4), 1240, 760, 'see you next month', 54, 'hand', {wt: 700, c: '#fff'});
-			return doc(this, null, 5, {c: '#222'}, tex.map(function (t) { return {tex: t, scale: .9}; }), b.L);
-		}, vars: {c1: '#e8692c', c2: '#7a2a10'}});
-
 	/* 2 ─ SCRAPBOOK MONTH · y2k · spiral notebook, polaroids, binder clips, a denim pocket */
 	T.push({id: 'scrapbook', name: 'Scrapbook Month', family: 'y2k', blurb: 'Spiral notebook pages, polaroids, clips, pocket and notes',
 		make: function () {

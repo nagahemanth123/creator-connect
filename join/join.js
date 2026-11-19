@@ -312,4 +312,54 @@
 		});
 	});
 	window.addEventListener('pageshow', function () { $$('.js-connect').forEach(reset); }); // back button from Instagram
+	/* ── 10. story maker demo (#mk): Templates / Collages switch + a rail of designs; the same photos are restyled by data-d ── */
+	(function () {
+		var mk = $('mk'); if (!mk) return;
+		var canvas = $('mk-canvas'), nameEl = $('mk-name'), modes = $$('.mk-mode', mk), rails = $$('.mk-rail', mk), all = $$('.mk-d', mk), last = {t: 'polaroid', c: 'c3'}, mode = 't';
+		function design(d) {
+			var b = all.find(function (x) { return x.getAttribute('data-d') === d; }); if (!b) return;
+			mode = b.getAttribute('data-m'); last[mode] = d;
+			canvas.setAttribute('data-d', d); mk.setAttribute('data-m', mode);
+			all.forEach(function (x) { var on = x === b; x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+			modes.forEach(function (m) { var on = m.getAttribute('data-m') === mode; m.classList.toggle('is-on', on); m.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+			rails.forEach(function (r) { r.hidden = r.getAttribute('data-m') !== mode; });
+			nameEl.textContent = b.getAttribute('data-name');
+			if (b.scrollIntoView && b.offsetParent) { var r = b.parentNode, br = b.getBoundingClientRect(), rr = r.getBoundingClientRect(); if (br.left < rr.left || br.right > rr.right) r.scrollLeft += br.left - rr.left - 8; }
+		}
+		all.forEach(function (b) { b.addEventListener('click', function () { design(b.getAttribute('data-d')); }); });
+		modes.forEach(function (m) { m.addEventListener('click', function () { design(last[m.getAttribute('data-m')]); }); });
+		swipe(canvas, function (dir) { // swipe the story itself: next / previous design of the open rail
+			var list = all.filter(function (x) { return x.getAttribute('data-m') === mode; }), i = list.findIndex(function (x) { return x.classList.contains('is-on'); });
+			design(list[(i + dir + list.length) % list.length].getAttribute('data-d'));
+		});
+		design('polaroid');
+	})();
+})();
+
+/* Invitation status: after she asks, check every 30 s whether the Busy Fox inviter has sent it, and say so. */
+(function () {
+	'use strict';
+	var api = window.CC && window.CC.api, box = document.getElementById('inv-status'), done = document.getElementById('done'), igEl = document.getElementById('done-ig');
+	if (!api || !box || !done || !('MutationObserver' in window)) return;
+	var timer = 0, tries = 0;
+	function show(sent) {
+		box.hidden = false; box.classList.add('show');
+		box.textContent = '';
+		if (!sent) { box.textContent = 'Waiting for your invitation to be sent\u2026'; return; }
+		var b = document.createElement('b'); b.textContent = 'Your invitation is ready. ';
+		var a = document.createElement('a'); a.href = 'https://www.instagram.com/accounts/manage_access/'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open your Instagram invitations';
+		box.appendChild(b); box.appendChild(a); box.appendChild(document.createTextNode(', tap Accept, then come back and tap Continue with Instagram.'));
+	}
+	function check() {
+		var u = (igEl.textContent || '').replace(/^@/, '').trim().toLowerCase();
+		if (!/^[a-z0-9._]{1,30}$/.test(u)) return;
+		fetch(api + '/invite/status?u=' + encodeURIComponent(u)).then(function (r) { return r.json(); }).then(function (j) {
+			if (j && j.state === 'sent') { show(true); clearInterval(timer); }
+		}).catch(function () {});
+		if (++tries > 240) clearInterval(timer); // two hours, then stop asking
+	}
+	new MutationObserver(function () {
+		if (done.hidden || timer) return;
+		show(false); check(); timer = setInterval(function () { if (!document.hidden) check(); }, 30000);
+	}).observe(done, {attributes: true, attributeFilter: ['hidden']});
 })();

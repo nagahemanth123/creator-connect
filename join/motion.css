@@ -1,0 +1,262 @@
+/* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   MOTION — FoxCut Creator Connect /join.  Loaded after join.css; driven by motion.js.
+
+   The idea: this page is a scrapbook on a desk. Paper is PUT DOWN (comes from just above, a touch big and tilted,
+   lands, settles). Tape is PRESSED on after the paper lands. Words RISE, hand notes are WRITTEN left to right,
+   doodles are DRAWN. Stickers and ticks POP. Only the stamp THUDS.
+
+   Four easings, four durations, one stagger. Nothing else is used anywhere.
+     --m-out     settle   fast start, soft landing        everything that arrives or changes place
+     --m-spring  pop      one small overshoot             stickers, badges, ticks, press-and-release
+     --m-pen     pen      slow start, steady stroke       anything written or drawn
+     --m-thud    thud     speeds up INTO the impact       the stamp and the ₹0, nothing else
+     --m-1 140ms  press / colour      --m-2 280ms  a state change (tab, flip, tick)
+     --m-3 520ms  an entrance         --m-4 800ms  a drawn line or a big hero piece
+     --m-step 70ms  the gap between neighbours in a group
+
+   Only transform-family properties (translate / rotate / scale, which stack on top of each element's own resting
+   transform), opacity, and stroke-dashoffset for drawn lines are animated. No will-change is set anywhere: the
+   browser promotes an element while its animation runs and drops it afterwards.
+
+   Three layers:
+     A  always            tokens, and two static fixes the motion relies on
+     B  motion allowed    (prefers-reduced-motion: no-preference) presses, tab / view / flip changes, the success state
+     C  html.mv           scroll and load entrances. The class is added by the inline script in <head> ONLY when
+                          JavaScript runs, motion is allowed, it is not ?still, and IntersectionObserver exists.
+                          Every "hidden before it arrives" rule lives under html.mv, so with no JS, reduced motion,
+                          ?still, or a failed script the whole page is simply there.
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ───────── A. tokens + static fixes ───────── */
+:root {
+	--m-out: cubic-bezier(.22, .9, .3, 1);
+	--m-spring: cubic-bezier(.3, 1.45, .5, 1);
+	--m-pen: cubic-bezier(.55, .1, .3, 1);
+	--m-thud: cubic-bezier(.7, 0, 1, .5);
+	--m-1: 140ms; --m-2: 280ms; --m-3: 520ms; --m-4: 800ms;
+	--m-step: 70ms;
+}
+/* the thin "next screen in 5 s" line on the hero phone's active tab: grown with a transform, not with width */
+.p-tab::before { width: 64%; transform: scaleX(0); transform-origin: 0 50%; }
+.phone.is-auto .p-tab.is-on::before { animation: m-fill var(--auto, 5s) linear forwards; }
+@keyframes m-fill { to { transform: scaleX(1); } }
+/* a view on its way out (a short-lived copy made by motion.js) */
+.m-ghost { pointer-events: none; z-index: 1; }
+.m-ghost, .m-ghost * { animation: none !important; transition: none !important; }
+/* hand notes that get written: an outer window and the text inside it (added by motion.js, only when html.mv) */
+.wr { display: block; width: fit-content; max-width: 100%; clip-path: inset(-.3em -.35em -.35em -.35em); }
+.wr.c { margin-inline: auto; } .wr.r { margin-left: auto; }
+.wr-i { display: block; }
+.hero-h .w { display: inline-block; }
+
+/* ───────── shared keyframes (each one starts somewhere and ends at the element's own resting place) ───────── */
+@keyframes m-place { 0% { opacity: 0; translate: 0 -20px; rotate: var(--mt, -2.4deg); scale: 1.045; } 40% { opacity: 1; } 66% { translate: 0 2px; rotate: calc(var(--mt, -2.4deg) * -.18); scale: .996; } 100% { translate: 0 0; rotate: 0deg; scale: 1; } }
+@keyframes m-right { 0% { opacity: 0; translate: 46px 4px; rotate: 3.2deg; } 40% { opacity: 1; } 68% { translate: -3px 0; rotate: -.5deg; } 100% { translate: 0 0; rotate: 0deg; } }
+@keyframes m-drop { 0% { opacity: 0; translate: var(--mx, 0px) -42px; rotate: var(--mr, -9deg); scale: 1.1; } 35% { opacity: 1; } 62% { translate: 0 3px; rotate: calc(var(--mr, -9deg) * -.2); scale: .985; } 82% { translate: 0 -1px; rotate: 0deg; scale: 1; } 100% { translate: 0 0; rotate: 0deg; scale: 1; } }
+@keyframes m-slide { 0% { opacity: 0; translate: var(--mx, 40px) 6px; rotate: var(--mr, 8deg); } 40% { opacity: 1; } 70% { translate: calc(var(--mx, 40px) * -.07) 0; rotate: calc(var(--mr, 8deg) * -.15); } 100% { translate: 0 0; rotate: 0deg; } }
+@keyframes m-phone { 0% { opacity: 0; translate: 0 48px; rotate: 4deg; scale: .965; } 35% { opacity: 1; } 68% { translate: 0 -4px; rotate: -.7deg; scale: 1; } 100% { translate: 0 0; rotate: 0deg; scale: 1; } }
+@keyframes m-pop { 0% { opacity: 0; scale: var(--ms, .55); rotate: var(--mr, -9deg); } 45% { opacity: 1; } 100% { scale: 1; rotate: 0deg; } }
+@keyframes m-tape { 0% { opacity: 0; translate: 0 -10px; scale: 1.18 1.3; } 55% { opacity: .9; translate: 0 1px; scale: .97 .94; } 100% { translate: 0 0; scale: 1 1; } }
+@keyframes m-rise { from { opacity: 0; translate: 0 16px; } }
+@keyframes m-rise-s { from { opacity: 0; translate: 0 8px; } }
+@keyframes m-word { from { opacity: 0; translate: 0 .38em; rotate: 5deg; } }
+@keyframes m-wipe-o { from { translate: calc(-100% - .8em) 0; } }
+@keyframes m-wipe-i { from { translate: calc(100% + .8em) 0; } }
+@keyframes m-draw { from { stroke-dashoffset: 1.05; } to { stroke-dashoffset: 0; } }
+@keyframes m-draw-40 { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+@keyframes m-grow-y { from { scale: 1 0; } }
+@keyframes m-grow-x { from { scale: 0 1; } }
+@keyframes m-thunk { 0% { opacity: 0; scale: var(--ms, 2.1); rotate: var(--mr, -12deg); animation-timing-function: var(--m-thud); } 55% { opacity: 1; scale: .93; rotate: 0deg; animation-timing-function: ease-out; } 78% { scale: 1.04; } 100% { opacity: 1; scale: 1; rotate: 0deg; } }
+@keyframes m-jolt { 30% { translate: 0 4px; rotate: .35deg; } 65% { translate: 0 -1px; rotate: 0deg; } }
+@keyframes m-press { 0% { scale: .95; } 100% { scale: 1; } }
+@keyframes m-view { from { opacity: 0; translate: 18px 0; } }
+@keyframes m-view-back { from { opacity: 0; translate: -18px 0; } }
+@keyframes m-poke { 0% { scale: 1; rotate: 0deg; } 30% { scale: 1.35; rotate: -16deg; } 60% { scale: .92; rotate: 10deg; } 100% { scale: 1; rotate: 0deg; } }
+@keyframes m-hop { 0% { translate: 0 0; rotate: 0deg; } 35% { translate: 0 -12px; rotate: 3deg; } 70% { translate: 0 2px; rotate: -1deg; } 100% { translate: 0 0; rotate: 0deg; } }
+@keyframes m-nudge { 0%, 100% { translate: 0 0; } 30% { translate: 5px 0; } 60% { translate: -2px 0; } }
+@keyframes m-beat { 0%, 20%, 100% { scale: 1; } 5% { scale: 1.17; } 10% { scale: .98; } 15% { scale: 1.09; } }
+@keyframes m-dock { from { translate: 0 100%; } }
+
+/* ───────── B. presses and state changes (no JS-hidden states here) ───────── */
+@media (prefers-reduced-motion: no-preference) {
+	/* press and release: squash on the way down, a small spring on the way back */
+	.btn { transition: background-color var(--m-1) ease, transform var(--m-2) var(--m-spring); }
+	.btn:active { transform: scale(.97, .94); transition-duration: 70ms; }
+	.btn .arr { transition: translate var(--m-2) var(--m-spring); }
+	.btn:focus-visible .arr { translate: 4px 0; }
+	@media (hover: hover) { .btn:hover .arr { translate: 4px 0; } }
+	.g-tab, .vs-opt, .seg button, .s-btn, .wk-b { transition: background-color var(--m-1) ease, color var(--m-1) ease, scale var(--m-2) var(--m-spring); }
+	.g-tab:active, .seg button:active, .s-btn:active { scale: .95; transition-duration: 70ms; }
+	.p-tab svg { transition: background-color var(--m-1) ease; }
+	.p-tab:active svg { scale: .88; }
+	.p-tab.is-on svg { animation: m-pop var(--m-2) var(--m-spring); --ms: .8; --mr: 0deg; }
+	.f-n { transition: opacity var(--m-2) ease; }
+
+	/* form: the field lights up, its label follows, the tick pops when the handle looks right */
+	.fld input { transition: border-color var(--m-1) ease, box-shadow var(--m-1) ease; }
+	.fld-l { transition: color var(--m-1) ease; }
+	.fld:focus-within .fld-l { color: var(--cherry); }
+	.at.is-ok .at-ok { animation: m-pop var(--m-2) var(--m-spring); --mr: -30deg; }
+
+	/* phone screens: the new view slides in from the side you are heading to */
+	.p-view.is-in { animation: m-view var(--m-2) var(--m-out); }
+	.p-view.is-in.back { animation-name: m-view-back; }
+	.cbars i { transition: background-color var(--m-1) ease; transform-origin: 50% 100%; }
+	.aud i { transform-origin: 0 50%; }
+
+	/* "Mark as done": the button gives, the tick is drawn, the line is crossed off */
+	.s-btn[aria-pressed="true"] { animation: m-press var(--m-2) var(--m-spring); }
+	.s-btn svg { stroke-dasharray: 30; }
+	.s-btn[aria-pressed="true"] svg { animation: m-draw-30 var(--m-2) var(--m-pen) 60ms backwards; }
+	.s-todo { transition: opacity var(--m-2) ease; }
+
+	/* calendar day: the reason arrives under the row, the chevron turns over */
+	.wk-b::after { transition: transform var(--m-2) var(--m-out); }
+	.wk-post.is-open .wk-more { animation: m-rise-s var(--m-2) var(--m-out); }
+	.faq details[open] > p { animation: m-rise-s var(--m-2) var(--m-out); }
+
+	/* Instagram Insights / Creator Connect: the thumb slides, then each row turns over, top to bottom.
+	   Instagram's answer leaves upward, ours comes up from below (and the other way round going back). */
+	.vs-thumb { transition: transform var(--m-3) var(--m-out), background-color var(--m-2) ease; }
+	.vs-opt { transition: color var(--m-2) ease, scale var(--m-2) var(--m-spring); }
+	.vs-row:nth-child(2) { --k: 1; } .vs-row:nth-child(3) { --k: 2; } .vs-row:nth-child(4) { --k: 3; } .vs-row:nth-child(5) { --k: 4; }
+	html.js .vs-a { transition: opacity var(--m-2) var(--m-out) calc(var(--k, 0) * 55ms + 150ms), translate var(--m-3) var(--m-out) calc(var(--k, 0) * 55ms + 150ms), visibility 0s; }
+	html.js .vs-board[data-side="cc"] .vs-a.ig, html.js .vs-board[data-side="ig"] .vs-a.cc { opacity: 0; transition: opacity var(--m-1) ease-in calc(var(--k, 0) * 55ms), translate var(--m-1) ease-in calc(var(--k, 0) * 55ms), visibility 0s calc(var(--k, 0) * 55ms + var(--m-1)); }
+	html.js .vs-board[data-side="cc"] .vs-a.ig { translate: 0 -10px; }
+	html.js .vs-board[data-side="ig"] .vs-a.cc { translate: 0 10px; }
+	/* the cross and the tick are two layers here so one can pop while the other goes */
+	html.js .vs-board[data-side] .vs-mark { position: relative; background: none; }
+	html.js .vs-mark::before, html.js .vs-mark::after { content: ''; position: absolute; inset: 0; border-radius: 50%; transition: opacity var(--m-1) ease calc(var(--k, 0) * 55ms + 60ms), scale var(--m-2) var(--m-spring) calc(var(--k, 0) * 55ms + 60ms), rotate var(--m-2) var(--m-spring) calc(var(--k, 0) * 55ms + 60ms); }
+	html.js .vs-mark::before { background: var(--tint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.5 6.5l7 7M13.5 6.5l-7 7' fill='none' stroke='%236E5551' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/20px no-repeat; }
+	html.js .vs-mark::after { background: var(--pink-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.4l3 3 6-6.6' fill='none' stroke='%23C42847' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px no-repeat; }
+	html.js .vs-board[data-side="cc"] .vs-mark::before { opacity: 0; scale: .5; }
+	html.js .vs-board[data-side="ig"] .vs-mark::after { opacity: 0; scale: .3; rotate: -40deg; }
+
+	/* things she can poke */
+	[data-play].poked { animation: m-poke var(--m-3) var(--m-out); }
+	.pal.poked { animation: m-hop var(--m-3) var(--m-out); }
+	.pal.poked .pal-cap { animation: m-pop var(--m-2) var(--m-spring); --ms: .7; --mr: -6deg; }
+	.f-try.poked svg { animation: m-nudge 600ms ease 2; }
+
+	/* the bottom button on phones slides up from the edge */
+	.dock.on { animation: m-dock var(--m-2) var(--m-out); }
+
+	/* request sent: tick pops and is drawn, the three lines rise one by one, "yay" is written,
+	   then the stamp comes down and the whole ticket takes the hit */
+	.box.is-done .done-tick { animation: m-pop 420ms var(--m-spring) backwards; --mr: -30deg; }
+	.box.is-done .done-tick svg { animation: m-draw-30 var(--m-2) var(--m-pen) 220ms backwards; }
+	.box.is-done .done h3 { animation: m-rise var(--m-3) var(--m-out) 100ms backwards; }
+	.box.is-done .done li { animation: m-rise var(--m-3) var(--m-out) calc(240ms + var(--n, 0) * 90ms) backwards; }
+	.done li:nth-child(2) { --n: 1; } .done li:nth-child(3) { --n: 2; }
+	.box.is-done .done-yay .wr { animation: m-wipe-o var(--wd, 450ms) var(--m-pen) 700ms backwards; }
+	.box.is-done .done-yay .wr-i { animation: m-wipe-i var(--wd, 450ms) var(--m-pen) 700ms backwards; }
+	.box.is-done .stamp { animation: m-thunk 460ms linear 420ms backwards; --mr: -14deg; }
+	html.js #box.is-done { animation: m-jolt var(--m-2) ease-out 670ms; }
+}
+@keyframes m-draw-30 { from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; } }
+
+/* ───────── C. entrances (html.mv only) ───────── */
+/* 1. before it arrives. Scenes whose pieces arrive one by one, and the two notes that sit outside a block. */
+html.mv [data-reveal]:not(.is-seen) { opacity: 0; }
+html.mv .six-w:not(.is-seen) .six-note, html.mv .steps-w:not(.is-seen) .string { opacity: 0; }
+html.mv .tape { animation: none; }
+html.mv .hero-h .swash path { stroke-dasharray: 1 2; animation: none; }
+
+/* 2. paper: put down on the desk. Neighbours tilt opposite ways. */
+html.mv [data-reveal].is-seen { animation: m-place var(--m-3) var(--m-out) var(--rd, 0ms) backwards; }
+html.mv [data-reveal]:nth-child(even) { --mt: 2.4deg; }
+html.mv [data-reveal="right"].is-seen { animation-name: m-right; animation-duration: 620ms; }
+html.mv :is(.badge, .after)[data-reveal].is-seen { animation: m-pop var(--m-3) var(--m-spring) var(--rd, 0ms) backwards; }
+html.mv .after { --ms: .9; --mr: -1.5deg; }
+html.mv .badge { --ms: .6; --mr: -10deg; }
+/*    words: they rise */
+html.mv :is(.hero-lede, .hero-cta, .safe-grid > li)[data-reveal].is-seen { animation-name: m-rise; }
+/*    tape: pressed on once the paper is down */
+html.mv .is-seen > .tape, html.mv .is-seen .mat > .tape, html.mv .six.is-seen .pal > .tape { animation: m-tape 380ms var(--m-out) calc(var(--rd, 0ms) + 330ms) backwards; }
+html.mv .is-seen > .tape:is(.b, .t2) { animation-delay: calc(var(--rd, 0ms) + 420ms); }
+
+/* 3. scenes: the block itself is just there, its pieces arrive */
+html.mv :is(.hi, .hero-h, .tiles, .stage, .strip, .intro, .vs-head, .txt, .f-head, ul.ticks, .get-phone, .six, .faq)[data-reveal].is-seen { animation: none; }
+/*    text blocks: note written, heading up, paragraph up */
+html.mv :is(.intro, .vs-head, .txt, .f-head).is-seen > * { animation: m-rise var(--m-3) var(--m-out) calc(var(--rd, 0ms) + var(--n, 0) * var(--m-step)) backwards; }
+html.mv :is(.intro, .vs-head, .txt, .f-head) > :nth-child(2) { --n: 1; }
+html.mv :is(.intro, .vs-head, .txt, .f-head) > :nth-child(3) { --n: 2; }
+html.mv :is(.intro, .vs-head, .txt, .f-head) > :nth-child(4) { --n: 3; }
+html.mv .is-seen > .hand.has-wr { animation: none; }
+html.mv .is-seen .wr, html.mv .has-wr.is-seen > .wr { animation: m-wipe-o var(--wd, 450ms) var(--m-pen) calc(var(--rd, 0ms) + var(--wo, 0ms)) backwards; }
+html.mv .is-seen .wr-i, html.mv .has-wr.is-seen > .wr > .wr-i { animation: m-wipe-i var(--wd, 450ms) var(--m-pen) calc(var(--rd, 0ms) + var(--wo, 0ms)) backwards; }
+html.mv .f-try svg path { stroke-dasharray: 40; }
+html.mv .f-head.is-seen .f-try svg path { animation: m-draw-40 420ms var(--m-pen) calc(var(--rd, 0ms) + 380ms) backwards; }
+html.mv .f-head.is-seen .f-try svg path + path { animation-duration: var(--m-2); animation-delay: calc(var(--rd, 0ms) + 700ms); }
+/*    lists: one line after another; the little tick lands a beat after its line */
+html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > * { --n: 0; }
+html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(2) { --n: 1; }
+html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(3) { --n: 2; }
+html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(4) { --n: 3; }
+html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(5) { --n: 4; }
+html.mv .tiles.is-seen > *, html.mv .strip.is-seen li, html.mv ul.ticks.is-seen > li, html.mv .faq.is-seen > details, html.mv .does.is-seen .ticks > li { animation: m-rise var(--m-3) var(--m-out) calc(var(--rd, 0ms) + var(--n, 0) * var(--m-step)) backwards; }
+html.mv .does.is-seen .ticks > li { animation-delay: calc(var(--rd, 0ms) + 260ms + var(--n, 0) * var(--m-step)); }
+html.mv ul.ticks.is-seen > li::before, html.mv .does.is-seen .ticks > li::before { animation: m-pop var(--m-2) var(--m-spring) calc(var(--rd, 0ms) + 200ms + var(--n, 0) * var(--m-step)) backwards; --mr: -30deg; }
+html.mv .does.is-seen .ticks > li::before { animation-delay: calc(var(--rd, 0ms) + 460ms + var(--n, 0) * var(--m-step)); }
+
+/* 4. the hero: headline word by word, the underline drawn under "guessing" as it lands */
+html.mv .hero-h.is-seen :is(.w, em) { animation: m-word var(--m-3) var(--m-spring) calc(var(--rd, 0ms) + var(--n, 0) * 60ms) backwards; transform-origin: 0 100%; }
+html.mv .hero-h.is-seen .swash path { animation: m-draw 620ms var(--m-pen) calc(var(--rd, 0ms) + 330ms) both; }
+/*    the stage: mat down, phone settles on it, tape, polaroids dropped, notes and stickers last */
+html.mv :is(.stage, .get-phone).is-seen .mat::before { animation: m-place var(--m-3) var(--m-out) var(--rd, 0ms) backwards; }
+html.mv :is(.stage, .get-phone).is-seen .phone { animation: m-phone 680ms var(--m-out) calc(var(--rd, 0ms) + 90ms) backwards; }
+html.mv :is(.stage, .get-phone).is-seen .mat > .tape { animation-delay: calc(var(--rd, 0ms) + 440ms); }
+html.mv :is(.stage, .get-phone).is-seen .mat > .tape.b { animation-delay: calc(var(--rd, 0ms) + 530ms); }
+html.mv .stage .pol.is-seen { animation: m-drop 560ms var(--m-out) calc(var(--rd, 0ms) + 470ms) backwards; }
+html.mv .stage .pol.p2.is-seen { animation-delay: calc(var(--rd, 0ms) + 570ms); --mr: 10deg; }
+html.mv .stage .jot.is-seen { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 640ms) backwards; --ms: .6; }
+html.mv .stage .jot.j2.is-seen { animation-delay: calc(var(--rd, 0ms) + 740ms); --mr: 9deg; }
+html.mv .stage.is-seen .stk:not(.poked) { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 780ms) backwards; --ms: .2; --mr: -40deg; }
+html.mv .stage.is-seen .stk.s2:not(.poked) { animation-delay: calc(var(--rd, 0ms) + 860ms); --mr: 50deg; }
+html.mv .stage-note { --wo: 720ms; }
+/*    the only thing on the page that moves by itself: the heart, a double beat every five seconds, and only
+      while the hero is on screen and the tab is in front (motion.js sets .m-idle) */
+html.mv .stage.is-seen.m-idle .stk.s1:not(.poked) { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 780ms) backwards, m-beat 5s ease-in-out 2.6s infinite; }
+
+/* 5. inside the phones: once the phone is down the screen wakes up; the same pieces replay on every tab change
+      (--pd is the wait for the phone to land, set by motion.js on first arrival, then 0) */
+html.mv .p-view.is-in { animation-delay: 70ms; animation-fill-mode: backwards; } /* the old screen (a fading copy) gets out of the way first */
+html.mv .is-seen .p-view > * { animation: m-rise-s 320ms var(--m-out) calc(var(--pd, 0ms) + 70ms + var(--n, 0) * 35ms) backwards; }
+html.mv .p-view > :nth-child(2) { --n: 1; } html.mv .p-view > :nth-child(3) { --n: 2; } html.mv .p-view > :nth-child(4) { --n: 3; } html.mv .p-view > :nth-child(5) { --n: 4; }
+html.mv .is-seen .cbars i { animation: m-grow-y var(--m-3) var(--m-out) calc(var(--pd, 0ms) + 140ms + var(--k, 0) * 28ms) backwards; }
+html.mv .cbars i:nth-child(2) { --k: 1; } html.mv .cbars i:nth-child(3) { --k: 2; } html.mv .cbars i:nth-child(4) { --k: 3; } html.mv .cbars i:nth-child(5) { --k: 4; } html.mv .cbars i:nth-child(6) { --k: 5; } html.mv .cbars i:nth-child(7) { --k: 6; } html.mv .cbars i:nth-child(8) { --k: 7; } html.mv .cbars i:nth-child(9) { --k: 8; }
+html.mv .is-seen .aud i { animation: m-grow-x var(--m-3) var(--m-out) calc(var(--pd, 0ms) + 200ms + var(--k, 0) * 80ms) backwards; }
+html.mv .aud li:nth-child(2) { --k: 1; } html.mv .aud li:nth-child(3) { --k: 2; }
+html.mv .is-seen .seal i { animation: m-pop var(--m-2) var(--m-spring) calc(var(--pd, 0ms) + 120ms) backwards; --mr: -25deg; }
+html.mv .is-seen .wk > li { animation: m-rise-s var(--m-2) var(--m-out) calc(var(--pd, 0ms) + 70ms + var(--k, 0) * 30ms) backwards; }
+html.mv .wk > li:nth-child(2) { --k: 1; } html.mv .wk > li:nth-child(3) { --k: 2; } html.mv .wk > li:nth-child(4) { --k: 3; } html.mv .wk > li:nth-child(5) { --k: 4; } html.mv .wk > li:nth-child(6) { --k: 5; } html.mv .wk > li:nth-child(7) { --k: 6; }
+
+/* 6. cards with something written on them: the note lands after the card */
+html.mv :is(.perk, .step).is-seen > .hand { animation: m-pop var(--m-2) var(--m-spring) calc(var(--rd, 0ms) + 420ms) backwards; --ms: .7; --mr: -8deg; }
+html.mv .step.is-seen::before { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 240ms) backwards; --ms: .3; --mr: -40deg; }
+html.mv .steps-w.is-seen .string-draw { animation: m-draw 900ms var(--m-pen) calc(var(--rd, 0ms) + 200ms) both; }
+html.mv .vs-foot { --wo: 520ms; }
+html.mv .con-card { --wo: 300ms; }
+
+/* 7. the team of six: each one turns up in their own way, tape pressed on, then they say their line */
+html.mv .six li:nth-child(2) { --n: 1; } html.mv .six li:nth-child(3) { --n: 2; } html.mv .six li:nth-child(4) { --n: 3; } html.mv .six li:nth-child(5) { --n: 4; } html.mv .six li:nth-child(6) { --n: 5; }
+html.mv .six.is-seen .pal:not(.poked) { animation: m-drop 600ms var(--m-out) calc(var(--rd, 0ms) + var(--n, 0) * 110ms) backwards; --mr: -11deg; }
+html.mv .six.is-seen li:nth-child(2) .pal:not(.poked) { animation-name: m-slide; --mx: 44px; --mr: 9deg; }
+html.mv .six.is-seen li:nth-child(3) .pal:not(.poked) { animation-name: m-pop; animation-timing-function: var(--m-spring); --ms: .5; --mr: 14deg; }
+html.mv .six.is-seen li:nth-child(4) .pal:not(.poked) { --mr: 13deg; --mx: -14px; }
+html.mv .six.is-seen li:nth-child(5) .pal:not(.poked) { animation-name: m-slide; --mx: -44px; --mr: -9deg; }
+html.mv .six.is-seen li:nth-child(6) .pal:not(.poked) { animation-name: m-pop; animation-timing-function: var(--m-spring); --ms: .5; --mr: -14deg; }
+html.mv .six.is-seen .pal > .tape { animation-delay: calc(var(--rd, 0ms) + var(--n, 0) * 110ms + 400ms); }
+html.mv .six.is-seen .pal:not(.poked) .pal-cap { animation: m-pop var(--m-2) var(--m-spring) calc(var(--rd, 0ms) + var(--n, 0) * 110ms + 480ms) backwards; --ms: .6; --mr: -8deg; }
+html.mv .six-w { --wo: 1050ms; }
+
+/* 8. the price tag: put down, then ₹0 is stamped on it and the tag takes the hit */
+html.mv .tag[data-reveal].is-seen { animation: m-place var(--m-3) var(--m-out) var(--rd, 0ms) backwards, m-jolt var(--m-2) ease-out calc(var(--rd, 0ms) + 480ms); }
+html.mv .tag.is-seen .zero { animation: m-thunk 460ms linear calc(var(--rd, 0ms) + 220ms) backwards; --ms: 1.5; --mr: -7deg; transform-origin: 22% 62%; }
+html.mv .tag.is-seen .say { animation: m-rise var(--m-3) var(--m-out) calc(var(--rd, 0ms) + 500ms) backwards; }
+html.mv .tag.is-seen small { animation: m-rise var(--m-3) var(--m-out) calc(var(--rd, 0ms) + 570ms) backwards; }
+
+/* 9. the request ticket: slides in, tape on, then her initial pops and her handle comes up */
+html.mv .box.is-seen .tk-av { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 380ms) backwards; --mr: -20deg; }
+html.mv .box.is-seen :is(.tk-lab, .tk-ig) { animation: m-rise-s var(--m-3) var(--m-out) calc(var(--rd, 0ms) + 430ms) backwards; }
+html.mv .box.is-seen .tk-ig { animation-delay: calc(var(--rd, 0ms) + 490ms); }

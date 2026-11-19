@@ -74,7 +74,7 @@
 	}
 
 	// ---------- pick screen ----------
-	var FAMS = [['all', 'All'], ['y2k', 'Y2K scrapbook'], ['seamless', 'Seamless'], ['phone', 'Phone screen'], ['telugu', 'Telugu traditional'], ['festival', 'Festivals'], ['soft', 'Soft & dreamy'], ['diary', 'Diary'], ['patterns', '& Patterns']];
+	var FAMS = [['all', 'All'], ['y2k', 'Y2K scrapbook'], ['seamless', 'Seamless'], ['phone', 'Phone screen'], ['telugu', 'Telugu traditional'], ['cinema', 'Cinema & songs'], ['village', 'Village & ooru'], ['festival', 'Festivals'], ['soft', 'Soft & dreamy'], ['diary', 'Diary'], ['patterns', '& Patterns']];
 	var fam = 'all';
 	function showPick() {
 		$('edit').hidden = true; $('pick').hidden = false; S.sel = null;
@@ -95,7 +95,8 @@
 		});
 	}
 	function cutKeys(d) { return d.layers.filter(function (l) { return l.kind === 'cut'; }).map(function (l) { var p = d.layers.filter(function (x) { return x.id === l.of; })[0]; return p && p.src && p.src.indexOf('ph/') === 0 ? 'cut/' + p.src.slice(3) : null; }).filter(Boolean); }
-	function pickTpl(id, variant, keep, fresh) { // keep = colour switch (keeps her work); fresh = start over (undo stays)
+	function pickTpl(id, variant, keep, fresh) {
+		if (!TP.list.some(function (t) { return t.id === id; })) return; // a template that no longer exists // keep = colour switch (keeps her work); fresh = start over (undo stays)
 		var d = TP.make(id, variant);
 		if (keep && S.doc && S.doc.tpl === id) carryOver(S.doc, d);
 		if (!keep && !fresh) { S.undo = []; S.redo = []; S.caption = ''; S.tags = []; }
@@ -406,7 +407,7 @@
 		if (a === 'adjustDone') { S.adjust = false; tools(); need = true; saveDraft(); return; }
 		if (a === 'cutout') return cutSheet(l);
 		if (a === 'filter') return pickSheet('Photo <em>look</em>', [['none', 'Natural'], ['warm', 'Warm'], ['fade', 'Faded film'], ['cool', 'Cool'], ['bw', 'Black & white']], l.filter || 'none', function (v) { l.filter = v; });
-		if (a === 'shape') return pickSheet('Photo <em>shape</em>', [['rect', 'Square corners'], ['round', 'Rounded'], ['arch', 'Arch'], ['circle', 'Circle'], ['heart', 'Heart'], ['polaroid', 'Polaroid'], ['border', 'White border'], ['window', 'Mac window'], ['camera-silver', 'Silver camera'], ['camera-pink', 'Pink camera'], ['camera-dslr', 'Big camera'], ['stamp', 'Postage stamp'], ['soft', 'Soft rounded'], ['music', 'Music player']], l.frame && l.frame !== 'none' ? l.frame : (l.shape === 'arch' || l.shape === 'circle' || l.shape === 'heart' ? l.shape : (l.r ? 'round' : 'rect')), function (v) {
+		if (a === 'shape') return pickSheet('Photo <em>shape</em>', [['rect', 'Square corners'], ['round', 'Rounded'], ['arch', 'Arch'], ['circle', 'Circle'], ['heart', 'Heart'], ['polaroid', 'Polaroid'], ['border', 'White border'], ['window', 'Mac window'], ['camera-silver', 'Silver camera'], ['camera-pink', 'Pink camera'], ['camera-dslr', 'Big camera'], ['retro-tv', 'Old TV'], ['stamp', 'Postage stamp'], ['soft', 'Soft rounded'], ['music', 'Music player']], l.frame && l.frame !== 'none' ? l.frame : (l.shape === 'arch' || l.shape === 'circle' || l.shape === 'heart' ? l.shape : (l.r ? 'round' : 'rect')), function (v) {
 			if (['rect', 'round', 'arch', 'circle', 'heart'].indexOf(v) >= 0) { l.frame = 'none'; l.shape = v === 'round' ? 'rect' : v; l.r = v === 'round' ? 40 : 0; } else { l.frame = v; l.shape = 'rect'; if (/^camera/.test(v)) l.h = l.w; if (v === 'music') { l.h = l.w * 1.58; l.title = l.title || 'Song name'; l.artist = l.artist || 'Artist'; } }
 			l.reshaped = true;
 		});
@@ -465,7 +466,7 @@
 	}
 
 	// ---------- stickers ----------
-	var STK = ['camera-silver', 'camera-pink', 'cherries', 'cinnamon-roll', 'chrome-star', 'puffy-heart', 'butterfly', 'sunflower', 'hibiscus', 'cherry-blossom', 'gingham-bow', 'pink-bow', 'binder-clip', 'sticky-note', 'ticket', 'cassette', 'vinyl', 'coffee-cup', 'denim-pocket', 'torn-paper', 'newspaper', 'lace', 'spiral', 'washi', 'jasmine', 'bangles', 'bangles-red', 'bangles-yellow', 'bangles-green', 'bangles-pink', 'bangles-maroon', 'diya', 'kite', 'stamp', 'wax-seal', 'luggage-tag', 'pressed-flower', 'gold-corner', 'lotus', 'lotus-bud', 'temple-bell', 'coconut', 'veena', 'hand-mirror', 'hibiscus-red', 'mango-toran', 'kolam', 'modak', 'sugarcane', 'neem-mango', 'kalash-lotus', 'jhumka', 'parrot-green', 'ill-langa-voni', 'ill-veena-girl', 'ill-mirror-girl', 'ill-kolam-girl', 'camera-dslr', 'lantern', 'iced-latte', 'calendar', 'torn-strip', 'bunny', 'swan', 'pearls', 'white-bow', 'blue-bow', 'forget-me-not', 'rose-bouquet', 'daisy', 'gerbera', 'white-butterfly', 'peg', 'film-canister', 'sun-doodle', 'doodles-pink'];
+	var STK = ['camera-silver', 'camera-pink', 'cherries', 'cinnamon-roll', 'chrome-star', 'puffy-heart', 'butterfly', 'sunflower', 'hibiscus', 'cherry-blossom', 'gingham-bow', 'pink-bow', 'binder-clip', 'sticky-note', 'ticket', 'cassette', 'vinyl', 'coffee-cup', 'denim-pocket', 'torn-paper', 'newspaper', 'lace', 'spiral', 'washi', 'jasmine', 'bangles', 'bangles-red', 'bangles-yellow', 'bangles-green', 'bangles-pink', 'bangles-maroon', 'diya', 'kite', 'stamp', 'wax-seal', 'luggage-tag', 'pressed-flower', 'gold-corner', 'lotus', 'lotus-bud', 'temple-bell', 'coconut', 'veena', 'hand-mirror', 'hibiscus-red', 'mango-toran', 'kolam', 'modak', 'sugarcane', 'neem-mango', 'kalash-lotus', 'jhumka', 'parrot-green', 'ill-langa-voni', 'ill-veena-girl', 'ill-mirror-girl', 'ill-kolam-girl', 'camera-dslr', 'lantern', 'iced-latte', 'calendar', 'torn-strip', 'bunny', 'swan', 'pearls', 'white-bow', 'blue-bow', 'forget-me-not', 'rose-bouquet', 'daisy', 'gerbera', 'white-butterfly', 'peg', 'film-canister', 'sun-doodle', 'doodles-pink', 'clapboard', 'film-reel', 'ticket-pink', 'retro-tv', 'popcorn', 'microphone', 'transistor', 'vhs', 'rose-petals', 'aviators', 'kunda', 'brass-pot', 'rope-cot', 'bullock-cart', 'boat', 'palms', 'banana-meal', 'tulsi-kota', 'cycle', 'cow', 'mango-branch'];
 	var UIS = [['bubble', 'Message bubble'], ['pin', 'Location pin'], ['note', 'Paper note'], ['label', 'Typed label'], ['notif', 'Notification'], ['search', 'Search bar'], ['like', 'Likes chip'], ['path', 'Flight path']];
 	function stickerSheet() {
 		var html = '<div class="cr-stk">' + STK.map(function (k) { return '<button type="button" data-k="' + k + '" aria-label="' + k.replace(/-/g, ' ') + '"><img src="a/stk/' + k + '.webp" alt="" loading="lazy"></button>'; }).join('') + '</div>';

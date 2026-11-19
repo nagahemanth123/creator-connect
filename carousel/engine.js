@@ -68,7 +68,7 @@
 		doc.layers.forEach(function (l) {
 			if (l.src) out.push(l.src);
 			if (l.k) out.push('stk/' + l.k);
-			if (l.frame && /^camera/.test(l.frame)) out.push('stk/' + l.frame);
+			if (l.frame && /^(camera|retro-tv)/.test(l.frame)) out.push('stk/' + l.frame);
 			if (l.tape) out.push('stk/' + (l.tape === true ? 'washi' : l.tape));
 		});
 		return out;
@@ -163,7 +163,7 @@
 		if (l.frame === 'polaroid') { var p = w * .055; return {x: -w / 2 + p, y: -h / 2 + p, w: w - 2 * p, h: h - p - w * .2}; }
 		if (l.frame === 'border') { var b = l.bw || 18; return {x: -w / 2 + b, y: -h / 2 + b, w: w - 2 * b, h: h - 2 * b}; }
 		if (l.frame === 'stamp' || l.frame === 'soft') { var q2 = l.bw || (l.frame === 'stamp' ? w * .07 : w * .045); return {x: -w / 2 + q2, y: -h / 2 + q2, w: w - 2 * q2, h: h - 2 * q2}; }
-		if (l.frame && /^camera/.test(l.frame)) { var m = (meta.stk[l.frame] || {}).screen || [.1, .3, .56, .4]; return {x: -w / 2 + m[0] * w, y: -h / 2 + m[1] * h, w: m[2] * w, h: m[3] * h}; }
+		if (l.frame && /^(camera|retro-tv)/.test(l.frame)) { var m = (meta.stk[l.frame] || {}).screen || [.1, .3, .56, .4]; return {x: -w / 2 + m[0] * w, y: -h / 2 + m[1] * h, w: m[2] * w, h: m[3] * h}; }
 		if (l.frame === 'phone') { var q = w * .045; return {x: -w / 2 + q, y: -h / 2 + q, w: w - 2 * q, h: h - 2 * q}; }
 		if (l.frame === 'window') { var bar = Math.max(34, w * .07); return {x: -w / 2, y: -h / 2 + bar, w: w, h: h - bar}; }
 		if (l.frame === 'music') { return {x: -w / 2 + w * .07, y: -h / 2 + w * .07, w: w * .86, h: w * .86}; }
@@ -202,7 +202,7 @@
 	}
 	function drawPhoto(ctx, doc, l, st, opts) {
 		var w = l.w, h = l.h, fr = l.frame || 'none';
-		if (l.shadow !== false && fr !== 'none' && !/^camera/.test(fr)) { ctx.shadowColor = 'rgba(30,20,10,.22)'; ctx.shadowBlur = 26; ctx.shadowOffsetY = 10; }
+		if (l.shadow !== false && fr !== 'none' && !/^(camera|retro-tv)/.test(fr)) { ctx.shadowColor = 'rgba(30,20,10,.22)'; ctx.shadowBlur = 26; ctx.shadowOffsetY = 10; }
 		if (fr === 'polaroid' || fr === 'border') { ctx.fillStyle = col(doc, l.paper || '#fbf8f2'); ctx.fillRect(-w / 2, -h / 2, w, h); }
 		if (fr === 'soft') { ctx.fillStyle = col(doc, l.paper || '#fffaf5'); rr(ctx, -w / 2, -h / 2, w, h, l.r || w * .06); ctx.fill(); }
 		if (fr === 'stamp') { // postage-stamp edge: a paper card with round bites along every side
@@ -237,7 +237,7 @@
 			if (l.cap) { ctx.fillStyle = '#555'; ctx.font = '600 ' + Math.round(bar * .4) + 'px ' + FONTS.ios; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(l.cap, 0, -h / 2 + bar / 2); }
 		}
 		if (fr === 'music') drawMusic(ctx, doc, l, b);
-		if (/^camera/.test(fr)) { var cam = img('stk/' + fr); if (cam) ctx.drawImage(cam, -w / 2, -h / 2, w, h); }
+		if (/^(camera|retro-tv)/.test(fr)) { var cam = img('stk/' + fr); if (cam) ctx.drawImage(cam, -w / 2, -h / 2, w, h); }
 		if (l.tape) { var tp = img('stk/' + (l.tape === true ? 'washi' : l.tape)); if (tp) { ctx.save(); ctx.translate(0, -h / 2); ctx.rotate(-.06); var tw = w * .42; ctx.globalAlpha = .92; ctx.drawImage(tp, -tw / 2, -tw * .3, tw, tw * .6); ctx.restore(); } }
 	}
 	function drawMusic(ctx, doc, l, b) {

@@ -447,3 +447,6 @@ html:not(.js) .six-note { display: none; }
 /* MOTION: every animation and transition of this page lives in motion.css (system, easings, durations) and motion.js.
    Nothing in this file moves, except the hero phone's "next screen" line, which motion.css also owns. */
 @media (prefers-reduced-motion: reduce) { .phone.is-auto .p-tab.is-on::before { animation: none; } }
+
+.does ul.ticks.roles li { font-size: 15.5px; line-height: 1.45; }
+.does ul.ticks.roles li b { color: var(--ink); }

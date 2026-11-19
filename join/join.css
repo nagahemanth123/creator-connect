@@ -450,3 +450,11 @@ html:not(.js) .six-note { display: none; }
 
 .does ul.ticks.roles li { font-size: 15.5px; line-height: 1.45; }
 .does ul.ticks.roles li b { color: var(--ink); }
+
+/* tools row: scheduler, comment for link, auto DM */
+.tools-intro { margin-top: 72px; }
+.tools-h { font-size: clamp(28px, 3.4vw, 42px); line-height: 1.08; }
+.tools { list-style: none; margin: 44px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 32px; }
+.tools .perk, .tools .perk:nth-child(n+4), .tools .perk:last-child { grid-column: auto; }
+.tools-fine { margin-top: 26px; }
+@media (max-width: 860px) { .tools { grid-template-columns: minmax(0, 1fr); gap: 34px; } .tools .perk { --rot: 0deg !important; } .tools-intro { margin-top: 48px; } }

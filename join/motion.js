@@ -9,6 +9,8 @@
      3  the phones: the old screen fades out as the new one slides in, and the score dial counts up
      4  the one idle loop (the heart) runs only while the hero is on screen and the tab is in front
      5  a small pop on the rate card price
+     6  the scroll-linked layer (motion.css, section D): sets the stage for it, and is its fallback where the
+        browser has no scroll-driven animations (one passive scroll listener + rAF, writing --p only)
 
    Safety: html.mv is set by the inline script in <head>, which also starts a 3 s timer that removes it again.
    This file cancels that timer only once everything below is running. If this file never loads, loads late,
@@ -168,6 +170,10 @@
 				var views = phone.querySelector('.p-views'), nv = views.querySelector('.p-view[data-view="' + now + '"]:not(.m-ghost)'), ov = views.querySelector('.p-view[data-view="' + old + '"]:not(.m-ghost)');
 				$$('.m-ghost', views).forEach(function (g) { g.remove(); });
 				ghost(ov, nv && nv.classList.contains('back'));
+				if (phone.id === 'get-phone' && phone.animate) { // the sticky phone gives a small turn and settles as each of the four things takes over
+					var turn = nv && nv.classList.contains('back') ? 9 : -9;
+					phone.animate([{transform: 'perspective(900px) rotateY(0deg)'}, {transform: 'perspective(900px) rotateY(' + turn + 'deg) rotate(' + (turn / 9) + 'deg)', offset: 0.3}, {transform: 'perspective(900px) rotateY(0deg)'}], {duration: 560, easing: 'cubic-bezier(.22, .9, .3, 1)'});
+				}
 				if (nv) $$('.dial', nv).forEach(function (d) { dial(d, 140); });
 			}).observe(phone, {attributes: true, attributeFilter: ['data-now'], attributeOldValue: true});
 		});
@@ -183,5 +189,74 @@
 			var b = e.target.closest('[data-act="rate"]'), out = b && b.closest('.rates').querySelector('.rate-out');
 			if (out && out.animate) out.animate([{opacity: 0, transform: 'translateY(7px)'}, {opacity: 1, transform: 'none'}], {duration: 280, easing: 'cubic-bezier(.22, .9, .3, 1)'});
 		});
+
+		/* ── 6. the scroll-linked layer ── */
+		// 6a. the stage for it: the hero phone's wrapper, the underlines under the cherry words, the tape strip
+		var heroPhone = document.getElementById('hero-phone'), tilt = null;
+		if (heroPhone) { tilt = document.createElement('div'); tilt.className = 'tilt'; heroPhone.parentNode.insertBefore(tilt, heroPhone); tilt.appendChild(heroPhone); }
+		function swashes() { // only under cherry words that sit on one line; redrawn to the word's real size so the line keeps its weight
+			$$('main h2 em').forEach(function (em) {
+				var old = em.querySelector('.s-swash'), one = em.getClientRects().length === 1;
+				if (!one) { if (old) { old.remove(); em.classList.remove('has-swash'); } return; }
+				var w = Math.round(em.offsetWidth * 1.02), h = Math.round(parseFloat(getComputedStyle(em).fontSize) * 0.3);
+				if (old && old._w === w) return;
+				var NS = 'http://www.w3.org/2000/svg', svg = old || document.createElementNS(NS, 'svg'), path = svg.firstChild || document.createElementNS(NS, 'path');
+				svg.setAttribute('class', 's-swash'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h); svg.setAttribute('preserveAspectRatio', 'none'); svg._w = w; svg._h = h;
+				path.setAttribute('pathLength', '1'); path.setAttribute('stroke-width', Math.max(3, h * 0.3).toFixed(1));
+				path.setAttribute('d', 'M3 ' + (h * 0.68).toFixed(1) + ' C ' + (w * 0.23).toFixed(1) + ' ' + (h * 0.28).toFixed(1) + ', ' + (w * 0.5).toFixed(1) + ' ' + (h * 0.2).toFixed(1) + ', ' + (w - 3) + ' ' + (h * 0.48).toFixed(1));
+				if (!old) { svg.appendChild(path); em.appendChild(svg); em.classList.add('has-swash'); }
+			});
+		}
+		swashes();
+		var prog = document.createElement('i'); prog.className = 's-prog'; prog.setAttribute('aria-hidden', 'true'); document.body.appendChild(prog);
+
+		// 6b. desktop: the hero phone leans toward the pointer (two custom properties, one rAF, only while the pointer is over the stage)
+		var heroStage = document.querySelector('.hero .stage');
+		if (tilt && heroStage && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+			var px = 0, py = 0, praf = 0;
+			var lean = function () { praf = 0; tilt.style.setProperty('--px', px.toFixed(3)); tilt.style.setProperty('--py', py.toFixed(3)); };
+			heroStage.addEventListener('pointermove', function (e) { var r = heroStage.getBoundingClientRect(); px = (e.clientX - r.left) / r.width - 0.5; py = (e.clientY - r.top) / r.height - 0.5; if (!praf) praf = requestAnimationFrame(lean); });
+			heroStage.addEventListener('pointerleave', function () { px = py = 0; if (!praf) praf = requestAnimationFrame(lean); });
+		}
+
+		// 6c. where --p comes from. With scroll-driven animations the browser does it and nothing below this line runs on scroll.
+		var SCENES = '.hero .mat, .get-stage, .f-panel, .six-w, .team-row, .steps-w, .band.join, .s-swash';
+		var native = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline: view()')) && !/[?&]scrolljs\b/.test(location.search); // ?scrolljs forces the fallback, for testing
+		var rz = 0;
+		if (native) { window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(swashes, 200); }); return; }
+
+		html.classList.add('s-js');
+		var live = new Set(), box = new Map(), raf = 0, docH = 1;
+		function measure() { // layout positions, read once (never on scroll); transforms do not count, as with view()
+			var vh = window.innerHeight;
+			$$(SCENES).forEach(function (el) {
+				var svg = el instanceof SVGElement, n = svg ? el.parentNode : el, top = 0, h = n.offsetHeight;
+				if (!h) { box.delete(el); return; }
+				for (var o = n; o; o = o.offsetParent) top += o.offsetTop;
+				if (svg) { top += h - el._h * 0.767; h = el._h; } // an underline sits at the foot of its word
+				box.set(el, {top: top, h: h});
+			});
+			docH = Math.max(1, document.documentElement.scrollHeight - vh);
+			ask();
+		}
+		function paint() {
+			raf = 0;
+			var y = window.scrollY, vh = window.innerHeight, out = []; // no layout is read here: positions were measured ahead of time
+			live.forEach(function (el) {
+				var b = box.get(el); if (!b) return;
+				out.push([el, Math.max(0, Math.min(1, (vh - b.top + y) / (vh + b.h)))]);
+			});
+			out.forEach(function (o) { o[0].style.setProperty('--p', o[1].toFixed(4)); });
+			prog.style.setProperty('--pg', Math.max(0, Math.min(1, y / docH)).toFixed(4));
+		}
+		function ask() { if (!raf && !document.hidden) raf = requestAnimationFrame(paint); }
+		var sio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) live.add(e.target); else live.delete(e.target); }); ask(); }, {rootMargin: '15% 0px 15% 0px'});
+		function watch() { sio.disconnect(); live.clear(); $$(SCENES).forEach(function (el) { sio.observe(el); }); }
+		watch(); measure();
+		window.addEventListener('scroll', ask, {passive: true});
+		window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { swashes(); watch(); measure(); }, 200); });
+		window.addEventListener('load', measure);
+		document.addEventListener('visibilitychange', ask);
+		if ('ResizeObserver' in window) new ResizeObserver(function () { clearTimeout(rz); rz = setTimeout(measure, 200); }).observe(document.body); // fonts, images and opened answers move things
 	}
 })();

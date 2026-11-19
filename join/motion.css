@@ -21,6 +21,7 @@
    Three layers:
      A  always            tokens, and two static fixes the motion relies on
      B  motion allowed    (prefers-reduced-motion: no-preference) presses, tab / view / flip changes, the success state
+     D  html.mv           the scroll-linked layer (end of file): things that move WITH the scroll.
      C  html.mv           scroll and load entrances. The class is added by the inline script in <head> ONLY when
                           JavaScript runs, motion is allowed, it is not ?still, and IntersectionObserver exists.
                           Every "hidden before it arrives" rule lives under html.mv, so with no JS, reduced motion,
@@ -48,15 +49,17 @@
 .wr.c { margin-inline: auto; } .wr.r { margin-left: auto; }
 .wr-i { display: block; }
 .hero-h .w { display: inline-block; }
+/* the hero phone's wrapper (added by motion.js), as on the connect page: it leans toward the pointer */
+.tilt { position: relative; z-index: 2; }
 
 /* ───────── shared keyframes (each one starts somewhere and ends at the element's own resting place) ───────── */
-@keyframes m-place { 0% { opacity: 0; translate: 0 -20px; rotate: var(--mt, -2.4deg); scale: 1.045; } 40% { opacity: 1; } 66% { translate: 0 2px; rotate: calc(var(--mt, -2.4deg) * -.18); scale: .996; } 100% { translate: 0 0; rotate: 0deg; scale: 1; } }
-@keyframes m-right { 0% { opacity: 0; translate: 46px 4px; rotate: 3.2deg; } 40% { opacity: 1; } 68% { translate: -3px 0; rotate: -.5deg; } 100% { translate: 0 0; rotate: 0deg; } }
-@keyframes m-drop { 0% { opacity: 0; translate: var(--mx, 0px) -42px; rotate: var(--mr, -9deg); scale: 1.1; } 35% { opacity: 1; } 62% { translate: 0 3px; rotate: calc(var(--mr, -9deg) * -.2); scale: .985; } 82% { translate: 0 -1px; rotate: 0deg; scale: 1; } 100% { translate: 0 0; rotate: 0deg; scale: 1; } }
-@keyframes m-slide { 0% { opacity: 0; translate: var(--mx, 40px) 6px; rotate: var(--mr, 8deg); } 40% { opacity: 1; } 70% { translate: calc(var(--mx, 40px) * -.07) 0; rotate: calc(var(--mr, 8deg) * -.15); } 100% { translate: 0 0; rotate: 0deg; } }
-@keyframes m-phone { 0% { opacity: 0; translate: 0 48px; rotate: 4deg; scale: .965; } 35% { opacity: 1; } 68% { translate: 0 -4px; rotate: -.7deg; scale: 1; } 100% { translate: 0 0; rotate: 0deg; scale: 1; } }
-@keyframes m-pop { 0% { opacity: 0; scale: var(--ms, .55); rotate: var(--mr, -9deg); } 45% { opacity: 1; } 100% { scale: 1; rotate: 0deg; } }
-@keyframes m-tape { 0% { opacity: 0; translate: 0 -10px; scale: 1.18 1.3; } 55% { opacity: .9; translate: 0 1px; scale: .97 .94; } 100% { translate: 0 0; scale: 1 1; } }
+@keyframes m-place { 0% { opacity: 0; translate: 0 -20px; rotate: var(--mt, -2.4deg); scale: 1.045; } 40% { opacity: 1; } 66% { translate: 0 2px; rotate: calc(var(--mt, -2.4deg) * -.18); scale: .996; } }
+@keyframes m-right { 0% { opacity: 0; translate: 46px 4px; rotate: 3.2deg; } 40% { opacity: 1; } 68% { translate: -3px 0; rotate: -.5deg; } }
+@keyframes m-drop { 0% { opacity: 0; translate: var(--mx, 0px) -42px; rotate: var(--mr, -9deg); scale: 1.1; } 35% { opacity: 1; } 62% { translate: 0 3px; rotate: calc(var(--mr, -9deg) * -.2); scale: .985; } }
+@keyframes m-slide { 0% { opacity: 0; translate: var(--mx, 40px) 6px; rotate: var(--mr, 8deg); } 40% { opacity: 1; } 70% { translate: calc(var(--mx, 40px) * -.07) 0; rotate: calc(var(--mr, 8deg) * -.15); } }
+@keyframes m-phone { 0% { opacity: 0; translate: 0 48px; rotate: 4deg; scale: .965; } 35% { opacity: 1; } 68% { translate: 0 -4px; rotate: -.7deg; scale: 1; } }
+@keyframes m-pop { 0% { opacity: 0; scale: var(--ms, .55); rotate: var(--mr, -9deg); } 45% { opacity: 1; } }
+@keyframes m-tape { 0% { opacity: 0; translate: 0 -10px; scale: 1.18 1.3; } 55% { opacity: .9; translate: 0 1px; scale: .97 .94; } }
 @keyframes m-rise { from { opacity: 0; translate: 0 16px; } }
 @keyframes m-rise-s { from { opacity: 0; translate: 0 8px; } }
 @keyframes m-word { from { opacity: 0; translate: 0 .38em; rotate: 5deg; } }
@@ -194,6 +197,7 @@ html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(2) { --n: 1; }
 html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(3) { --n: 2; }
 html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(4) { --n: 3; }
 html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(5) { --n: 4; }
+html.mv :is(.tiles, .strip ul, ul.ticks, .faq) > :nth-child(n+6) { --n: 5; }
 html.mv .tiles.is-seen > *, html.mv .strip.is-seen li, html.mv ul.ticks.is-seen > li, html.mv .faq.is-seen > details, html.mv .does.is-seen .ticks > li { animation: m-rise var(--m-3) var(--m-out) calc(var(--rd, 0ms) + var(--n, 0) * var(--m-step)) backwards; }
 html.mv .does.is-seen .ticks > li { animation-delay: calc(var(--rd, 0ms) + 260ms + var(--n, 0) * var(--m-step)); }
 html.mv ul.ticks.is-seen > li::before, html.mv .does.is-seen .ticks > li::before { animation: m-pop var(--m-2) var(--m-spring) calc(var(--rd, 0ms) + 200ms + var(--n, 0) * var(--m-step)) backwards; --mr: -30deg; }
@@ -207,8 +211,8 @@ html.mv :is(.stage, .get-phone).is-seen .mat::before { animation: m-place var(--
 html.mv :is(.stage, .get-phone).is-seen .phone { animation: m-phone 680ms var(--m-out) calc(var(--rd, 0ms) + 90ms) backwards; }
 html.mv :is(.stage, .get-phone).is-seen .mat > .tape { animation-delay: calc(var(--rd, 0ms) + 440ms); }
 html.mv :is(.stage, .get-phone).is-seen .mat > .tape.b { animation-delay: calc(var(--rd, 0ms) + 530ms); }
-html.mv .stage .pol.is-seen { animation: m-drop 560ms var(--m-out) calc(var(--rd, 0ms) + 470ms) backwards; }
-html.mv .stage .pol.p2.is-seen { animation-delay: calc(var(--rd, 0ms) + 570ms); --mr: 10deg; }
+html.mv .stage .pol.is-seen { animation: m-slide 620ms var(--m-out) calc(var(--rd, 0ms) + 470ms) backwards; --mx: -64px; --mr: -16deg; }
+html.mv .stage .pol.p2.is-seen { animation-name: m-drop; animation-delay: calc(var(--rd, 0ms) + 570ms); --mx: 0px; --mr: 14deg; } /* from above, not from the right: a start beyond the right edge would make the page scroll sideways */
 html.mv .stage .jot.is-seen { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 640ms) backwards; --ms: .6; }
 html.mv .stage .jot.j2.is-seen { animation-delay: calc(var(--rd, 0ms) + 740ms); --mr: 9deg; }
 html.mv .stage.is-seen .stk:not(.poked) { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 780ms) backwards; --ms: .2; --mr: -40deg; }
@@ -234,7 +238,6 @@ html.mv .wk > li:nth-child(2) { --k: 1; } html.mv .wk > li:nth-child(3) { --k: 2
 /* 6. cards with something written on them: the note lands after the card */
 html.mv :is(.perk, .step).is-seen > .hand { animation: m-pop var(--m-2) var(--m-spring) calc(var(--rd, 0ms) + 420ms) backwards; --ms: .7; --mr: -8deg; }
 html.mv .step.is-seen::before { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 240ms) backwards; --ms: .3; --mr: -40deg; }
-html.mv .steps-w.is-seen .string-draw { animation: m-draw 900ms var(--m-pen) calc(var(--rd, 0ms) + 200ms) both; }
 html.mv .vs-foot { --wo: 520ms; }
 html.mv .con-card { --wo: 300ms; }
 
@@ -260,3 +263,86 @@ html.mv .tag.is-seen small { animation: m-rise var(--m-3) var(--m-out) calc(var(
 html.mv .box.is-seen .tk-av { animation: m-pop 420ms var(--m-spring) calc(var(--rd, 0ms) + 380ms) backwards; --mr: -20deg; }
 html.mv .box.is-seen :is(.tk-lab, .tk-ig) { animation: m-rise-s var(--m-3) var(--m-out) calc(var(--rd, 0ms) + 430ms) backwards; }
 html.mv .box.is-seen .tk-ig { animation-delay: calc(var(--rd, 0ms) + 490ms); }
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   D. THE SCROLL-LINKED LAYER (html.mv only) — the page moves WITH her thumb, like the connect page's phone.
+
+   One number does everything: --p, how far a "scene" has travelled through the screen
+   (0 = its top edge is at the bottom of the screen, 1 = its bottom edge has left the top; .5 = about the middle,
+   which is also the default, and at .5 every rule below is at rest / fully drawn).
+   Where --p comes from:
+     · browsers with scroll-driven animations (Chrome, Edge, Android, new Safari): the browser itself, through
+       animation-timeline: view(). No JavaScript runs on scroll at all.
+     · everything else: motion.js, ONE passive scroll listener + requestAnimationFrame that writes --p on the
+       scenes that are on screen (html.s-js). It writes that custom property and nothing else.
+   Either way this CSS turns --p into translate / rotate / stroke-dashoffset. Text never moves against its paper.
+   Scenes: the hero mat, the four-things stage and each of its panels, the six, the team row, the steps, the form band, each underline.
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+@property --p { syntax: '<number>'; inherits: true; initial-value: .5; }
+@property --pg { syntax: '<number>'; inherits: false; initial-value: 0; }
+@keyframes s-p { from { --p: 0; } to { --p: 1; } }
+@keyframes s-pg { from { --pg: 0; } to { --pg: 1; } }
+@supports (animation-timeline: view()) {
+	html.mv:not(.s-js) :is(.hero .mat, .get-stage, .f-panel, .six-w, .team-row, .steps-w, .band.join, .s-swash) { animation: s-p linear both; animation-timeline: view(); }
+	html.mv:not(.s-js) .s-prog { animation: s-pg linear both; animation-timeline: scroll(root); }
+}
+
+/* 1. hero phone: arrives leaning in 3D (the connect page's entrance), then tips back and lifts as she scrolls away;
+      on a desktop it also leans toward the pointer (--px / --py from motion.js) */
+html.mv .hero .mat { perspective: 1100px; perspective-origin: 50% 36%; --d: calc(var(--p, .5) - .5); --ex: clamp(0, calc((var(--p, .5) - .5) * 2.4), 1); }
+html.mv .tilt { transform-style: preserve-3d; transform: rotateY(calc(var(--px, 0) * 7deg)) rotateX(calc(var(--py, 0) * -6deg)); transition: transform 500ms var(--m-out); }
+html.mv .hero .phone { rotate: x calc(var(--ex, 0) * 8deg); translate: 0 calc(var(--ex, 0) * -18px); }
+@keyframes m-phone-3d { 0% { opacity: 0; transform: translateY(44px) rotateX(20deg) rotateY(-16deg) rotate(-4deg); } 35% { opacity: 1; } }
+html.mv .stage.is-seen .hero-phone { animation: m-phone-3d 900ms var(--m-out) calc(var(--rd, 0ms) + 90ms) backwards; }
+
+/* 2. depth: the scrapbook has layers. Things lying on top travel a little faster than the phone, things underneath
+      a little slower, and the gingham mat turns a touch. A few px on phones, up to ~25px either way on a desktop. */
+html.mv .stage .pol.p1 { translate: 0 calc(var(--d, 0) * -44px); }
+html.mv .stage .pol.p2 { translate: 0 calc(var(--d, 0) * 32px); }
+html.mv .stage .jot.j1 { translate: 0 calc(var(--d, 0) * -30px); }
+html.mv .stage .jot.j2 { translate: 0 calc(var(--d, 0) * -18px); }
+html.mv .stage .stk.s1 { translate: 0 calc(var(--d, 0) * -56px); }
+html.mv .stage .stk.s2 { translate: 0 calc(var(--d, 0) * -38px); }
+html.mv .hero .mat > .tape { translate: 0 calc(var(--d, 0) * 12px); }
+html.mv .hero .mat::before { rotate: calc(var(--d, 0) * 3deg); }
+html.mv .get-stage { --d: calc(var(--p, .5) - .5); } /* the whole four-things stage: the mat under the sticky phone turns slowly from first panel to last */
+html.mv .get-phone .mat::before { rotate: calc(var(--d, 0) * -5deg); }
+html.mv .get-phone .mat > .tape { translate: 0 calc(var(--d, 0) * 12px); }
+@media (max-width: 700px) {
+	html.mv .stage .jot.j1 { translate: 0 calc(var(--d, 0) * -8px); }
+	html.mv .stage .jot.j2 { translate: 0 calc(var(--d, 0) * -6px); }
+	html.mv .stage .stk.s1 { translate: 0 calc(var(--d, 0) * -26px); }
+	html.mv .stage .stk.s2 { translate: 0 calc(var(--d, 0) * -18px); }
+	html.mv .hero .mat > .tape, html.mv .get-phone .mat > .tape { translate: 0 calc(var(--d, 0) * 6px); }
+	html.mv .hero .mat::before { rotate: calc(var(--d, 0) * 2deg); }
+	html.mv .get-phone .mat::before { rotate: calc(var(--d, 0) * -2deg); }
+}
+
+/* 3. "four things" on a desktop: the big 01–04 slides sideways as its panel passes */
+@media (min-width: 900px) { html.mv .f-panel .f-n { translate: calc((var(--p, .5) - .5) * -120px) 0; } }
+
+/* 4. section headings: a pink underline (added by motion.js under the cherry words, the hero's own swash)
+      is drawn as the heading comes up the screen: done by the time it is a third of the way up */
+.s-swash { position: absolute; z-index: -1; left: -1%; bottom: -.07em; width: 102%; height: .3em; overflow: visible; pointer-events: none; }
+.s-swash path { fill: none; stroke: var(--pink); stroke-linecap: round; stroke-dasharray: 1 2; stroke-dashoffset: calc((1 - clamp(0, calc((var(--p, .5) - .1) / .24), 1)) * 1.05); }
+em.has-swash { position: relative; z-index: 0; }
+
+/* 5. the six: they come up the screen as a loose pile and fan out into their places */
+html.mv .six-w { --g: calc(1 - clamp(0, calc((var(--p, .5) - .14) / .3), 1)); --fan: 36px; }
+html.mv .six .pal { translate: calc(var(--g, 0) * var(--fx, 0) * var(--fan, 36px)) calc(var(--g, 0) * var(--fy, 1) * 22px); rotate: calc(var(--g, 0) * var(--fr, 0deg)); }
+html.mv .six li:nth-child(3n+1) .pal { --fx: 1; --fr: 8deg; }
+html.mv .six li:nth-child(3n) .pal { --fx: -1; --fr: -8deg; }
+html.mv .six li:nth-child(n+4) .pal { --fy: -1; }
+@media (max-width: 640px) { html.mv .six-w { --fan: 20px; } }
+
+/* 6. the ₹0 tag hangs from its tape and swings a little as it goes by */
+html.mv .team-row .tag { rotate: calc((var(--p, .5) - .5) * -5deg); }
+
+/* 7. the string between the three steps is drawn exactly as far as she has scrolled */
+html.mv .steps-w .string-draw { stroke-dashoffset: calc((1 - clamp(0, calc((var(--p, .5) - .18) / .3), 1)) * 1.05); }
+
+/* 8. the cocoa form band starts a little low and rises to meet the page */
+html.mv .band.join { translate: 0 calc((1 - clamp(0, calc(var(--p, .5) / .2), 1)) * 64px); }
+
+/* 9. a strip of washi tape pulled across the very top of the screen: how far down the page she is */
+.s-prog { position: fixed; z-index: 70; left: 0; top: 0; width: 100%; height: 5px; pointer-events: none; opacity: .92; background: repeating-linear-gradient(-55deg, var(--pink) 0 6px, var(--pink-soft) 6px 12px); transform: translateX(calc((var(--pg, 0) - 1) * 100%)); }

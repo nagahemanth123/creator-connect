@@ -302,7 +302,7 @@
 		if (!d || !d.ok) { if (d && d.error === 'not_found') store(KEY, ''); return fail((d && d.message) || 'This link is not valid any more. Ask Busy Fox for a new one.'); }
 		var p = d.profile || {};
 		$('page').hidden = false;
-		var mkGo = $('mkGo'); if (mkGo) { mkGo.href = '../make/#' + token; mkGo.hidden = false; } var crGo = $('crGo'); if (crGo) { crGo.href = '../carousel/#' + token; crGo.hidden = false; } if (window.FoxyChat) { var ts = $('todaySec'); FoxyChat.init({api: cc.api, token: token, first: p.first || '', mount: ts ? ts.parentNode : null}); } // Foxy: tips card + chat // the story and collage maker opens with her key, like this page
+		var mkGo = $('mkGo'); if (mkGo) { mkGo.href = '../make/?v=20261119c#' + token; mkGo.hidden = false; } var crGo = $('crGo'); if (crGo) { crGo.href = '../carousel/?v=20261119c#' + token; crGo.hidden = false; } if (window.FoxyChat) { var ts = $('todaySec'); FoxyChat.init({api: cc.api, token: token, first: p.first || '', mount: ts ? ts.parentNode : null}); } // Foxy: tips card + chat // the story and collage maker opens with her key, like this page
 		// her first name as the worker cleaned it (set by the team, from her report, or from her own name when it is plain letters); never the decorated Instagram name
 		$('hiName').textContent = p.first || 'there';
 		if (p.first) document.title = p.first + '’s dashboard | Busy Fox';

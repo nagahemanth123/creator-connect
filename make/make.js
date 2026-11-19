@@ -77,6 +77,15 @@
 	// ---------- state ----------
 	var S = {fmt: 'story', fam: 'story', tpl: {story: 'scrap', collage: 'two'}, theme: {}, text: {label: null, title: null, caption: null, handle: null}, media: [], sel: -1, playing: !reduced, sound: true, dirty: false, busy: false, pending: 0};
 	var hits = [], texts = [], need = true, railT = null, uid = 0;
+	var STK_IMG = {}, STK_BASE = '../carousel/a/stk/';
+	function stkLoad(k) { // load once; repaint the preview and the template rail when it arrives
+		if (STK_IMG[k]) return STK_IMG[k].ready;
+		var im = new Image(); STK_IMG[k] = im;
+		im.ready = new Promise(function (res) { im.onload = im.onerror = function () { res(); need = true; clearTimeout(railT); railT = setTimeout(rail, 80); }; });
+		im.src = STK_BASE + k + '.webp';
+		return im.ready;
+	}
+
 
 	// ---------- drawing kit ----------
 	function rrPath(c, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); c.moveTo(x + r, y); c.lineTo(x + w - r, y); c.arcTo(x + w, y, x + w, y + r, r); c.lineTo(x + w, y + h - r); c.arcTo(x + w, y + h, x + w - r, y + h, r); c.lineTo(x + r, y + h); c.arcTo(x, y + h, x, y + h - r, r); c.lineTo(x, y + r); c.arcTo(x, y, x + r, y, r); c.closePath(); }
@@ -255,6 +264,39 @@
 			g.text('title', cx - 350, cy - 50, 700, 100, q);
 			o.texts = keep;
 		};
+		g.stk = function (k, cx, cy, w, deg) { // one of our own stickers (shared with the carousel studio), drawn when it has loaded
+			if (o.stks) o.stks[k] = 1;
+			var im = STK_IMG[k]; if (!im) { stkLoad(k); return; } if (!im.complete || !im.naturalWidth) return;
+			var h = w * im.naturalHeight / im.naturalWidth;
+			c.save(); c.translate(cx, cy); c.rotate((deg || 0) * Math.PI / 180); c.drawImage(im, -w / 2, -h / 2, w, h); c.restore();
+		};
+		g.film = function (first, cx, cy, len, thick, deg, n, col, holeCol) { // a strip of film with n photo frames along it
+			var r = deg * Math.PI / 180, ca = Math.cos(r), sa = Math.sin(r), hh = thick * .085, hw = hh * 1.25, gap = hw * 2.1, i;
+			c.save(); c.translate(cx, cy); c.rotate(r);
+			c.fillStyle = col; c.fillRect(-len / 2, -thick / 2, len, thick);
+			c.fillStyle = holeCol; for (var x = -len / 2 + gap / 2; x < len / 2 - hw; x += gap) { c.beginPath(); rrPath(c, x, -thick / 2 + thick * .045, hw, hh, hh * .2); rrPath(c, x, thick / 2 - thick * .045 - hh, hw, hh, hh * .2); c.fill(); }
+			c.restore();
+			var across = thick * .72, step = len / n, fl = step * .9, up = Math.abs(((deg % 180) + 180) % 180 - 90) < 45;
+			for (i = 0; i < n; i++) {
+				var t = -len / 2 + step * (i + .5), fx = cx + ca * t, fy = cy + sa * t, w = up ? across : fl, h = up ? fl : across;
+				g.slot(first + i, fx - w / 2, fy - h / 2, w, h, {rot: up ? deg - 90 : deg});
+			}
+		};
+		g.post = function (i, x, y, cw, ratio, play) { // a feed-post card around one photo spot; returns its bottom edge
+			var k = cw / 760, hd = 104 * k, ph = cw * ratio, ft = 96 * k, h = hd + ph + ft, ink = '#2B1A17', T = g.T;
+			c.save(); c.shadowColor = 'rgba(43,26,23,.3)'; c.shadowBlur = 50; c.shadowOffsetY = 20; g.box(x, y, cw, h, '#FFFDFB', 34 * k); c.restore();
+			c.fillStyle = T.soft; c.beginPath(); c.arc(x + 62 * k, y + hd / 2, 28 * k, 0, Math.PI * 2); c.fill();
+			g.text('handle', x + 108 * k, y + hd / 2 - 26 * k, cw - 210 * k, 52 * k, {font: 'sans', weight: 700, size: 32 * k, va: 'middle', color: ink, max: 1});
+			c.fillStyle = ink; [0, 1, 2].forEach(function (n) { c.beginPath(); c.arc(x + cw - 40 * k - n * 16 * k, y + hd / 2, 4.5 * k, 0, Math.PI * 2); c.fill(); });
+			g.slot(i, x, y + hd, cw, ph);
+			if (play) { var px = x + cw / 2, py = y + hd + ph / 2, pr = 58 * k; c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(px, py, pr, 0, Math.PI * 2); c.fill(); c.fillStyle = ink; c.beginPath(); c.moveTo(px - pr * .32, py - pr * .45); c.lineTo(px + pr * .5, py); c.lineTo(px - pr * .32, py + pr * .45); c.closePath(); c.fill(); }
+			var iy = y + hd + ph + ft / 2, ix = x + 56 * k, sz = 22 * k;
+			c.strokeStyle = ink; c.lineWidth = 5 * k; c.lineJoin = 'round'; c.lineCap = 'round';
+			c.beginPath(); c.moveTo(ix, iy + sz * .9); c.bezierCurveTo(ix - sz * 1.7, iy - sz * .2, ix - sz * .7, iy - sz * 1.3, ix, iy - sz * .45); c.bezierCurveTo(ix + sz * .7, iy - sz * 1.3, ix + sz * 1.7, iy - sz * .2, ix, iy + sz * .9); c.fillStyle = '#E8384F'; c.fill();
+			ix += 86 * k; c.beginPath(); c.arc(ix, iy, sz * .95, Math.PI * .65, Math.PI * 2.45); c.lineTo(ix - sz * 1.05, iy + sz * 1.05); c.closePath(); c.stroke();
+			ix += 86 * k; c.beginPath(); c.moveTo(ix - sz, iy - sz * .8); c.lineTo(ix + sz * 1.1, iy - sz * .8); c.lineTo(ix - sz * .1, iy + sz); c.lineTo(ix - sz * .2, iy - sz * .1); c.closePath(); c.stroke();
+			return y + h;
+		};
 		g.scrim = function (y0, y1, a0, a1) {
 			var rgb = T.light ? '255,249,247' : '24,14,12', gr = c.createLinearGradient(0, y0, 0, y1);
 			gr.addColorStop(0, 'rgba(' + rgb + ',' + a0 + ')'); gr.addColorStop(1, 'rgba(' + rgb + ',' + a1 + ')');
@@ -283,7 +325,7 @@
 				g.text('caption', 130, st ? 1522 : 978, 820, st ? 110 : 92, {font: 'sans', weight: 500, size: st ? 40 : 34, lh: 1.3, align: 'center', color: T.sub, max: 2});
 				g.text('handle', 90, st ? 1640 : 1150, 900, 50, {font: 'sans', weight: 700, size: 30, track: .1, align: 'center', color: T.acc, max: 1});
 			}},
-		{id: 'bold', fam: 'story', name: 'Big title', n: 1, fields: ['label', 'title', 'caption', 'handle'], themes: ['oWhite', 'oButter', 'oPink', 'oInk'],
+		{id: 'bold', fam: 'story', hide: true, name: 'Big title', n: 1, fields: ['label', 'title', 'caption', 'handle'], themes: ['oWhite', 'oButter', 'oPink', 'oInk'],
 			def: {label: 'New reel', title: 'Three cafés you need to try', caption: 'Saved you the scrolling. Full list inside.'},
 			draw: function (g) {
 				var st = g.st, T = g.T, W = g.W, H = g.H, sh = !T.light;
@@ -296,7 +338,7 @@
 				g.text('title', 70, g.bot - 150 - (st ? 520 : 420), 940, st ? 520 : 420, {font: 'sans', weight: 800, size: st ? 150 : 124, lh: .98, upper: true, va: 'bottom', color: T.on, shadow: sh, max: 4});
 				g.text('caption', 70, g.bot - 122, 940, 112, {font: 'sans', weight: 500, size: 40, lh: 1.3, color: T.on, shadow: sh, max: 2});
 			}},
-		{id: 'cover', fam: 'story', name: 'Magazine', n: 1, fields: ['title', 'label', 'caption'], themes: ['oWhite', 'oButter', 'oPink', 'oInk'],
+		{id: 'cover', fam: 'story', hide: true, name: 'Magazine', n: 1, fields: ['title', 'label', 'caption'], themes: ['oWhite', 'oButter', 'oPink', 'oInk'],
 			def: {title: 'Sunday', label: 'Issue 01 · the slow edit', caption: 'Long walks, filter coffee and one brand new reel'},
 			draw: function (g) {
 				var st = g.st, T = g.T, W = g.W, H = g.H, sh = !T.light, y = st ? 200 : 44;
@@ -340,7 +382,84 @@
 				g.text('title', 90, y + h + (st ? 50 : 34), 900, st ? 150 : 124, {font: 'serif', italic: true, weight: 600, size: st ? 104 : 84, lh: 1.08, align: 'center', va: 'middle', color: T.ink, max: 2});
 				g.text('caption', 130, y + h + (st ? 206 : 164), 820, st ? 58 : 100, {font: 'sans', weight: 500, size: 38, lh: 1.3, align: 'center', color: T.sub, max: st ? 1 : 2});
 			}},
-		{id: 'quote', fam: 'story', name: 'Quote', n: 1, fields: ['title', 'caption', 'handle'], themes: ['butter', 'berry', 'sage', 'mocha', 'night'],
+		// --- new looks in the three styles she likes (Polaroid, Film strip, New post), dressed with our own stickers ---
+		{id: 'pair', fam: 'story', name: 'Polaroid pair', n: 2, fields: ['title', 'label', 'handle'], themes: ['berry', 'butter', 'sage', 'sky', 'mocha'],
+			def: {title: 'us, lately', label: 'two favourites'},
+			draw: function (g) {
+				var st = g.st, T = g.T, Y = function (v) { return st ? v : v * .703; }, Z = function (v) { return st ? v : v * .78; };
+				g.bg(T.bg); g.gingham(0, Y(1000), 1080, Y(920), T.soft, 40);
+				g.text('title', 90, Y(200), 900, Z(150), {font: 'hand', weight: 700, size: Z(140), align: 'center', va: 'middle', color: T.acc, max: 1, rot: -3});
+				g.text('label', 90, Y(200) + Z(150), 900, 44, {font: 'sans', weight: 700, size: 28, track: .22, upper: true, align: 'center', color: T.sub, max: 1});
+				var a = g.polaroid(0, 380, Y(820), Z(560), -6, {strip: .17});
+				var b = g.polaroid(1, 710, Y(1250), Z(560), 5, {strip: .17});
+				g.stk('washi-floral', 380, a.top + 12, Z(240), -8); g.stk('washi-gingham', 720, b.top + 10, Z(230), 6);
+				g.stk('peony', 210, Y(1500), Z(300), -10); g.stk('sparkles-gold', 920, Y(560), Z(190), 0); g.stk('doodle-hearts', 880, Y(900), Z(170), 8);
+				g.text('handle', 90, st ? 1660 : 1270, 900, 50, {font: 'sans', weight: 700, size: 30, track: .1, align: 'center', color: T.acc, max: 1});
+			}},
+		{id: 'dump', fam: 'story', name: 'Photo dump', n: 3, fields: ['title', 'label', 'handle'], themes: ['butter', 'berry', 'sage', 'sky', 'mocha'],
+			def: {title: 'photo dump', label: '19 · 11 · 2026'},
+			draw: function (g) {
+				var st = g.st, T = g.T, Y = function (v) { return st ? v : v * .703; }, Z = function (v) { return st ? v : v * .74; };
+				g.bg(T.bg);
+				g.text('title', 60, Y(230), 640, Z(140), {font: 'hand', weight: 700, size: Z(130), va: 'middle', color: T.ink, max: 1, rot: -5});
+				g.text('label', 110, Y(230) + Z(140) + 6, 560, 44, {font: 'sans', weight: 600, size: 28, track: .2, color: T.sub, max: 1});
+				g.stk('sparkles-gold', 920, Y(290), Z(190), 0);
+				var s1 = g.polaroid(1, 800, Y(660), Z(400), 8, {strip: .16}); g.stk('washi-gingham', 800, s1.top + 8, Z(190), 4);
+				g.polaroid(0, 540, Y(1060), Z(680), -3, {strip: .17}); g.stk('gold-clip', 300, Y(690), Z(160), -18);
+				var s3 = g.polaroid(2, 270, Y(1520), Z(420), -9, {strip: .16}); g.stk('washi-floral', 270, s3.top + 10, Z(190), -14);
+				g.stk('tulips', 860, Y(1470), Z(290), 10); g.stk('doodle-hearts', 900, Y(1130), Z(160), 6);
+				g.text('handle', 560, st ? 1690 : 1280, 460, 50, {font: 'sans', weight: 700, size: 30, track: .1, align: 'right', color: T.acc, max: 1});
+			}},
+		{id: 'roll', fam: 'story', name: 'Film roll', n: 4, fields: ['label', 'title', 'caption'], themes: ['butter', 'berry', 'sage', 'mocha', 'night'],
+			def: {label: 'roll 01', title: 'stories from this week', caption: '24 exp · iso 400'},
+			draw: function (g) {
+				var st = g.st, T = g.T, Y = function (v) { return st ? v : v * .703; };
+				g.bg(T.bg);
+				g.film(0, 450, Y(980), st ? 2150 : 1520, st ? 600 : 470, 86, 4, T.film, T.bg);
+				g.stk('clear-tape', 420, Y(70), 300, -8);
+				g.text('label', 760, Y(300), 300, 60, {font: 'sans', weight: 800, size: 44, track: .12, upper: true, color: T.acc, max: 1});
+				g.text('title', 790, Y(420), 270, Y(520), {font: 'serif', italic: true, weight: 600, size: st ? 74 : 60, lh: 1.08, va: 'top', color: T.ink, max: 6});
+				g.stk('sparkles-gold', 900, Y(1080), 150, 0); g.stk('film-canister', 900, Y(1400), 220, 12);
+				g.text('caption', 820, Y(1610), 250, 50, {font: 'sans', weight: 600, size: 24, track: .14, upper: true, color: T.sub, max: 1});
+			}},
+		{id: 'reel', fam: 'story', name: 'Film strips', n: 4, fields: ['title', 'caption', 'handle'], themes: ['night', 'mocha', 'berry', 'butter', 'sky'],
+			def: {title: 'the highlights', caption: 'four frames, one good day'},
+			draw: function (g) {
+				var st = g.st, T = g.T, Y = function (v) { return st ? v : v * .703; }, Z = function (v) { return st ? v : v * .78; };
+				var film = T.bg === '#151212' || T.bg === '#3D2521' ? '#F3EADC' : T.film;
+				g.bg(T.bg);
+				g.text('title', 90, Y(190), 900, Z(140), {font: 'hand', weight: 700, size: Z(128), align: 'center', va: 'middle', color: T.ink, max: 1});
+				g.film(0, 540, Y(640), 1400, Z(470), -6, 2, film, T.bg);
+				g.film(2, 540, Y(1200), 1400, Z(470), 5, 2, film, T.bg);
+				g.stk('film-reel', 140, Y(940), Z(200), -10); g.stk('sparkles-gold', 950, Y(930), Z(170), 0); g.stk(T.ink === '#FFFFFF' || T.bg === '#3D2521' ? 'doodle-hearts' : 'music-notes', 900, Y(1560), Z(190), 8);
+				g.text('caption', 130, Y(1540), 640, 60, {font: 'sans', weight: 500, size: 38, va: 'middle', color: T.sub, max: 1});
+				g.text('handle', 130, Y(1610), 640, 50, {font: 'sans', weight: 700, size: 30, track: .1, color: T.acc, max: 1});
+			}},
+		{id: 'sparkle', fam: 'story', name: 'New post, sparkly', n: 1, fields: ['title', 'caption', 'handle'], themes: ['berry', 'butter', 'sage', 'sky', 'night'],
+			def: {title: 'NEW POST', caption: 'go like it ♡'},
+			draw: function (g) {
+				var st = g.st, T = g.T, Y = function (v) { return st ? v : v * .703; }, cw = st ? 720 : 520, x = (1080 - cw) / 2;
+				g.bg(T.bg); g.gingham(0, 0, 1080, g.H, T.soft, 54);
+				g.text('title', 60, Y(190), 960, st ? 170 : 130, {font: 'sans', weight: 800, size: st ? 150 : 116, lh: 1, track: .02, upper: true, align: 'center', va: 'middle', color: T.acc, max: 1});
+				var b = g.post(0, x, Y(400), cw, 1.25);
+				g.stk('sparkles-gold', x + cw - 10, Y(400), st ? 200 : 150, 0); g.stk('location-pin', x - 20, Y(400) + (st ? 120 : 90), st ? 150 : 110, -12);
+				g.stk('doodle-hearts', x + cw + 30, b - (st ? 260 : 180), st ? 180 : 130, 8);
+				g.stk('doodle-arrow', 300, b + (st ? 90 : 50), st ? 230 : 160, -75);
+				g.text('caption', 420, b + (st ? 40 : 14), 560, st ? 110 : 80, {font: 'hand', weight: 700, size: st ? 70 : 54, va: 'middle', color: T.ink, max: 1});
+			}},
+		{id: 'newreel', fam: 'story', name: 'New reel', n: 1, fields: ['label', 'caption', 'handle'], themes: ['night', 'berry', 'butter', 'sage', 'mocha'],
+			def: {label: 'new reel', caption: 'sound on for this one'},
+			draw: function (g) {
+				var st = g.st, T = g.T, Y = function (v) { return st ? v : v * .703; }, cw = st ? 600 : 400, x = (1080 - cw) / 2;
+				g.bg(T.bg);
+				var lq = {font: 'sans', weight: 800, size: st ? 52 : 40, track: .1, upper: true, max: 1, va: 'middle', align: 'center', color: T.accInk}, f = g.fit('label', 700, 90, lq);
+				if (f) g.box(540 - (f.wmax + 90) / 2, Y(200), f.wmax + 90, st ? 96 : 76, T.acc, 48);
+				g.text('label', 190, Y(200), 700, st ? 96 : 76, lq);
+				var b = g.post(0, x, Y(360), cw, 16 / 9 * .82, true);
+				g.stk(T.ink === '#FFFFFF' || T.bg === '#3D2521' ? 'cloud' : 'music-notes', x - 40, Y(560), st ? 200 : 140, -8); g.stk('headphones', x + cw + 20, Y(1180), st ? 210 : 150, 10); g.stk('sparkles-gold', x + cw - 10, Y(360), st ? 170 : 120, 0);
+				g.text('caption', 90, b + (st ? 40 : 18), 900, st ? 90 : 70, {font: 'hand', weight: 700, size: st ? 66 : 52, align: 'center', va: 'middle', color: T.ink, max: 1});
+			}},
+		{id: 'quote', fam: 'story', hide: true, name: 'Quote', n: 1, fields: ['title', 'caption', 'handle'], themes: ['butter', 'berry', 'sage', 'mocha', 'night'],
 			def: {title: 'Post the thing. Nobody is watching as closely as you think.', caption: 'Note to self'},
 			draw: function (g) {
 				var st = g.st, T = g.T, c = g.c, y = st ? 330 : 96, q = {font: 'serif', weight: 800, size: 440};
@@ -354,7 +473,7 @@
 				g.text('caption', 350, py + 36, 620, 64, {font: 'sans', weight: 700, size: 38, va: 'middle', color: T.ink, max: 1});
 				g.text('handle', 350, py + 104, 620, 50, {font: 'sans', weight: 500, size: 30, va: 'middle', color: T.sub, max: 1});
 			}},
-		{id: 'date', fam: 'story', name: 'Save the date', n: 1, fields: ['label', 'title', 'caption', 'handle'], themes: ['sage', 'berry', 'butter', 'sky', 'mocha'],
+		{id: 'date', fam: 'story', hide: true, name: 'Save the date', n: 1, fields: ['label', 'title', 'caption', 'handle'], themes: ['sage', 'berry', 'butter', 'sky', 'mocha'],
 			def: {label: 'Save the date', title: '24 Nov', caption: '3 days to go. Something lovely is coming.'},
 			draw: function (g) {
 				var st = g.st, T = g.T, c = g.c, aw = st ? 800 : 560, ax = (1080 - aw) / 2, ay = st ? 250 : 64, ah = st ? 840 : 556, b = ay + ah;
@@ -366,7 +485,7 @@
 				g.text('caption', 130, b + (st ? 352 : 290), 820, st ? 110 : 96, {font: 'sans', weight: 500, size: st ? 40 : 34, lh: 1.3, align: 'center', color: T.sub, max: 2});
 				g.text('handle', 90, st ? 1612 : 1230, 900, 50, {font: 'sans', weight: 700, size: 30, track: .1, align: 'center', color: T.acc, max: 1});
 			}},
-		{id: 'frame', fam: 'story', name: 'Quiet frame', n: 1, fields: ['title', 'label', 'handle'], themes: ['paper', 'berry', 'butter', 'sage', 'night'],
+		{id: 'frame', fam: 'story', hide: true, name: 'Quiet frame', n: 1, fields: ['title', 'label', 'handle'], themes: ['paper', 'berry', 'butter', 'sage', 'night'],
 			def: {title: 'Golden hour, again', label: 'No. 01 · November'},
 			draw: function (g) {
 				var st = g.st, T = g.T, c = g.c, fw = st ? 840 : 720, fx = (1080 - fw) / 2, fy = st ? 300 : 84, fh = fw * 1.25, b = fy + fh;
@@ -420,7 +539,7 @@
 				g.text('handle', 90, st ? 1650 : 1262, 900, 50, {font: 'sans', weight: 700, size: 30, track: .1, align: 'center', color: T.acc, max: 1});
 			}}
 	];
-	function cur() { var id = S.tpl[S.fam]; return TPL.filter(function (t) { return t.id === id; })[0]; }
+	function cur() { var id = S.tpl[S.fam]; return TPL.filter(function (t) { return t.id === id && !t.hide; })[0] || TPL.filter(function (t) { return t.fam === S.fam && !t.hide; })[0]; }
 	function dims(fmt) { return {W: 1080, H: (fmt || S.fmt) === 'story' ? 1920 : 1350}; }
 
 	function render(c, px, fmt, tpl, o) {
@@ -449,11 +568,11 @@
 	}
 	function fontsFor(tpl, fmt) { // a dry run of the design to find every font and word it uses, then wait for them
 		var map = {}, c = document.createElement('canvas').getContext('2d');
-		render(c, 108, fmt || S.fmt, tpl, {mode: 'export', fonts: map});
+		var stks = {}; render(c, 108, fmt || S.fmt, tpl, {mode: 'export', fonts: map, stks: stks});
 		map['800 40px ' + FAM.serif] = (map['800 40px ' + FAM.serif] || '') + '“';
 		map['600 40px ' + FAM.hand] = (map['600 40px ' + FAM.hand] || '') + 'your photo or video loading…';
 		Object.keys(map).forEach(function (k) { delete fontSeen[k + '|' + map[k]]; });
-		return loadFonts(map);
+		return Promise.all([loadFonts(map), Promise.all(Object.keys(stks).map(stkLoad))]).then(function (r) { return r[0]; });
 	}
 
 	// ---------- preview ----------
@@ -507,7 +626,7 @@
 		$('exportBtn').textContent = visibleVideos().length ? 'Export video' : 'Export';
 	}
 	function rail() {
-		var box = $('rail'), list = TPL.filter(function (t) { return t.fam === S.fam; }), d = dims(), key = S.fam + S.fmt;
+		var box = $('rail'), list = TPL.filter(function (t) { return t.fam === S.fam && !t.hide; }), d = dims(), key = S.fam + S.fmt;
 		if (box.dataset.key !== key) {
 			box.dataset.key = key; box.innerHTML = '';
 			list.forEach(function (t) {

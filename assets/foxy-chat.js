@@ -53,11 +53,25 @@
 			'<div class="fx-log" role="log" aria-live="polite"></div>' +
 			'<div class="fx-chips" aria-label="Ideas to ask"></div>' +
 			'<form class="fx-form"><label class="sr" for="fxIn" style="position:absolute;left:-9999px">Message Foxy</label><textarea id="fxIn" rows="1" maxlength="1500" placeholder="Ask Foxy anything…"></textarea><button type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></form>' +
-			'<p class="fx-fine">Foxy can get things wrong. Check numbers on your dashboard.</p></div>');
+			'<p class="fx-fine">Foxy can get things wrong. Check numbers on your dashboard. <button type="button" class="fx-forget">Forget everything</button></p></div>');
 		document.body.appendChild(panel);
 		log = panel.querySelector('.fx-log'); ta = panel.querySelector('textarea'); sendBtn = panel.querySelector('.fx-form button'); chips = panel.querySelector('.fx-chips');
 		panel.querySelector('.fx-x').onclick = hide;
 		panel.querySelector('.fx-new').onclick = function () { if (busy) return; req('/me/foxy/chat-clear', {method: 'POST'}).then(function () { history = []; render(); }); };
+		panel.querySelector('.fx-forget').onclick = function () { // her choice: wipes every chat and what Foxy remembers about her
+			if (busy || log.querySelector('.fx-confirm')) return;
+			var c = el('<div class="fx-m fox fx-confirm" role="alertdialog" aria-label="Forget everything?"><p><b>Forget everything?</b> Foxy will delete all your chats and everything it remembers about you. This cannot be undone.</p><div class="fx-cbtn"><button type="button" class="yes">Yes, forget</button><button type="button" class="no">Keep it</button></div></div>');
+			log.appendChild(c); log.scrollTop = log.scrollHeight; c.querySelector('.no').focus();
+			c.querySelector('.no').onclick = function () { c.remove(); ta.focus(); };
+			c.querySelector('.yes').onclick = function () {
+				c.querySelectorAll('button').forEach(function (x) { x.disabled = true; });
+				req('/me/foxy/forget', {method: 'POST'}).then(function (r) { return r.json(); }).then(function (d) {
+					if (!d || !d.ok) throw new Error('x');
+					history = []; render();
+					var ok = el('<div class="fx-m fox"><p>Done. I have forgotten our chats and everything I noted about you. Your audit and dashboard numbers are still here for me to help with.</p></div>'); log.appendChild(ok);
+				}).catch(function () { c.remove(); var e = el('<div class="fx-m fox fx-err"><p>That did not go through. Try again in a moment.</p></div>'); log.appendChild(e); });
+			};
+		};
 		panel.querySelector('form').onsubmit = function (e) { e.preventDefault(); send(ta.value); };
 		ta.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(ta.value); } });
 		ta.addEventListener('input', function () { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; });

@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en" class="wm-on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Creator Connect | Free Instagram audit and your own dashboard</title>
+<meta name="description" content="Creator Connect reads every post you have made, shows what your followers really want, and gives you a dashboard that plans your next 13 weeks. Free, read-only, two minutes.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FFF4E4">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Stop guessing what to post">
+<meta property="og:description" content="A free Instagram audit, your own dashboard, a 13-week calendar and a brand kit. Read-only. Your password stays with Instagram.">
+<meta property="og:image" content="https://work.busyfox.in/creator-connect/assets/og.jpg">
+<meta property="og:url" content="https://work.busyfox.in/creator-connect/join/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="../assets/fox.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<link rel="stylesheet" href="../assets/watermark.css">
+<style>
+:root {
+	--bg: #FFF4E4; --card: #FFFFFF; --ink: #15100E; --soft: #5A4E48;
+	--cherry: #E5284C; --cobalt: #2A3CFF; --lime: #CFF24A; --butter: #FFD23F; --pink: #FFB3C7; --mint: #9BE7C9;
+	--disp: 'Bricolage Grotesque', 'Arial Black', system-ui, sans-serif;
+	--sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--b: 2.5px solid var(--ink);
+	--pop: 6px 6px 0 var(--ink);
+	color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.55 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+h1, h2, h3, p, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+h1, h2, h3 { font-family: var(--disp); font-weight: 800; letter-spacing: -.035em; text-wrap: balance; }
+h1 { font-size: clamp(48px, 9.2vw, 118px); line-height: .92; }
+h2 { font-size: clamp(36px, 6vw, 76px); line-height: .96; }
+h3 { font-size: clamp(22px, 2.4vw, 28px); line-height: 1.08; letter-spacing: -.02em; }
+:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: max(28px, env(safe-area-inset-left, 0px)) max(28px, env(safe-area-inset-right, 0px)); }
+@media (max-width: 520px) { .wrap { padding-inline: 16px; } body { font-size: 16px; } }
+section { padding-block: clamp(64px, 9vw, 120px); scroll-margin-top: 70px; }
+.kicker { color: var(--ink); display: inline-block; padding: 5px 12px 6px; border: var(--b); border-radius: 999px; background: var(--card); font: 700 12.5px/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+.lede { font-size: clamp(18px, 1.9vw, 22px); line-height: 1.45; color: var(--soft); max-width: 31em; }
+.hl { background: var(--lime); padding: 0 .12em; border-radius: 6px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.hl.b { background: var(--butter); } .hl.p { background: var(--pink); }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 58px; padding: 0 28px; border: var(--b); border-radius: 16px; background: var(--cherry); color: #fff; font: 700 18px/1 var(--sans); text-decoration: none; cursor: pointer; box-shadow: var(--pop); transition: transform .12s ease, box-shadow .12s ease; -webkit-tap-highlight-color: transparent; }
+.btn:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--ink); }
+.btn:active { transform: translate(4px, 4px); box-shadow: 2px 2px 0 var(--ink); }
+.btn.sm { min-height: 44px; padding: 0 18px; font-size: 15px; border-radius: 12px; box-shadow: 4px 4px 0 var(--ink); }
+.btn.ink { background: var(--ink); }
+.btn[disabled] { opacity: .6; cursor: default; transform: none; }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+
+/* top bar */
+.top { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: var(--b); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+.logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 500 13px/1.1 var(--sans); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+.logo img { width: 26px; height: auto; }
+.logo b { font: 800 21px/1 var(--disp); letter-spacing: -.03em; text-transform: none; }
+@media (max-width: 420px) { .logo span { display: none; } }
+
+/* hero */
+.hero { padding-block: clamp(36px, 5vw, 64px) clamp(64px, 8vw, 110px); }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 48px; align-items: center; }
+.hero-l { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; min-width: 0; }
+.hi { font: 700 clamp(20px, 2.4vw, 26px)/1.1 var(--disp); letter-spacing: -.02em; }
+.hi b { background: var(--pink); padding: 2px 10px; border: var(--b); border-radius: 10px; display: inline-block; transform: rotate(-2deg); }
+.proof { display: flex; flex-wrap: wrap; gap: 8px 10px; font: 600 14.5px/1.2 var(--sans); }
+.proof li { padding: 8px 13px; border: var(--b); border-radius: 999px; background: var(--card); }
+.proof li:nth-child(1) { background: var(--lime); } .proof li:nth-child(3) { background: var(--butter); }
+.hero-r { position: relative; justify-self: center; }
+.sticker { position: absolute; z-index: 3; padding: 10px 14px; border: var(--b); border-radius: 14px; font: 800 17px/1.05 var(--disp); letter-spacing: -.02em; box-shadow: 4px 4px 0 var(--ink); }
+.sticker.s1 { top: -22px; left: -84px; background: var(--butter); transform: rotate(-7deg); }
+.sticker.s2 { bottom: 26px; right: -64px; background: var(--lime); transform: rotate(6deg); }
+.sticker small { display: block; font: 600 12px/1.2 var(--sans); letter-spacing: 0; margin-top: 3px; }
+@media (max-width: 900px) {
+	.hero .wrap { grid-template-columns: 1fr; gap: 44px; }
+	.sticker.s1 { left: -14px; top: -34px; } .sticker.s2 { right: -12px; bottom: 22px; }
+}
+
+/* phone */
+.phone { position: relative; width: min(300px, 78vw); border: var(--b); border-width: 3px; border-radius: 38px; background: var(--ink); padding: 10px; box-shadow: 10px 10px 0 var(--ink); }
+.phone.tilt { transform: rotate(2.5deg); }
+.phone.tilt .screen { padding-bottom: 96px; }
+.screen { position: relative; border-radius: 28px; background: #FFF9F1; overflow: hidden; padding: 18px 14px 22px; display: flex; flex-direction: column; gap: 11px; font-size: 13px; line-height: 1.35; }
+.screen::before { content: ''; align-self: center; width: 74px; height: 6px; border-radius: 99px; background: var(--ink); margin-bottom: 4px; }
+.ex { align-self: flex-start; font: 700 9.5px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; padding: 5px 8px; border-radius: 99px; background: var(--ink); color: #fff; }
+.s-h { font: 800 21px/1.05 var(--disp); letter-spacing: -.03em; }
+.s-card { border: 2px solid var(--ink); border-radius: 14px; padding: 11px 12px; background: #fff; }
+.s-card.lime { background: var(--lime); } .s-card.pink { background: var(--pink); } .s-card.butter { background: var(--butter); } .s-card.blue { background: var(--cobalt); color: #fff; }
+.s-lab { font: 700 9.5px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; opacity: .72; margin-bottom: 6px; }
+.s-big { font: 800 17px/1.1 var(--disp); letter-spacing: -.02em; }
+.s-num { font: 800 30px/1 var(--disp); letter-spacing: -.04em; }
+.s-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.s-btn { margin-top: 9px; display: flex; align-items: center; justify-content: center; height: 34px; border-radius: 10px; background: var(--ink); color: #fff; font: 700 12px/1 var(--sans); }
+.bars { display: flex; align-items: flex-end; gap: 5px; height: 74px; margin-top: 8px; }
+.bars i { flex: 1; background: var(--ink); border-radius: 4px 4px 0 0; opacity: .22; }
+.bars i.on { opacity: 1; background: var(--cherry); }
+.bars-x { display: flex; justify-content: space-between; font-size: 10px; margin-top: 4px; opacity: .7; }
+.wk { display: grid; gap: 6px; }
+.wk li { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 7px; font-size: 12px; line-height: 1.2; align-items: center; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 11px; background: #fff; font-weight: 600; }
+.wk li b { font: 800 12px/1 var(--disp); }
+.wk li em { font: 700 9.5px/1 var(--sans); font-style: normal; letter-spacing: .08em; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--butter); }
+.wk li.off { border-style: dashed; opacity: .55; font-weight: 500; }
+.seal { display: flex; align-items: center; gap: 9px; font: 800 14px/1.1 var(--disp); }
+.seal i { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--ink) url(../assets/fox.png) center/52% no-repeat; }
+.kv { display: grid; gap: 5px; }
+.kv li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1.5px dashed rgba(21, 16, 14, .3); padding-bottom: 5px; }
+.kv li:last-child { border: 0; padding: 0; }
+.kv b { font-weight: 700; }
+
+/* strip */
+.strip { border-block: var(--b); background: var(--ink); color: var(--bg); padding-block: 18px; }
+.strip ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 26px; font: 800 clamp(17px, 2.2vw, 24px)/1.1 var(--disp); letter-spacing: -.02em; }
+.strip li::before { content: '✦'; color: var(--lime); margin-right: 12px; }
+
+/* compare */
+.vs { background: var(--cobalt); color: #fff; border-bottom: var(--b); }
+.vs .lede { color: #DCE0FF; }
+.vs-head { display: flex; flex-direction: column; gap: 20px; align-items: flex-start; margin-bottom: 48px; }
+.vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.vs-col { border: var(--b); border-radius: 22px; padding: 26px 24px 28px; color: var(--ink); }
+.vs-col.ig { background: #E9EBFF; }
+.vs-col.cc { background: var(--lime); box-shadow: 8px 8px 0 var(--ink); }
+.vs-col h3 { margin-bottom: 18px; }
+.vs-col li { position: relative; padding: 12px 0 12px 34px; border-top: 2px solid rgba(21, 16, 14, .16); font-weight: 500; }
+.vs-col li:first-child { border-top: 0; }
+.vs-col li::before { content: '–'; position: absolute; left: 4px; top: 10px; font: 800 20px/1.2 var(--disp); }
+.vs-col.cc li::before { content: '✓'; }
+.vs-col li b { font-weight: 700; }
+@media (max-width: 760px) { .vs-grid { grid-template-columns: 1fr; } }
+
+/* what you get */
+.get-head { display: flex; flex-direction: column; gap: 20px; align-items: flex-start; margin-bottom: 52px; }
+.feat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px 56px; align-items: center; padding-block: 44px; border-top: var(--b); }
+.feat:nth-of-type(even) .f-txt { order: 2; }
+.f-txt { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; min-width: 0; }
+.f-n { font: 800 15px/1 var(--disp); padding: 7px 11px; border: var(--b); border-radius: 10px; background: var(--butter); }
+.feat:nth-of-type(2) .f-n { background: var(--pink); } .feat:nth-of-type(3) .f-n { background: var(--lime); } .feat:nth-of-type(4) .f-n { background: var(--mint); }
+.f-txt h3 { font-size: clamp(28px, 3.6vw, 44px); letter-spacing: -.03em; line-height: 1; }
+.f-txt p { color: var(--soft); max-width: 30em; }
+.ticks { display: grid; gap: 8px; font-weight: 600; }
+.ticks li { padding-left: 28px; position: relative; }
+.ticks li::before { content: '✓'; position: absolute; left: 0; top: 2px; width: 19px; height: 19px; border-radius: 50%; background: var(--ink); color: var(--lime); font: 800 11px/19px var(--sans); text-align: center; }
+.f-pic { justify-self: center; }
+.f-pic .phone { transform: rotate(-2deg); }
+.feat:nth-of-type(even) .f-pic .phone { transform: rotate(2deg); }
+@media (max-width: 820px) { .feat { grid-template-columns: 1fr; } .feat:nth-of-type(even) .f-txt { order: 0; } }
+.more { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; padding-top: 44px; border-top: var(--b); }
+.more li { border: var(--b); border-radius: 18px; padding: 20px; background: var(--card); box-shadow: 5px 5px 0 var(--ink); }
+.more li:nth-child(1) { background: var(--pink); } .more li:nth-child(3) { background: var(--mint); }
+.more h3 { font-size: 22px; margin-bottom: 8px; }
+.more p { font-size: 15.5px; line-height: 1.45; }
+@media (max-width: 820px) { .more { grid-template-columns: 1fr; } }
+
+/* steps */
+.how { background: var(--lime); border-block: var(--b); }
+.how h2 { margin-block: 20px 44px; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; counter-reset: s; }
+.steps li { counter-increment: s; border: var(--b); border-radius: 22px; background: var(--card); padding: 24px 22px 26px; box-shadow: var(--pop); }
+.steps li::before { content: counter(s); display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border: var(--b); border-radius: 50%; background: var(--cherry); color: #fff; font: 800 24px/1 var(--disp); margin-bottom: 16px; }
+.steps h3 { margin-bottom: 8px; }
+.steps p { color: var(--soft); font-size: 16px; }
+.steps small { display: inline-block; margin-top: 12px; font: 700 12px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; padding: 6px 9px; border-radius: 8px; background: var(--butter); border: 2px solid var(--ink); }
+.after { margin-top: 30px; font: 700 clamp(19px, 2.2vw, 24px)/1.25 var(--disp); letter-spacing: -.02em; }
+@media (max-width: 820px) { .steps { grid-template-columns: 1fr; } }
+
+/* safe */
+.safe { background: var(--ink); color: var(--bg); }
+.safe .kicker { background: var(--lime); color: var(--ink); border-color: var(--lime); }
+.safe h2 { margin-block: 20px 40px; }
+.safe-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 48px; }
+.safe-grid li { padding: 22px 0; border-top: 2px solid #3A312D; display: grid; grid-template-columns: 34px 1fr; gap: 14px; }
+.safe-grid li::before { content: '✓'; width: 30px; height: 30px; border-radius: 50%; background: var(--lime); color: var(--ink); font: 800 16px/30px var(--sans); text-align: center; }
+.safe-grid b { display: block; font: 700 20px/1.2 var(--disp); letter-spacing: -.02em; margin-bottom: 4px; }
+.safe-grid span { color: #CFC4BC; font-size: 16px; }
+@media (max-width: 760px) { .safe-grid { grid-template-columns: 1fr; } }
+
+/* price + faq */
+.free .wrap { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 56px; align-items: start; }
+.tag { border: var(--b); border-radius: 26px; background: var(--butter); padding: 32px 28px; box-shadow: var(--pop); transform: rotate(-1.5deg); }
+.tag .zero { font: 800 clamp(88px, 13vw, 150px)/.85 var(--disp); letter-spacing: -.06em; }
+.tag p { margin-top: 16px; font-weight: 600; font-size: 18px; line-height: 1.4; }
+.tag small { display: block; margin-top: 14px; font-size: 14.5px; line-height: 1.45; color: #4A3D12; }
+.faq h2 { font-size: clamp(30px, 4vw, 48px); margin-bottom: 22px; }
+details { border-top: var(--b); }
+details:last-of-type { border-bottom: var(--b); }
+summary { list-style: none; cursor: pointer; padding: 18px 44px 18px 0; position: relative; font: 700 19px/1.25 var(--disp); letter-spacing: -.02em; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: '+'; position: absolute; right: 4px; top: 12px; font: 800 30px/1 var(--disp); }
+details[open] summary::after { content: '–'; }
+details p { padding: 0 0 20px; color: var(--soft); max-width: 36em; }
+@media (max-width: 860px) { .free .wrap { grid-template-columns: 1fr; gap: 44px; } }
+
+/* form */
+.join { background: var(--cherry); color: #fff; border-top: var(--b); }
+.join .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+.join h2 { margin-bottom: 18px; }
+.join .lede { color: #FFE1E7; }
+.box { border: var(--b); border-radius: 26px; background: var(--card); color: var(--ink); padding: 28px 24px; box-shadow: 10px 10px 0 var(--ink); }
+.box h3 { margin-bottom: 18px; font-size: 26px; }
+.fld { display: block; margin-bottom: 16px; }
+.fld span { display: block; font: 700 13px/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 7px; }
+.fld input { width: 100%; height: 56px; padding: 0 16px; border: var(--b); border-radius: 14px; background: #FFFDF8; color: var(--ink); font: 500 18px/1 var(--sans); -webkit-appearance: none; appearance: none; }
+.fld input:focus { outline: 3px solid var(--cobalt); outline-offset: 2px; }
+.at { position: relative; }
+.at::before { content: '@'; position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font: 700 18px/1 var(--sans); color: var(--soft); pointer-events: none; }
+.at input { padding-left: 36px; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.box .btn { width: 100%; }
+.err { margin: 0 0 14px; padding: 10px 13px; border: 2px solid var(--cherry); border-radius: 12px; background: #FFE9EE; color: #8E0F2B; font-weight: 600; font-size: 15px; }
+.fine { margin-top: 14px; font-size: 13.5px; line-height: 1.45; color: var(--soft); text-align: center; }
+.done h3 { font-size: 30px; }
+.done ol { display: grid; gap: 12px; margin: 18px 0 6px; counter-reset: d; }
+.done li { counter-increment: d; display: grid; grid-template-columns: 30px 1fr; gap: 12px; font-weight: 500; }
+.done li::before { content: counter(d); width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--lime); font: 800 14px/28px var(--disp); text-align: center; }
+.done a { font-weight: 700; color: var(--cobalt); }
+@media (max-width: 860px) { .join .wrap { grid-template-columns: 1fr; } }
+
+/* footer + sticky cta */
+footer { background: var(--ink); color: #CFC4BC; padding-block: 34px 110px; font-size: 14.5px; }
+footer .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 28px; }
+footer .wm-mark { font-size: 11px; }
+footer a { color: var(--bg); }
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--bg); border-top: var(--b); display: none; }
+.dock .btn { width: 100%; min-height: 52px; font-size: 17px; }
+@media (max-width: 700px) { .dock.on { display: block; } .top .btn { display: none; } }
+@media (min-width: 701px) { footer { padding-bottom: 34px; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+	<div class="wrap">
+		<a class="logo" href="#top" aria-label="FoxCut Creator Connect"><img src="../assets/fox.png" alt="" width="26" height="38"><b>FoxCut</b><span>Creator Connect</span></a>
+		<a class="btn sm" href="#join">Ask for invite</a>
+	</div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+	<div class="wrap">
+		<div class="hero-l">
+			<p class="hi" id="hi" hidden>Hi <b id="hi-name"></b> this one is for you.</p>
+			<h1>Stop <span class="hl">guessing</span> what to post.</h1>
+			<p class="lede">Creator Connect reads every post you have ever made, finds what your followers really want, and gives you your own dashboard that plans the next 13 weeks. It costs nothing.</p>
+			<a class="btn" href="#join">Ask for my invite</a>
+			<ul class="proof" aria-label="Good to know">
+				<li>Free</li>
+				<li>Read-only</li>
+				<li>2 minutes to connect</li>
+				<li>Your password stays with Instagram</li>
+			</ul>
+		</div>
+		<div class="hero-r">
+			<p class="sticker s1">Post this<br>on Thursday<small>6:30 pm, your best slot</small></p>
+			<p class="sticker s2">63% new<br>people<small>reached by your reels</small></p>
+			<div class="phone tilt" role="img" aria-label="Example dashboard: today's post, this week's score and best time to post">
+				<div class="screen wm-tile">
+					<span class="ex">Example · made-up numbers</span>
+					<p class="s-h">Hi, Meera 👋</p>
+					<div class="s-card lime">
+						<p class="s-lab">Next up · Thu 6:30 pm</p>
+						<p class="s-big">Reel: Sunday reset in 20 seconds</p>
+						<p style="margin-top:5px">Shoot by Wednesday. Open on the messy desk, not your face.</p>
+						<p class="s-btn">Open the script</p>
+					</div>
+					<div class="s-row">
+						<div class="s-card"><p class="s-lab">This week</p><p class="s-num">78</p><p>score, up 9</p></div>
+						<div class="s-card butter"><p class="s-lab">Views</p><p class="s-num">41.2K</p><p>last 7 days</p></div>
+					</div>
+					<div class="s-card pink">
+						<p class="s-lab">Heads up</p>
+						<p><b>Carousels on Tuesday</b> are getting saved 2× more than your usual post.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<div class="strip">
+	<div class="wrap">
+		<ul>
+			<li>Full audit report</li>
+			<li>Your own dashboard</li>
+			<li>13-week calendar</li>
+			<li>Ideas bank</li>
+			<li>Brand kit</li>
+		</ul>
+	</div>
+</div>
+
+<section class="vs" id="why">
+	<div class="wrap">
+		<div class="vs-head">
+			<span class="kicker">Why not just Instagram Insights?</span>
+			<h2>Instagram gives you numbers. We give you the <span class="hl" style="color:var(--ink)">next move.</span></h2>
+			<p class="lede">You already have a Professional Dashboard. It is good at counting. It does not tell you what to do on Thursday.</p>
+		</div>
+		<div class="vs-grid">
+			<div class="vs-col ig">
+				<h3>Instagram's own insights</h3>
+				<ul>
+					<li>Mostly the <b>last 90 days</b></li>
+					<li>One post at a time, no patterns across posts</li>
+					<li>Numbers with <b>no advice</b> on what to change</li>
+					<li>No plan for what to post next</li>
+					<li>Nothing you can send to a brand</li>
+				</ul>
+			</div>
+			<div class="vs-col cc">
+				<h3>Creator Connect</h3>
+				<ul>
+					<li><b>Every post</b> since your very first one</li>
+					<li>Which few posts brought most of your reach, and what they share</li>
+					<li>Your best day and hour, worked out from <b>your own posts</b></li>
+					<li>A dated calendar: what to post, when, and why</li>
+					<li>A brand page with your numbers, <b>verified by Busy Fox</b></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="get" id="get">
+	<div class="wrap">
+		<div class="get-head">
+			<span class="kicker">What you get</span>
+			<h2>Four things, <span class="hl p">all yours.</span></h2>
+			<p class="lede">The screens below use a made-up creator with made-up numbers. Yours will be built from your own account.</p>
+		</div>
+
+		<article class="feat">
+			<div class="f-txt">
+				<span class="f-n">01</span>
+				<h3>Your audit report</h3>
+				<p>We go through every post since your first one and write up what is working, what is not, and why. Plain words, no jargon.</p>
+				<ul class="ticks">
+					<li>Who really follows you: ages and cities</li>
+					<li>Views first, then how many different people you reached</li>
+					<li>Your best days and times to post</li>
+					<li>What Instagram's own dashboard does not show you</li>
+				</ul>
+			</div>
+			<div class="f-pic">
+				<div class="phone" role="img" aria-label="Example audit report with the main finding and a best-time chart">
+					<div class="screen wm-tile">
+						<span class="ex">Example report</span>
+						<p class="s-lab" style="margin:0">The one thing to know</p>
+						<p class="s-h">Your reels already travel. 63% of your reach is people who don't follow you yet.</p>
+						<div class="s-card">
+							<p class="s-lab">When your followers are online</p>
+							<div class="bars" aria-hidden="true"><i style="height:22%"></i><i style="height:30%"></i><i style="height:26%"></i><i style="height:44%"></i><i style="height:58%"></i><i class="on" style="height:88%"></i><i class="on" style="height:100%"></i><i class="on" style="height:82%"></i><i style="height:40%"></i></div>
+							<div class="bars-x"><span>6 am</span><span>12 pm</span><span>6–9 pm</span><span>12 am</span></div>
+						</div>
+						<div class="s-row">
+							<div class="s-card butter"><p class="s-lab">Reach vs last year</p><p class="s-num">+31%</p></div>
+							<div class="s-card blue"><p class="s-lab">Empty weeks</p><p class="s-num">5</p></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</article>
+
+		<article class="feat">
+			<div class="f-txt">
+				<span class="f-n">02</span>
+				<h3>Your own dashboard</h3>
+				<p>One private link, made for your phone. Open it in the morning and it tells you the one thing to do today.</p>
+				<ul class="ticks">
+					<li>Today card: your next post and when to shoot it</li>
+					<li>A weekly score so you can see if the week went well</li>
+					<li>Alerts when a post takes off, or when you have gone quiet</li>
+					<li>Fresh numbers pulled in through the day</li>
+				</ul>
+			</div>
+			<div class="f-pic">
+				<div class="phone" role="img" aria-label="Example dashboard with weekly score and alerts">
+					<div class="screen wm-tile">
+						<span class="ex">Example dashboard</span>
+						<p class="s-h">Your week</p>
+						<div class="s-card blue"><p class="s-lab">Weekly score</p><p class="s-num">78 <span style="font-size:14px;letter-spacing:0">/ 100</span></p><p>3 of 4 planned posts are out. One to go.</p></div>
+						<div class="s-card lime"><p class="s-lab">Taking off</p><p><b>"What I eat in a day, hostel edition"</b> is at 3× your usual views in 24 hours.</p></div>
+						<div class="s-card"><p class="s-lab">Do next</p><p>Reply to the top 10 comments on it before 9 pm.</p><p class="s-btn">Mark as done</p></div>
+					</div>
+				</div>
+			</div>
+		</article>
+
+		<article class="feat">
+			<div class="f-txt">
+				<span class="f-n">03</span>
+				<h3>A 13-week content calendar</h3>
+				<p>Dated posts for the next three months, placed on the days and hours that already work for you, and built around what you told us you enjoy making.</p>
+				<ul class="ticks">
+					<li>Every post has a date, a time and a reason</li>
+					<li>An ideas bank for the days you feel stuck</li>
+					<li>Festivals and your own big dates already marked</li>
+				</ul>
+			</div>
+			<div class="f-pic">
+				<div class="phone" role="img" aria-label="Example calendar week with four dated posts">
+					<div class="screen wm-tile">
+						<span class="ex">Example calendar</span>
+						<p class="s-h">Week 1</p>
+						<ul class="wk">
+							<li class="off"><b>MON</b><span>Rest day</span><span></span></li>
+							<li><b>TUE</b><span>What's in my bag</span><em>Carousel</em></li>
+							<li class="off"><b>WED</b><span>Shoot day</span><span></span></li>
+							<li><b>THU</b><span>Sunday reset, 20 s</span><em>Reel</em></li>
+							<li class="off"><b>FRI</b><span>Story only</span><span></span></li>
+							<li><b>SAT</b><span>Cafe find + price</span><em>Reel</em></li>
+							<li><b>SUN</b><span>Ask me anything</span><em>Reel</em></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</article>
+
+		<article class="feat">
+			<div class="f-txt">
+				<span class="f-n">04</span>
+				<h3>A brand kit brands can trust</h3>
+				<p>When a brand asks "send your insights", you send one clean link instead of ten screenshots. The numbers come straight from Instagram, so they carry our "Verified by Busy Fox" seal.</p>
+				<ul class="ticks">
+					<li>The numbers brands actually ask for</li>
+					<li>A verification code a brand can check</li>
+					<li>A suggested rate card for reels, stories and posts</li>
+				</ul>
+			</div>
+			<div class="f-pic">
+				<div class="phone" role="img" aria-label="Example brand kit with verified numbers and a rate card">
+					<div class="screen wm-tile">
+						<span class="ex">Example brand kit</span>
+						<div class="s-card lime"><p class="seal"><i></i>Verified by Busy Fox<br>Code BF-7Q2K</p></div>
+						<div class="s-row">
+							<div class="s-card"><p class="s-lab">Followers</p><p class="s-num">12.8K</p></div>
+							<div class="s-card butter"><p class="s-lab">Avg reel views</p><p class="s-num">9.4K</p></div>
+						</div>
+						<div class="s-card">
+							<p class="s-lab">Audience</p>
+							<ul class="kv"><li><span>Women 18–24</span><b>46%</b></li><li><span>Hyderabad</span><b>31%</b></li><li><span>Bengaluru</span><b>14%</b></li></ul>
+						</div>
+						<div class="s-card pink">
+							<p class="s-lab">Suggested rates</p>
+							<ul class="kv"><li><span>Reel</span><b>₹4,000–7,000</b></li><li><span>Story set</span><b>₹1,500–2,500</b></li></ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</article>
+
+		<ul class="more">
+			<li><h3>Views first</h3><p>Instagram mixes up views and reach. We show views first, then the number of different people, so nothing looks smaller than it is.</p></li>
+			<li><h3>In your language</h3><p>Reports and post ideas are written the way you write your own captions, whether that is English, Telugu or a mix.</p></li>
+			<li><h3>A real team</h3><p>Busy Fox Marketing is a marketing agency. People read your report before it reaches you.</p></li>
+		</ul>
+	</div>
+</section>
+
+<section class="how" id="how">
+	<div class="wrap">
+		<span class="kicker">How it works</span>
+		<h2>Three taps. Two minutes.</h2>
+		<ol class="steps">
+			<li><h3>Ask for your invite</h3><p>Type your Instagram username below. We send an invite from our app, Busy Fox Insights.</p><small>30 seconds</small></li>
+			<li><h3>Accept it in Instagram</h3><p>Open the link we send you, tap Tester invites, then Accept. Instagram needs this step while it reviews our app.</p><small>30 seconds</small></li>
+			<li><h3>Connect and tell us what you love</h3><p>Tap Continue with Instagram, pick your account, tap Allow. Then tell us what you enjoy making.</p><small>1 minute</small></li>
+		</ol>
+		<p class="after">Your report and dashboard reach you in 2–3 days.</p>
+	</div>
+</section>
+
+<section class="safe" id="safe">
+	<div class="wrap">
+		<span class="kicker">Is it safe?</span>
+		<h2>We can look. We can't touch.</h2>
+		<ul class="safe-grid">
+			<li><div><b>Read-only</b><span>We can see your posts and insights. We cannot post, delete, message or change anything.</span></div></li>
+			<li><div><b>Your password stays with Instagram</b><span>You sign in on Instagram's own screen. We never see or store your password.</span></div></li>
+			<li><div><b>Remove us any time</b><span>Instagram → Settings → Apps and websites → Busy Fox Insights → Remove. One tap, no questions.</span></div></li>
+			<li><div><b>Private to you</b><span>Your report and dashboard open only from your own private link. We do not sell or share your data.</span></div></li>
+		</ul>
+	</div>
+</section>
+
+<section class="free" id="cost">
+	<div class="wrap">
+		<div class="tag">
+			<p class="zero">₹0</p>
+			<p>The audit, the dashboard, the calendar and the brand kit are free.</p>
+			<small>If you later want a team to script, edit and post for you, ask us about FoxCut. That part is paid, and it is completely optional.</small>
+		</div>
+		<div class="faq">
+			<h2>Quick answers</h2>
+			<details><summary>Do I need a special kind of account?</summary><p>Yes, a Creator or Business account. It is free to switch: Instagram → Settings → Account type and tools → Switch to professional account.</p></details>
+			<details><summary>Why do I have to accept a "tester invite"?</summary><p>Instagram is still reviewing our app. Until it finishes, it only lets invited accounts connect. It is a one-time tap and does not change anything on your profile.</p></details>
+			<details><summary>How many followers do I need?</summary><p>There is no minimum. Instagram shares audience details such as ages and cities only for accounts with 100 followers or more.</p></details>
+			<details><summary>Will my followers see anything?</summary><p>No. Nothing is posted and nothing shows on your profile.</p></details>
+			<details><summary>What do you want in return?</summary><p>Nothing. If you like the report, we would love to hear it. If you ever want paid help with content, you know where we are.</p></details>
+		</div>
+	</div>
+</section>
+
+<section class="join" id="join">
+	<div class="wrap">
+		<div>
+			<h2>Ready? Get your invite.</h2>
+			<p class="lede">Tell us your Instagram username. We will send the invite and the link to connect, usually the same day.</p>
+		</div>
+		<div class="box">
+			<form id="f" novalidate>
+				<h3>Ask for my invite</h3>
+				<label class="fld"><span>Your first name</span><input id="name" name="name" type="text" autocomplete="given-name" maxlength="40" placeholder="Meera"></label>
+				<label class="fld"><span>Instagram username</span><span class="at" style="margin:0;letter-spacing:0;text-transform:none"><input id="ig" name="username" type="text" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off" maxlength="60" placeholder="yourhandle" required></span></label>
+				<label class="hp" aria-hidden="true">Website<input id="site" name="site" type="text" tabindex="-1" autocomplete="off"></label>
+				<p class="err" id="err" role="alert" hidden></p>
+				<button class="btn" id="go" type="submit">Send me the invite</button>
+				<p class="fine">We only use this to send your invite. Read our <a href="../privacy/">privacy note</a>.</p>
+			</form>
+			<div class="done" id="done" hidden tabindex="-1">
+				<h3>Got it<span id="done-name"></span>. Your invite is on its way.</h3>
+				<ol>
+					<li><span>We add <b id="done-ig"></b> to our app. This is done by a person, so give us a few hours.</span></li>
+					<li><span>Then open <a href="https://www.instagram.com/accounts/manage_access/" target="_blank" rel="noopener">Instagram's invites page</a> on your phone, tap <b>Tester invites</b>, then <b>Accept</b>.</span></li>
+					<li><span>We message you the link to connect. Two minutes and you are done.</span></li>
+				</ol>
+			</div>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p class="wm-mark fox light"><b>FoxCut</b> Creator Connect</p>
+		<p>By Busy Fox Marketing · <a href="../privacy/">Privacy</a></p>
+	</div>
+</footer>
+
+<div class="dock" id="dock"><a class="btn" href="#join">Ask for my invite</a></div>
+
+<script src="../assets/config.js"></script>
+<script>
+(function () {
+	'use strict';
+	var $ = function (id) { return document.getElementById(id); };
+	var q = new URLSearchParams(location.search);
+	function plain(v, max) { return String(v || '').replace(/[^\p{L}\p{M} .'-]/gu, '').trim().slice(0, max); }
+	function handle(v) { return String(v || '').trim().replace(/^@+/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[\/?#].*$/, '').toLowerCase(); }
+
+	// a link made for one person: ?for=Aisha&ig=aishas.aura
+	var who = plain(q.get('for'), 24), ig0 = handle(q.get('ig'));
+	if (who) { $('hi-name').textContent = who + ','; $('hi').hidden = false; $('name').value = who; }
+	if (/^[a-z0-9._]{1,30}$/.test(ig0)) $('ig').value = ig0;
+
+	// the bottom button on phones: shown once the hero button has scrolled away, hidden while the form is on screen
+	var dock = $('dock'), heroBtn = document.querySelector('.hero .btn'), join = $('join'), seenHero = true, seenJoin = false;
+	function sync() { dock.classList.toggle('on', !seenHero && !seenJoin); }
+	if ('IntersectionObserver' in window) {
+		new IntersectionObserver(function (e) { seenHero = e[0].isIntersecting; sync(); }).observe(heroBtn);
+		new IntersectionObserver(function (e) { seenJoin = e[0].isIntersecting; sync(); }, {threshold: 0.12}).observe(join);
+	}
+
+	var form = $('f'), err = $('err'), go = $('go'), busy = false;
+	function fail(msg) { err.textContent = msg; err.hidden = false; go.disabled = false; go.textContent = 'Send me the invite'; busy = false; }
+	form.addEventListener('submit', function (ev) {
+		ev.preventDefault();
+		if (busy) return;
+		var name = plain($('name').value, 40), user = handle($('ig').value);
+		err.hidden = true;
+		if (!/^[a-z0-9._]{1,30}$/.test(user)) { fail('Please check your Instagram username. Only letters, numbers, dots and underscores.'); $('ig').focus(); return; }
+		var api = window.CC && window.CC.api;
+		if (!api) { fail('Something is not set up on our side. Please reply to the message we sent you.'); return; }
+		busy = true; go.disabled = true; go.textContent = 'Sending…';
+		fetch(api + '/invite', {method: 'POST', headers: {'content-type': 'text/plain'}, body: JSON.stringify({name: name, username: user, ref: plain(q.get('ref'), 40) || who, site: $('site').value})})
+			.then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return {s: r.status, j: j}; }); })
+			.then(function (r) {
+				if (r.j && r.j.ok) {
+					$('done-name').textContent = name ? ', ' + name : '';
+					$('done-ig').textContent = '@' + user;
+					form.hidden = true; $('done').hidden = false; $('done').focus();
+					return;
+				}
+				if (r.s === 429) return fail('That was a few tries in a row. Please wait a little and try again.');
+				if (r.j && r.j.error === 'bad_username') return fail('Please check your Instagram username.');
+				fail('That did not go through. Please try again in a minute.');
+			})
+			.catch(function () { fail('No connection. Please check your internet and try again.'); });
+	});
+})();
+</script>
+</body>
+</html>

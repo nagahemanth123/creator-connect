@@ -33,9 +33,9 @@
 			<h1>Make a <em>carousel</em></h1>
 			<p class="cr-lede">Pick a look. Add your photos, or let Foxy place them and write the words. Move anything, then save it or put it in your content plan.</p>
 		</div>
+		<div class="cr-drafts" id="drafts" hidden></div>
 		<div class="cr-chips" id="fams" role="group" aria-label="Kind of carousel"></div>
 		<div class="cr-grid" id="grid"></div>
-		<div class="cr-drafts" id="drafts" hidden></div>
 	</main>
 
 	<!-- step 2: the editor -->
@@ -44,22 +44,31 @@
 			<button type="button" class="cr-ghost" id="toPick"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 3.5L5 8l4.5 4.5"/></svg>Templates</button>
 			<div class="cr-title"><b id="tplName">Template</b><span id="tplNote">5 slides</span></div>
 			<div class="cr-topr">
-				<button type="button" class="cr-icon" id="undo" aria-label="Undo" disabled><svg viewBox="0 0 24 24"><path d="M9 7H4v5"/><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8"/></svg></button>
-				<button type="button" class="cr-icon" id="redo" aria-label="Redo" disabled><svg viewBox="0 0 24 24"><path d="M15 7h5v5"/><path d="M20 12a8 8 0 1 1-2.3-5.7L20 8"/></svg></button>
+				<button type="button" class="cr-icon" id="undo" aria-label="Undo" title="Undo" disabled><svg viewBox="0 0 24 24"><path d="M9 7H4v5"/><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8"/></svg></button>
+				<button type="button" class="cr-icon" id="redo" aria-label="Redo" title="Redo" disabled><svg viewBox="0 0 24 24"><path d="M15 7h5v5"/><path d="M20 12a8 8 0 1 1-2.3-5.7L20 8"/></svg></button>
 			</div>
 		</div>
 		<div class="cr-switches">
-			<div class="seg" role="group" aria-label="Size"><button type="button" data-h="1350" aria-pressed="true">4:5</button><button type="button" data-h="1440" aria-pressed="false">3:4</button></div>
-			<div class="seg" role="group" aria-label="Still or moving"><button type="button" data-mode="still" aria-pressed="true">Still</button><button type="button" data-mode="anim" aria-pressed="false">Animated</button></div>
+			<div class="seg" role="group" aria-label="Slide shape"><button type="button" data-h="1350" aria-pressed="true">4:5</button><button type="button" data-h="1440" aria-pressed="false">3:4</button></div>
+			<div class="seg" role="group" aria-label="Pictures or moving"><button type="button" data-mode="still" aria-pressed="true">Pictures</button><button type="button" data-mode="anim" aria-pressed="false">Moving</button></div>
 			<div class="cr-variants" id="variants" role="group" aria-label="Colour"></div>
 		</div>
 
-		<div class="cr-stage" id="stage">
-			<div class="cr-strip" id="strip"><canvas id="cv" role="img" aria-label="Your carousel. Tap any photo, word or sticker to change it. Drag to move, pull the corner dot to resize, the top dot to turn."></canvas></div>
-		</div>
-		<div class="cr-dots" id="dots" aria-hidden="true"></div>
+		<p class="cr-hint" id="hint" hidden><span>Tap a piece to pick it, drag to move it. Pull the pink dot to resize, the white dot to turn. Double-tap to change words or photo.</span><button type="button" id="hintX">Got it</button></p>
 
-		<div class="cr-tools" id="tools" role="toolbar" aria-label="Tools"></div>
+		<div class="cr-stage" id="stage">
+			<div class="cr-strip" id="strip"><canvas id="cv" role="img" aria-label="Your carousel. Tap any photo, word or sticker to pick it. Drag to move, pull the pink dot to resize, the white dot to turn, double-tap to change words or photo."></canvas></div>
+		</div>
+		<div class="cr-count">
+			<button type="button" class="cr-icon" id="prevS" aria-label="Previous slide"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+			<div><b id="slideNo" aria-live="polite">Slide 1 of 5</b><div class="cr-dots" id="dots" aria-hidden="true"></div></div>
+			<button type="button" class="cr-icon" id="nextS" aria-label="Next slide"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+		</div>
+
+		<div class="cr-dock">
+			<div class="cr-selbar" id="selbar" role="toolbar" aria-label="This piece" hidden></div>
+			<div class="cr-tools" id="tools" role="toolbar" aria-label="Tools"></div>
+		</div>
 
 		<section class="cr-tray">
 			<div class="cr-tray-h"><b>Your photos</b><span id="trayNote">Stay on this phone until you save or plan the post.</span></div>
@@ -83,6 +92,7 @@
 <script>window.CAROUSEL_BASE = '';</script>
 <script src="engine.js"></script>
 <script src="templates.js"></script>
+<script src="templates3.js"></script>
 <script src="editor.js"></script>
 </body>
 </html>

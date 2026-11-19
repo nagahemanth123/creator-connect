@@ -145,7 +145,7 @@
 		}, vars: {c1: '#f6e7a1', c3: '#f3efe6'}});
 
 	/* 5 ─ LIFE LATELY · phone · one colour theme, music cards, big type, little notes */
-	var LL = [{key: 'green', label: 'Green', c1: '#e8f23a', c2: '#2f5d1e', tex: 'matcha'}, {key: 'pink', label: 'Pink', c1: '#ffe14d', c2: '#c2366b', tex: 'plaster'}, {key: 'blue', label: 'Blue', c1: '#ffd84d', c2: '#1d4f91', tex: 'blue-tiles'}];
+	var LL = [{key: 'green', label: 'Green', c1: '#e8f23a', c2: '#2f5d1e', tex: 'matcha', washes: ['sage', 'teal', 'butter'], washes: ['sage', 'butter', 'teal']}, {key: 'pink', label: 'Pink', c1: '#ffe14d', c2: '#c2366b', tex: 'plaster', washes: ['rose', 'magenta', 'lilac'], washes: ['rose', 'lilac', 'butter']}, {key: 'blue', label: 'Blue', c1: '#ffd84d', c2: '#1d4f91', tex: 'blue-tiles', washes: ['powder', 'navy', 'stone'], washes: ['powder', 'navy', 'butter']}];
 	T.push({id: 'life-lately', name: 'Life Lately', family: 'phone', blurb: 'One colour theme, music player cards, big type and little notes', variants: LL,
 		make: function (v) {
 			var b = B();
@@ -222,11 +222,11 @@
 	/* 7 ─ NEELI RANGU · telugu · six saree colours; title, accents, bangles and paper follow the colour */
 	var SAREE = [
 		{key: 'blue', label: 'Neeli blue', c1: '#1f3fae', c2: '#e9eefb', hue: 0, te: 'నీలి రంగు', en: 'in a blue saree'},
-		{key: 'red', label: 'Kumkum red', c1: '#b3122b', c2: '#fbe9ea', hue: 128, te: 'ఎరుపు రంగు', en: 'in a red saree'},
-		{key: 'yellow', label: 'Pasupu yellow', c1: '#c98a00', c2: '#fdf4dc', hue: 178, te: 'పసుపు రంగు', en: 'in a yellow saree'},
+		{key: 'red', label: 'Kumkum red', c1: '#b3122b', c2: '#fbe9ea', hue: 128, te: 'ఎరుపు రంగు', en: 'in a red saree', washes: ['maroon', 'magenta', 'rose']},
+		{key: 'yellow', label: 'Pasupu yellow', c1: '#c98a00', c2: '#fdf4dc', hue: 178, te: 'పసుపు రంగు', en: 'in a yellow saree', washes: ['butter', 'terracotta', 'stone']},
 		{key: 'green', label: 'Chilaka green', c1: '#1e7a3c', c2: '#e6f4ea', hue: -95, te: 'ఆకుపచ్చ రంగు', en: 'in a green saree'},
 		{key: 'pink', label: 'Gulabi pink', c1: '#d0397a', c2: '#fce8f1', hue: 100, te: 'గులాబీ రంగు', en: 'in a pink saree'},
-		{key: 'maroon', label: 'Maroon', c1: '#6e1423', c2: '#f5e6e3', hue: 118, sat: .7, te: 'మెరూన్ రంగు', en: 'in a maroon saree'}
+		{key: 'maroon', label: 'Maroon', c1: '#6e1423', c2: '#f5e6e3', hue: 118, sat: .7, te: 'మెరూన్ రంగు', en: 'in a maroon saree', washes: ['maroon', 'rose', 'espresso']}
 	];
 	T.push({id: 'neeli-rangu', name: 'Rangu Cheera', family: 'telugu', blurb: 'Telugu saree carousel in six colours — title, bangles and paper follow your saree', variants: SAREE,
 		make: function (v) {
@@ -275,13 +275,16 @@
 			return doc(this, null, 6, {c: '#fff'}, [], b.L);
 		}});
 
+	var WASH = {y2k: ['terracotta', 'teal', 'butter', 'rose', 'navy'], seamless: ['powder', 'butter', 'terracotta', 'teal', 'rose'], phone: ['sage', 'butter', 'espresso', 'powder'], telugu: ['maroon', 'magenta', 'butter', 'rose', 'stone'], patterns: ['rose', 'sage', 'powder', 'terracotta', 'lilac', 'espresso'], festival: ['butter', 'magenta', 'sage', 'maroon'], soft: ['rose', 'lilac', 'powder', 'stone'], diary: ['rose', 'stone', 'lilac', 'butter']};
 	function make(id, variantKey) {
 		var t = T.filter(function (x) { return x.id === id; })[0]; if (!t) return null;
 		var v = t.variants ? (t.variants.filter(function (x) { return x.key === variantKey; })[0] || t.variants[0]) : null;
 		uid = 0;
 		var d = t.make(v);
 		d.vars = Object.assign({}, t.vars || {}, v || {});
+		var wash = (v && v.washes) || t.washes || WASH[t.family] || ['rose', 'sage', 'butter', 'powder'], wi = 0;
+		d.layers.forEach(function (l) { if (l.kind === 'photo' && l.src && l.src.indexOf('ph/') === 0) l.src = 'wash/' + wash[wi++ % wash.length]; });
 		return d;
 	}
-	root.CarouselTemplates = {list: T, make: make, SAREE: SAREE};
+	root.CarouselTemplates = {list: T, make: make, SAREE: SAREE, kit: {B: B, X: X, F: F, doc: doc}};
 })(window);

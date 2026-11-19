@@ -30,12 +30,14 @@
 		ios: "-apple-system,'SF Pro Text','Inter','Noto Sans Telugu',sans-serif",
 		te: "'Gurajada','Noto Serif Telugu',serif",
 		teSerif: "'Noto Serif Telugu','Instrument Serif',serif",
-		teBold: "'Ramaraja','Noto Sans Telugu',serif"
+		teBold: "'Ramaraja','Noto Sans Telugu',serif",
+		date: "'VT323','IBM Plex Mono',monospace",
+		marker: "'Gochi Hand','Caveat',cursive"
 	};
-	var FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,800&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,500;0,800;1,500&family=Caveat:wght@500;700&family=Mrs+Saint+Delafield&family=Pacifico&family=IBM+Plex+Mono:wght@400;600&family=Special+Elite&family=Inter:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;700&family=Noto+Serif+Telugu:wght@400;700&family=Gurajada&family=Ramaraja&display=block';
+	var FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,800&family=Instrument+Serif:ital@0;1&family=Playfair+Display:ital,wght@0,500;0,800;1,500&family=Caveat:wght@500;700&family=Mrs+Saint+Delafield&family=Pacifico&family=IBM+Plex+Mono:wght@400;600&family=Special+Elite&family=Inter:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;700&family=Noto+Serif+Telugu:wght@400;700&family=Gurajada&family=Ramaraja&family=VT323&family=Gochi+Hand&display=block';
 	function fontsReady() {
 		if (!document.fonts || !document.fonts.load) return Promise.resolve();
-		var probes = ['800 40px "Bricolage Grotesque"', '600 40px "DM Sans"', '40px "Instrument Serif"', 'italic 40px "Instrument Serif"', '800 40px "Playfair Display"', 'italic 500 40px "Playfair Display"', '700 40px Caveat', '40px "Mrs Saint Delafield"', '40px Pacifico', '600 40px "IBM Plex Mono"', '40px "Special Elite"', '600 40px Inter', '700 40px "Noto Sans Telugu"', '40px "Noto Serif Telugu"', '40px Gurajada', '40px Ramaraja'];
+		var probes = ['800 40px "Bricolage Grotesque"', '600 40px "DM Sans"', '40px "Instrument Serif"', 'italic 40px "Instrument Serif"', '800 40px "Playfair Display"', 'italic 500 40px "Playfair Display"', '700 40px Caveat', '40px "Mrs Saint Delafield"', '40px Pacifico', '600 40px "IBM Plex Mono"', '40px "Special Elite"', '600 40px Inter', '700 40px "Noto Sans Telugu"', '40px "Noto Serif Telugu"', '40px Gurajada', '40px Ramaraja', '40px VT323', '40px "Gochi Hand"'];
 		return Promise.all(probes.map(function (p) { return document.fonts.load(p, 'Aa తెలుగు').catch(function () {}); }));
 	}
 
@@ -96,6 +98,11 @@
 			for (var i = 0; i < 10; i++) { var rad = i % 2 ? .42 : 1, a2 = -Math.PI / 2 + i * Math.PI / 5; ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a2) * w / 2 * rad, Math.sin(a2) * h / 2 * rad); }
 			ctx.closePath(); return;
 		}
+		if (sh === 'film') { // a strip of film: dark band, sprocket holes along both edges (filled even-odd by drawShape)
+			ctx.beginPath(); ctx.rect(x, y, w, h); var hh = h * .07, hw = hh * 1.3, gap = hw * 1.9;
+			for (var fx = x + gap / 2; fx < x + w - hw; fx += gap) { ctx.rect(fx, y + h * .05, hw, hh); ctx.rect(fx, y + h - h * .05 - hh, hw, hh); }
+			return;
+		}
 		if (sh === 'scallop') {
 			ctx.beginPath(); var n = Math.max(6, Math.round(w / 60)), s = w / n;
 			ctx.moveTo(x, y + h);
@@ -155,6 +162,7 @@
 		var w = l.w, h = l.h;
 		if (l.frame === 'polaroid') { var p = w * .055; return {x: -w / 2 + p, y: -h / 2 + p, w: w - 2 * p, h: h - p - w * .2}; }
 		if (l.frame === 'border') { var b = l.bw || 18; return {x: -w / 2 + b, y: -h / 2 + b, w: w - 2 * b, h: h - 2 * b}; }
+		if (l.frame === 'stamp' || l.frame === 'soft') { var q2 = l.bw || (l.frame === 'stamp' ? w * .07 : w * .045); return {x: -w / 2 + q2, y: -h / 2 + q2, w: w - 2 * q2, h: h - 2 * q2}; }
 		if (l.frame && /^camera/.test(l.frame)) { var m = (meta.stk[l.frame] || {}).screen || [.1, .3, .56, .4]; return {x: -w / 2 + m[0] * w, y: -h / 2 + m[1] * h, w: m[2] * w, h: m[3] * h}; }
 		if (l.frame === 'phone') { var q = w * .045; return {x: -w / 2 + q, y: -h / 2 + q, w: w - 2 * q, h: h - 2 * q}; }
 		if (l.frame === 'window') { var bar = Math.max(34, w * .07); return {x: -w / 2, y: -h / 2 + bar, w: w, h: h - bar}; }
@@ -182,11 +190,28 @@
 		if (l.filter && l.filter !== 'none') ctx.filter = filterFor(l.filter);
 		ctx.drawImage(im, c.x, c.y, c.w, c.h);
 		ctx.restore();
+		if (!cutOnly && src.indexOf('wash/') === 0) { ctx.save(); ctx.fillStyle = 'rgba(255,250,246,.28)'; ctx.fillRect(box.x, box.y, box.w, box.h); ctx.restore(); } // keep the wash soft
+		if (!cutOnly && src.indexOf('wash/') === 0 && opts.mode !== 'export') { // an empty spot: a soft colour wash with a small camera badge
+			var r = clamp(Math.min(box.w, box.h) * .09, 18, 46), cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+			ctx.save(); ctx.globalAlpha = .9; ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+			ctx.strokeStyle = 'rgba(60,40,30,.75)'; ctx.lineWidth = r * .09; ctx.lineJoin = 'round';
+			rr(ctx, cx - r * .5, cy - r * .3, r, r * .68, r * .14); ctx.stroke();
+			ctx.beginPath(); ctx.moveTo(cx - r * .18, cy - r * .3); ctx.lineTo(cx - r * .1, cy - r * .44); ctx.lineTo(cx + r * .1, cy - r * .44); ctx.lineTo(cx + r * .18, cy - r * .3); ctx.stroke();
+			ctx.beginPath(); ctx.arc(cx, cy + r * .04, r * .2, 0, TAU); ctx.stroke(); ctx.restore();
+		}
 	}
 	function drawPhoto(ctx, doc, l, st, opts) {
 		var w = l.w, h = l.h, fr = l.frame || 'none';
 		if (l.shadow !== false && fr !== 'none' && !/^camera/.test(fr)) { ctx.shadowColor = 'rgba(30,20,10,.22)'; ctx.shadowBlur = 26; ctx.shadowOffsetY = 10; }
 		if (fr === 'polaroid' || fr === 'border') { ctx.fillStyle = col(doc, l.paper || '#fbf8f2'); ctx.fillRect(-w / 2, -h / 2, w, h); }
+		if (fr === 'soft') { ctx.fillStyle = col(doc, l.paper || '#fffaf5'); rr(ctx, -w / 2, -h / 2, w, h, l.r || w * .06); ctx.fill(); }
+		if (fr === 'stamp') { // postage-stamp edge: a paper card with round bites along every side
+			ctx.fillStyle = col(doc, l.paper || '#fffaf3'); ctx.fillRect(-w / 2, -h / 2, w, h); ctx.shadowColor = 'transparent';
+			ctx.save(); ctx.globalCompositeOperation = 'destination-out'; var br = Math.max(5, w * .016), stp = br * 3.1;
+			for (var sx = -w / 2; sx <= w / 2 + 1; sx += stp) { ctx.beginPath(); ctx.arc(sx, -h / 2, br, 0, TAU); ctx.arc(sx, h / 2, br, 0, TAU); ctx.fill(); }
+			for (var sy = -h / 2; sy <= h / 2 + 1; sy += stp) { ctx.beginPath(); ctx.arc(-w / 2, sy, br, 0, TAU); ctx.arc(w / 2, sy, br, 0, TAU); ctx.fill(); }
+			ctx.restore();
+		}
 		if (fr === 'phone') { ctx.fillStyle = '#111'; rr(ctx, -w / 2, -h / 2, w, h, w * .12); ctx.fill(); }
 		if (fr === 'window') { ctx.fillStyle = '#fff'; rr(ctx, -w / 2, -h / 2, w, h, 18); ctx.fill(); }
 		if (fr === 'music') { ctx.fillStyle = col(doc, l.card || '#f4f1ec'); rr(ctx, -w / 2, -h / 2, w, h, w * .07); ctx.fill(); }
@@ -198,6 +223,7 @@
 		else if (fr === 'phone') rr(ctx, b.x, b.y, b.w, b.h, w * .09);
 		else if (fr === 'window') { ctx.rect(b.x, b.y, b.w, b.h); }
 		else if (fr === 'music') rr(ctx, b.x, b.y, b.w, b.h, w * .04);
+		else if (fr === 'soft') rr(ctx, b.x, b.y, b.w, b.h, (l.r || w * .06) * .7);
 		else ctx.rect(b.x, b.y, b.w, b.h);
 		ctx.clip();
 		drawPhotoInto(ctx, doc, l, b, st, opts, false);
@@ -294,7 +320,7 @@
 		ctx.fillStyle = col(doc, l.c || '#fff');
 		if (l.tex) { var t = img('tex/' + l.tex); if (t) { var p = ctx.createPattern(t, 'repeat'); if (p) { if (p.setTransform) p.setTransform(new DOMMatrix().scale(l.texScale || .6)); ctx.fillStyle = p; } } }
 		shapePath(ctx, l.sh, l.w, l.h, l.r || 0);
-		if (l.c !== 'none') ctx.fill();
+		if (l.c !== 'none') ctx.fill(l.sh === 'film' ? 'evenodd' : 'nonzero');
 		if (l.line) { ctx.lineWidth = l.line; ctx.strokeStyle = col(doc, l.lineC || '#000'); if (l.dash) ctx.setLineDash(l.dash); ctx.stroke(); ctx.setLineDash([]); }
 	}
 	function drawPath(ctx, doc, l, st) { // dotted flight path through pts (strip coords), with a small plane at the end

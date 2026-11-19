@@ -13,7 +13,7 @@ body { background: var(--paper); color: var(--ink); background-image: linear-gra
 .cr-intro h1 em { color: var(--cherry); }
 .cr-lede { max-width: 60ch; color: var(--warm); margin: 0 0 20px; }
 .cr-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-.cr-chips button { font: 600 14px var(--sans); border: 0; border-radius: 999px; padding: 10px 16px; min-height: 42px; background: var(--card); color: var(--warm); box-shadow: inset 0 0 0 1.5px var(--line); cursor: pointer; }
+.cr-chips button { font: 600 14px var(--sans); border: 0; border-radius: 999px; padding: 10px 16px; min-height: 44px; background: var(--card); color: var(--warm); box-shadow: inset 0 0 0 1.5px var(--line); cursor: pointer; }
 .cr-chips button[aria-pressed="true"] { background: var(--cocoa); color: var(--cream); box-shadow: none; }
 .cr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 20px; }
 .cr-card { background: var(--card); border-radius: 18px; padding: 12px 12px 16px; box-shadow: var(--soft); display: grid; gap: 10px; min-width: 0; cursor: pointer; border: 0; text-align: left; font: inherit; color: inherit; }
@@ -25,30 +25,37 @@ body { background: var(--paper); color: var(--ink); background-image: linear-gra
 .cr-drafts { margin-top: 26px; } .cr-drafts .btn { height: 46px; }
 
 /* edit */
-.cr-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.cr-ghost { display: inline-flex; align-items: center; gap: 4px; font: 600 14px var(--sans); background: var(--card); color: var(--ink); border: 0; border-radius: 999px; padding: 0 14px 0 10px; min-height: 42px; box-shadow: var(--soft); cursor: pointer; }
+.cr-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; padding: 8px 0; position: sticky; top: 0; z-index: 21; background: var(--paper); } /* Undo and Templates stay in reach while she scrolls */
+.cr-ghost { display: inline-flex; align-items: center; gap: 4px; font: 600 14px var(--sans); background: var(--card); color: var(--ink); border: 0; border-radius: 999px; padding: 0 14px 0 10px; min-height: 44px; box-shadow: var(--soft); cursor: pointer; }
 .cr-ghost svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .cr-title { min-width: 0; flex: 1 1 auto; display: grid; } .cr-title b { font: 600 17px/1.2 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .cr-title span { font-size: 12.5px; color: var(--warm); }
 .cr-topr { display: flex; gap: 6px; }
-.cr-icon { width: 42px; height: 42px; border-radius: 50%; border: 0; background: var(--card); box-shadow: var(--soft); display: grid; place-items: center; cursor: pointer; color: var(--ink); }
+.cr-icon { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--card); box-shadow: var(--soft); display: grid; place-items: center; cursor: pointer; color: var(--ink); }
 .cr-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.cr-icon[disabled] { opacity: .4; cursor: default; }
+.cr-icon[disabled] { opacity: .35; cursor: default; }
 .cr-switches { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
 .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--card); box-shadow: inset 0 0 0 1.5px var(--line); }
-.seg button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--warm); font: 600 13.5px/1 var(--sans); cursor: pointer; }
+.seg button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--warm); font: 600 13.5px/1 var(--sans); cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--cocoa); color: var(--cream); }
-.cr-variants { display: flex; gap: 8px; flex-wrap: wrap; }
-.cr-variants button { width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer; box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--line); }
+.cr-variants { display: flex; gap: 12px; flex-wrap: wrap; padding: 0 4px; }
+.cr-variants button { width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer; position: relative; box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--line); }
+.cr-variants button::after, .cr-swatch::after { content: ''; position: absolute; inset: -6px; } /* a 46px touch target around the small dot */
 .cr-variants button[aria-pressed="true"] { box-shadow: 0 0 0 2px #fff, 0 0 0 4.5px var(--cherry); }
 .cr-stage { position: relative; overflow-x: auto; overflow-y: hidden; border-radius: 16px; background: var(--cocoa); padding: 14px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 .cr-strip { position: relative; }
-.cr-strip canvas { display: block; touch-action: pan-x; border-radius: 4px; }
-.cr-dots { display: flex; gap: 6px; justify-content: center; margin: 10px 0 4px; } .cr-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); } .cr-dots i.on { background: var(--cherry); width: 18px; border-radius: 6px; }
-.cr-tools { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 12px; scrollbar-width: none; }
+.cr-strip canvas { display: block; touch-action: pan-x pan-y; border-radius: 4px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+.cr-hint { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 8px 8px 8px 14px; border-radius: 14px; background: var(--butter); font: 500 13.5px/1.35 var(--sans); } .cr-hint span { flex: 1; } .cr-hint button { flex: none; min-height: 44px; min-width: 70px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--cocoa); color: var(--cream); font: 600 14px var(--sans); cursor: pointer; }
+.cr-count { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 2px; } .cr-count > div { display: grid; justify-items: center; gap: 6px; } .cr-count b { font: 600 15px var(--sans); }
+.cr-dots { display: flex; gap: 6px; justify-content: center; margin: 0; } .cr-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); } .cr-dots i.on { background: var(--cherry); width: 18px; border-radius: 6px; }
+.cr-dock { position: sticky; bottom: 0; z-index: 20; background: var(--paper); margin: 0 -14px; padding: 6px 14px calc(6px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 16px -8px rgba(43, 26, 23, .18); } /* the pick-and-change tools stay on screen */
+.cr-selbar { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 8px; padding: 4px 0 6px; } .cr-selbar .cr-tool { min-width: 0; min-height: 52px; }
+.cr-tool.danger { color: var(--cherry); box-shadow: inset 0 0 0 1.5px var(--cherry); }
+.cr-tools { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.cr-tools[hidden], .cr-selbar[hidden] { display: none; }
 .cr-tools::-webkit-scrollbar { display: none; }
-.cr-tool { flex: none; display: grid; justify-items: center; gap: 4px; min-width: 70px; padding: 10px 8px 9px; border: 0; border-radius: 14px; background: var(--card); color: var(--ink); font: 600 12px/1.15 var(--sans); box-shadow: var(--soft); cursor: pointer; }
+.cr-tool { flex: none; display: grid; justify-items: center; align-content: center; gap: 4px; min-width: 76px; min-height: 52px; padding: 7px 8px 6px; border: 0; border-radius: 14px; background: var(--card); color: var(--ink); font: 600 12px/1.15 var(--sans); box-shadow: var(--soft); cursor: pointer; }
 .cr-tool svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.cr-tool.hot { background: var(--cherry); color: #fff; } .cr-tool.foxy { background: var(--butter); }
+.cr-tool.hot { background: var(--cherry); color: #fff; } .cr-tool span { text-align: center; } .cr-tool.foxy { background: var(--butter); }
 .cr-tool:focus-visible, .cr-ghost:focus-visible, .cr-icon:focus-visible, .seg button:focus-visible, .cr-variants button:focus-visible { outline: 3px solid var(--cherry); outline-offset: 2px; }
 .cr-tray { background: var(--card); border-radius: 16px; padding: 12px 12px 14px; box-shadow: var(--soft); }
 .cr-tray-h { display: flex; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap; align-items: baseline; margin-bottom: 10px; } .cr-tray-h b { font-size: 15px; } .cr-tray-h span { font-size: 12.5px; color: var(--warm); }
@@ -62,16 +69,16 @@ body { background: var(--paper); color: var(--ink); background-image: linear-gra
 .cr-note { color: var(--warm); font-size: 13.5px; min-height: 1em; }
 
 /* sheet + toast */
-.cr-sheet { position: fixed; inset: 0; z-index: 50; background: rgba(43, 26, 23, .45); display: flex; align-items: flex-end; justify-content: center; padding: 16px max(12px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
-.cr-sheet-in { width: min(560px, 100%); max-height: 86vh; overflow: auto; background: var(--card); border-radius: 22px; padding: 20px 18px 18px; box-shadow: var(--lift); }
+.cr-sheet { overscroll-behavior: contain; position: fixed; inset: 0; z-index: 50; background: rgba(43, 26, 23, .45); display: flex; align-items: flex-end; justify-content: center; padding: 16px max(12px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+.cr-sheet-in { width: min(560px, 100%); max-height: min(86vh, 100%); overflow: auto; overscroll-behavior: contain; background: var(--card); border-radius: 22px; padding: 20px 18px 18px; box-shadow: var(--lift); }
 .cr-sheet-in h2 { font: 400 26px/1.1 var(--serif); margin: 4px 0 12px; } .cr-sheet-in h2 em { color: var(--cherry); }
-.cr-sheet-in .acts { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; } .cr-sheet-in .acts .btn { flex: 1 1 160px; height: 50px; }
+.cr-sheet-in .acts { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; position: sticky; bottom: -18px; padding: 10px 0 18px; margin-bottom: -18px; background: var(--card); } /* Done stays reachable above the keyboard */ .cr-sheet-in .acts .btn { flex: 1 1 160px; height: 50px; }
 .cr-sheet-in textarea, .cr-sheet-in input[type=text], .cr-sheet-in input[type=datetime-local] { width: 100%; font: 500 17px/1.4 var(--sans); border: 1.5px solid var(--field-line); border-radius: 12px; padding: 12px; background: #fff; color: var(--ink); box-sizing: border-box; }
 .cr-sheet-in label { display: block; font: 600 12px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--warm); margin: 14px 0 6px; }
 .cr-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.cr-pill { border: 0; border-radius: 999px; padding: 9px 14px; min-height: 40px; background: var(--tint); color: var(--ink); font: 600 14px var(--sans); cursor: pointer; }
+.cr-pill { border: 0; border-radius: 999px; padding: 9px 14px; min-height: 44px; background: var(--tint); color: var(--ink); font: 600 14px var(--sans); cursor: pointer; }
 .cr-pill[aria-pressed="true"] { background: var(--cocoa); color: var(--cream); }
-.cr-swatch { width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--line); }
+.cr-swatch { position: relative; width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; margin: 4px; box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--line); }
 .cr-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px #fff, 0 0 0 4.5px var(--cherry); }
 .cr-sheet-in input[type=range] { width: 100%; accent-color: var(--cherry); }
 .cr-stk { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 8px; }
@@ -84,3 +91,5 @@ body { background: var(--paper); color: var(--ink); background-image: linear-gra
 .cr-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0; background: var(--cocoa); color: var(--cream); font: 600 14px var(--sans); padding: 12px 18px; border-radius: 999px; transition: .25s; z-index: 60; pointer-events: none; max-width: calc(100% - 32px); text-align: center; }
 .cr-toast.on { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) { .cr-toast { transition: none; } }
+body.cr-lock { overflow: hidden; }
+.cr-drafts { margin: 0 0 18px; }

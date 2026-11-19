@@ -120,7 +120,9 @@
 .mk-go span { display: grid; gap: 2px; }
 .mk-go b { font: 700 15px/1.1 var(--sans); white-space: nowrap; }
 .mk-go small { font: 500 12px/1.15 var(--sans); color: var(--warm); white-space: nowrap; }
-.mk-go small i { font-style: normal; }
+.mk-go small i { font-style: normal; } .head-r:has(.cr-go:not([hidden])) .mk-go { margin-block: 0; }
+.cr-go svg { background: var(--cocoa); } .head-r:has(.cr-go:not([hidden])) { gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 560px) { .head-r .mk-go small { display: none; } .head-r .mk-go { padding-right: 12px; } }
 @media (max-width: 720px) { .mk-go small i { display: none; } }
 @media (max-width: 700px) { .hello .fun-doodles { display: none; } } /* on a phone the card takes the corner beside the logo where the doodles used to sit */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--cocoa); color: var(--cream); padding: 12px 20px; border-radius: 999px; font-size: 14.5px; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 95; max-width: calc(100vw - 32px); }
@@ -134,7 +136,7 @@
 <div class="wrap">
 	<header class="head">
 		<a class="logo" href="../" aria-label="Busy Fox"><span class="mast">Busy<em>Fox</em></span><span class="sub" aria-hidden="true"><span>C</span><span>R</span><span>E</span><span>A</span><span>T</span><span>O</span><span>R</span><span>&nbsp;</span><span>C</span><span>O</span><span>N</span><span>N</span><span>E</span><span>C</span><span>T</span></span></a>
-		<div class="head-r"><a class="mk-go" id="mkGo" href="../make/" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="11" height="15" rx="2"/><path d="M9 21h9a2 2 0 0 0 2-2V8"/></svg><span><b>Make a story</b><small>Templates and collages<i> from your photos and videos</i></small></span></a></div>
+		<div class="head-r"><a class="mk-go" id="mkGo" href="../make/" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="11" height="15" rx="2"/><path d="M9 21h9a2 2 0 0 0 2-2V8"/></svg><span><b>Make a story</b><small>Templates and collages<i> from your photos and videos</i></small></span></a><a class="mk-go cr-go" id="crGo" href="../carousel/" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4" width="10" height="16" rx="2"/><path d="M3 7v10M21 7v10"/></svg><span><b>Make a carousel</b><small>Templates<i> Foxy fills in</i></small></span></a></div>
 	</header>
 
 	<main class="page" id="page" hidden>
@@ -298,7 +300,7 @@
 		if (!d || !d.ok) { if (d && d.error === 'not_found') store(KEY, ''); return fail((d && d.message) || 'This link is not valid any more. Ask Busy Fox for a new one.'); }
 		var p = d.profile || {};
 		$('page').hidden = false;
-		var mkGo = $('mkGo'); if (mkGo) { mkGo.href = '../make/#' + token; mkGo.hidden = false; } // the story and collage maker opens with her key, like this page
+		var mkGo = $('mkGo'); if (mkGo) { mkGo.href = '../make/#' + token; mkGo.hidden = false; } var crGo = $('crGo'); if (crGo) { crGo.href = '../carousel/#' + token; crGo.hidden = false; } // the story and collage maker opens with her key, like this page
 		// her first name as the worker cleaned it (set by the team, from her report, or from her own name when it is plain letters); never the decorated Instagram name
 		$('hiName').textContent = p.first || 'there';
 		if (p.first) document.title = p.first + '’s dashboard | Busy Fox';

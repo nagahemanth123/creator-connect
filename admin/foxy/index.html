@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Foxy costs | Busy Fox</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F7E6E3">
+<link rel="icon" type="image/png" href="../../assets/fox.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../assets/cc.css">
+<style>
+body { background: var(--paper); background-image: linear-gradient(var(--gingham) 50%, transparent 50%), linear-gradient(90deg, var(--gingham) 50%, transparent 50%); background-size: 30px 30px; }
+.fx-gate { max-width: 480px; margin: 40px auto; } .fx-gate input { width: 100%; font: 500 16px var(--sans); padding: 12px; border-radius: 12px; border: 1.5px solid var(--field-line); margin: 12px 0; box-sizing: border-box; }
+.fx-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 20px; }
+.fx-top h1 { font: 400 clamp(34px, 6vw, 52px)/1 var(--serif); margin: 4px 0 0; } .fx-top h1 em { color: var(--cherry); }
+.fx-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; } .fx-tools select { font: 600 14px var(--sans); padding: 10px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); min-height: 42px; }
+.fx-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 22px; }
+.fx-num { background: var(--card); border-radius: 16px; padding: 16px; box-shadow: var(--soft); min-width: 0; } .fx-num:nth-child(2n) { background: var(--butter); }
+.fx-num small { font: 600 11px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--warm); } .fx-num b { display: block; font: 500 32px/1.1 var(--serif); font-style: italic; color: var(--cherry); font-variant-numeric: tabular-nums; margin-top: 4px; } .fx-num span { font-size: 12.5px; color: var(--warm); }
+.fx-card { background: var(--card); border-radius: 18px; padding: 8px 16px 12px; box-shadow: var(--soft); margin-bottom: 20px; overflow-x: auto; }
+.fx-card h2 { font: 400 24px var(--serif); margin: 12px 0 6px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; } th, td { text-align: left; padding: 10px 8px; border-bottom: 1.5px dashed var(--line); white-space: nowrap; } th { font: 600 11px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--warm); } td.r, th.r { text-align: right; }
+.bar { height: 8px; background: var(--tint); border-radius: 99px; min-width: 80px; } .bar i { display: block; height: 100%; background: var(--cherry); border-radius: 99px; }
+.bad { color: var(--cherry); font-weight: 600; } .fine { font-size: 12.5px; color: var(--warm); } .warn { background: var(--butter); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<header class="head">
+		<a class="logo" href="../" aria-label="Busy Fox"><span class="mast">Busy<em>Fox</em></span><span class="sub" aria-hidden="true"><span>C</span><span>R</span><span>E</span><span>A</span><span>T</span><span>O</span><span>R</span><span>&nbsp;</span><span>C</span><span>O</span><span>N</span><span>N</span><span>E</span><span>C</span><span>T</span></span></a>
+		<div class="head-r"><a class="btn line" href="../">Creators</a></div>
+	</header>
+	<section class="fx-gate" id="gate" hidden><div class="card"><p class="hand">busy fox team only</p><h2>Open <em>Foxy costs</em></h2><p>Paste the Busy Fox admin key. It stays on this device only.</p><input id="key" type="password" autocomplete="off" placeholder="Admin key"><button class="btn red" id="open" type="button">Open</button><p class="fine" id="gmsg"></p></div></section>
+	<main id="app" hidden>
+		<div class="fx-top"><div><p class="hand">what Foxy costs, creator by creator</p><h1>Foxy <em>costs</em></h1></div>
+			<div class="fx-tools"><label class="fine" for="month">Month</label><select id="month"></select><button class="btn red" id="refresh" type="button" style="height:42px">Refresh</button></div></div>
+		<div class="warn" id="keyWarn" hidden>Foxy is off: the Claude API key is not set on the worker yet.</div>
+		<div class="fx-nums" id="nums"></div>
+		<div class="fx-card"><h2>By creator</h2><table><thead><tr><th>Creator</th><th class="r">Fills</th><th class="r">Tokens in</th><th class="r">Tokens out</th><th class="r">Cost</th><th></th><th>Last used</th></tr></thead><tbody id="rows"></tbody></table></div>
+		<div class="fx-card"><h2>Latest calls</h2><table><thead><tr><th>When</th><th>Creator</th><th>Model</th><th class="r">In</th><th class="r">Out</th><th class="r">Cost</th><th class="r">Time</th><th>Result</th></tr></thead><tbody id="log"></tbody></table></div>
+		<p class="fine" id="foot"></p>
+	</main>
+</div>
+<script src="../../assets/config.js"></script>
+<script>
+(function () {
+	var cc = window.CC || {}, KEY = 'cc_admin_key', INR = 84.5;
+	var $ = function (id) { return document.getElementById(id); };
+	function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+	function key() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+	function usd(v) { return '$' + (v || 0).toFixed(v < 1 ? 4 : 2); }
+	function inr(v) { return '₹' + ((v || 0) * INR).toFixed(v * INR < 10 ? 2 : 0); }
+	function n(v) { return (v || 0).toLocaleString('en-IN'); }
+	function when(s) { var d = new Date(s); return isNaN(d) ? '' : d.toLocaleString([], {day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); }
+	var months = []; for (var i = 0; i < 6; i++) { var d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - i); months.push(d.toISOString().slice(0, 7)); }
+	$('month').innerHTML = months.map(function (m) { return '<option value="' + m + '">' + new Date(m + '-01T00:00:00Z').toLocaleString([], {month: 'long', year: 'numeric'}) + '</option>'; }).join('');
+	function load() {
+		var k = key(); if (!k) { $('gate').hidden = false; $('app').hidden = true; return; }
+		fetch(cc.api + '/admin/foxy-costs?month=' + $('month').value, {headers: {Authorization: 'Bearer ' + k}, cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (d) {
+			if (!d.ok) { $('gate').hidden = false; $('app').hidden = true; $('gmsg').textContent = d.error === 'unauthorized' ? 'That key did not work.' : (d.error || 'Could not load.'); return; }
+			$('gate').hidden = true; $('app').hidden = false; $('keyWarn').hidden = !!d.key_set;
+			var t = d.total || {}, avg = t.calls ? t.usd / t.calls : 0;
+			$('nums').innerHTML = [['This month', usd(t.usd), inr(t.usd)], ['Foxy fills', n(t.calls), d.creators.length + ' creator' + (d.creators.length === 1 ? '' : 's')], ['Average fill', usd(avg), inr(avg) + ' each'], ['Tokens', n((t.in || 0) + (t.out || 0)), n(t.in) + ' in · ' + n(t.out) + ' out']]
+				.map(function (x) { return '<div class="fx-num"><small>' + x[0] + '</small><b>' + x[1] + '</b><span>' + x[2] + '</span></div>'; }).join('');
+			var top = Math.max.apply(null, d.creators.map(function (c) { return c.usd || 0; }).concat([1e-9]));
+			$('rows').innerHTML = d.creators.length ? d.creators.map(function (c) { return '<tr><td><b>@' + esc(c.username || c.ig) + '</b></td><td class="r">' + n(c.calls) + '</td><td class="r">' + n(c.in) + '</td><td class="r">' + n(c.out) + '</td><td class="r"><b>' + usd(c.usd) + '</b> <span class="fine">' + inr(c.usd) + '</span></td><td><div class="bar"><i style="width:' + Math.round((c.usd || 0) / top * 100) + '%"></i></div></td><td>' + esc(when(c.last)) + '</td></tr>'; }).join('') : '<tr><td colspan="7" class="fine">No Foxy fills this month yet.</td></tr>';
+			$('log').innerHTML = d.log.length ? d.log.map(function (l) { return '<tr><td>' + esc(when(l.at)) + '</td><td>@' + esc(l.username || l.ig) + '</td><td>' + esc(l.model || '') + '</td><td class="r">' + n(l.in) + '</td><td class="r">' + n(l.out) + '</td><td class="r">' + usd(l.usd) + '</td><td class="r">' + ((l.ms || 0) / 1000).toFixed(1) + ' s</td><td>' + (l.ok ? 'filled' : '<span class="bad">' + esc(l.error || 'did not finish') + '</span>') + '</td></tr>'; }).join('') : '<tr><td colspan="8" class="fine">Nothing yet.</td></tr>';
+			var p = d.price_per_million || {};
+			$('foot').textContent = 'Model ' + d.model + ' at $' + p.in + ' per million tokens in, $' + p.out + ' out. Costs come from the token counts the Claude API returns on every call. ₹ at ' + INR + ' per $.';
+		}, function () { $('gmsg').textContent = 'Could not reach the server.'; });
+	}
+	$('open').onclick = function () { try { localStorage.setItem(KEY, $('key').value.trim()); } catch (e) {} load(); };
+	$('refresh').onclick = load; $('month').onchange = load;
+	load();
+})();
+</script>
+</body>
+</html>

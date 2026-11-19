@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Make a carousel | Busy Fox</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F7E6E3">
+<link rel="icon" type="image/png" href="../assets/fox.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
+<link rel="stylesheet" id="tplFonts">
+<link rel="stylesheet" href="../assets/cc.css">
+<link rel="stylesheet" href="carousel.css">
+</head>
+<body>
+<div class="wrap cr">
+	<header class="head">
+		<a class="logo" id="logo" href="../me/" aria-label="Busy Fox, back to my dashboard"><span class="mast">Busy<em>Fox</em></span><span class="sub" aria-hidden="true"><span>C</span><span>R</span><span>E</span><span>A</span><span>T</span><span>O</span><span>R</span><span>&nbsp;</span><span>C</span><span>O</span><span>N</span><span>N</span><span>E</span><span>C</span><span>T</span></span></a>
+		<div class="head-r"><a class="cr-back" id="back" href="../me/" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 3.5L5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My dashboard</a></div>
+	</header>
+
+	<section class="cr-gate" id="gate" aria-live="polite">
+		<div class="card"><p class="hand" id="gateHand">one sec</p><h2 id="gateTitle">Opening your <em>carousel studio</em></h2><p class="body" id="gateMsg">Laying out the stickers and the tape.</p><div class="cr-acts" id="gateActs" hidden></div></div>
+	</section>
+
+	<!-- step 1: pick a template -->
+	<main class="cr-pick" id="pick" hidden>
+		<div class="cr-intro">
+			<p class="hand" id="hello">swipe-worthy, in minutes</p>
+			<h1>Make a <em>carousel</em></h1>
+			<p class="cr-lede">Pick a look. Add your photos, or let Foxy place them and write the words. Move anything, then save it or put it in your content plan.</p>
+		</div>
+		<div class="cr-chips" id="fams" role="group" aria-label="Kind of carousel"></div>
+		<div class="cr-grid" id="grid"></div>
+		<div class="cr-drafts" id="drafts" hidden></div>
+	</main>
+
+	<!-- step 2: the editor -->
+	<main class="cr-edit" id="edit" hidden>
+		<div class="cr-top">
+			<button type="button" class="cr-ghost" id="toPick"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 3.5L5 8l4.5 4.5"/></svg>Templates</button>
+			<div class="cr-title"><b id="tplName">Template</b><span id="tplNote">5 slides</span></div>
+			<div class="cr-topr">
+				<button type="button" class="cr-icon" id="undo" aria-label="Undo" disabled><svg viewBox="0 0 24 24"><path d="M9 7H4v5"/><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8"/></svg></button>
+				<button type="button" class="cr-icon" id="redo" aria-label="Redo" disabled><svg viewBox="0 0 24 24"><path d="M15 7h5v5"/><path d="M20 12a8 8 0 1 1-2.3-5.7L20 8"/></svg></button>
+			</div>
+		</div>
+		<div class="cr-switches">
+			<div class="seg" role="group" aria-label="Size"><button type="button" data-h="1350" aria-pressed="true">4:5</button><button type="button" data-h="1440" aria-pressed="false">3:4</button></div>
+			<div class="seg" role="group" aria-label="Still or moving"><button type="button" data-mode="still" aria-pressed="true">Still</button><button type="button" data-mode="anim" aria-pressed="false">Animated</button></div>
+			<div class="cr-variants" id="variants" role="group" aria-label="Colour"></div>
+		</div>
+
+		<div class="cr-stage" id="stage">
+			<div class="cr-strip" id="strip"><canvas id="cv" role="img" aria-label="Your carousel. Tap any photo, word or sticker to change it. Drag to move, pull the corner dot to resize, the top dot to turn."></canvas></div>
+		</div>
+		<div class="cr-dots" id="dots" aria-hidden="true"></div>
+
+		<div class="cr-tools" id="tools" role="toolbar" aria-label="Tools"></div>
+
+		<section class="cr-tray">
+			<div class="cr-tray-h"><b>Your photos</b><span id="trayNote">Stay on this phone until you save or plan the post.</span></div>
+			<div class="cr-tray-row" id="tray"></div>
+			<input type="file" id="file" accept="image/*" multiple hidden>
+		</section>
+
+		<div class="cr-foot">
+			<button type="button" class="btn butter cr-foxy" id="foxyBtn"><img src="../assets/fox.png" alt="" width="22" height="22">Foxy, fill it in</button>
+			<button type="button" class="btn red" id="exportBtn">Save or plan it</button>
+		</div>
+		<p class="cr-note" id="note" aria-live="polite"></p>
+	</main>
+</div>
+
+<div class="cr-sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="cr-sheet-in" id="sheetIn"></div></div>
+<div class="cr-toast" id="toast" role="status" aria-live="polite"></div>
+<div id="vids" hidden></div>
+
+<script src="../assets/config.js"></script>
+<script>window.CAROUSEL_BASE = '';</script>
+<script src="engine.js"></script>
+<script src="templates.js"></script>
+<script src="editor.js"></script>
+</body>
+</html>

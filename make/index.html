@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Make a story | Busy Fox</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F7E6E3">
+<link rel="icon" type="image/png" href="../assets/fox.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Caveat:wght@500;600;700&family=Noto+Sans+Telugu:wght@400;600&display=swap">
+<link rel="stylesheet" href="../assets/cc.css">
+<link rel="stylesheet" href="make.css">
+</head>
+<body>
+<div class="wrap mk">
+	<header class="head">
+		<a class="logo" id="logo" href="../me/" aria-label="Busy Fox, back to my dashboard"><span class="mast">Busy<em>Fox</em></span><span class="sub" aria-hidden="true"><span>C</span><span>R</span><span>E</span><span>A</span><span>T</span><span>O</span><span>R</span><span>&nbsp;</span><span>C</span><span>O</span><span>N</span><span>N</span><span>E</span><span>C</span><span>T</span></span></a>
+		<div class="head-r"><a class="mk-back" id="back" href="../me/" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.500 3.500L5 8l4.500 4.500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>My dashboard</a></div>
+	</header>
+
+	<!-- before the tool opens: checking her link, or telling her where to open it from -->
+	<section class="mk-gate" id="gate" aria-live="polite">
+		<div class="card">
+			<span class="tape" style="top:-12px;left:30px"></span>
+			<p class="hand" id="gateHand">one sec</p>
+			<h2 id="gateTitle">Opening your <em>studio</em></h2>
+			<p class="body" id="gateMsg">Getting your paper, tape and scissors ready.</p>
+			<div class="mk-gate-acts" id="gateActs" hidden></div>
+		</div>
+	</section>
+
+	<main class="mk-tool" id="tool" hidden>
+		<div class="mk-intro">
+			<p class="hand" id="hello">cut, stick, post</p>
+			<h1>Make a <em>story</em></h1>
+			<p class="mk-private"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Your photos and videos stay on this phone. Nothing is uploaded.</p>
+		</div>
+
+		<div class="mk-grid">
+			<div class="mk-left">
+				<div class="mk-switch">
+					<div class="seg" role="group" aria-label="Size">
+						<button type="button" data-fmt="story" aria-pressed="true">Story <i>9:16</i></button>
+						<button type="button" data-fmt="post" aria-pressed="false">Post <i>4:5</i></button>
+					</div>
+					<div class="seg" role="group" aria-label="Kind of design">
+						<button type="button" data-fam="story" aria-pressed="true">Templates</button>
+						<button type="button" data-fam="collage" aria-pressed="false">Collages</button>
+					</div>
+				</div>
+
+				<div class="mk-stage" id="stage">
+					<div class="mk-cvbox" id="cvbox">
+						<canvas id="cv" tabindex="0" role="img" aria-label="Your design. Tap a spot to add or change a photo or video."></canvas>
+						<button type="button" class="mk-play" id="playBtn" hidden aria-pressed="true" aria-label="Pause the videos"></button>
+						<div class="mk-drop" id="drop" hidden><p class="hand">drop them here</p></div>
+					</div>
+				</div>
+				<p class="mk-hint" id="hint"></p>
+
+				<div class="mk-slotbar" id="slotbar" hidden>
+					<div class="row top"><b id="slotName">Photo 1</b><button type="button" class="chip" data-a="done">Done</button></div>
+					<label class="row zoom"><span>Zoom</span><input type="range" id="zoom" min="1" max="4" step="0.01" value="1" aria-label="Zoom"></label>
+					<div class="row acts">
+						<button type="button" class="chip" data-a="replace">Swap it</button>
+						<button type="button" class="chip ic" data-a="left" aria-label="Move to the spot before"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.500 3.500L5 8l4.500 4.500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+						<button type="button" class="chip ic" data-a="right" aria-label="Move to the spot after"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.500 3.500L11 8l-4.500 4.500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+						<button type="button" class="chip warn" data-a="remove">Remove</button>
+					</div>
+				</div>
+				<div class="msg" id="note" role="alert"></div>
+			</div>
+
+			<div class="mk-right">
+				<section class="mk-sec">
+					<div class="mk-h"><h2 id="railTitle">Pick a look</h2><p class="hand" id="railHand">swipe, tap, done</p></div>
+					<div class="mk-rail" id="rail"></div>
+				</section>
+
+				<section class="mk-sec">
+					<div class="mk-h"><h2>Photos and videos</h2><p class="hand" id="trayHand"></p></div>
+					<div class="mk-tray" id="tray"></div>
+				</section>
+
+				<section class="mk-sec" id="textSec">
+					<div class="mk-h"><h2>Words</h2></div>
+					<div class="mk-fields" id="fields"></div>
+				</section>
+
+				<section class="mk-sec">
+					<div class="mk-h"><h2>Colours</h2></div>
+					<div class="mk-sw" id="swatches"></div>
+				</section>
+			</div>
+		</div>
+
+		<div class="mk-bar" id="bar">
+			<button type="button" class="btn line" id="addBtn"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round"/></svg>Add</button>
+			<button type="button" class="btn red" id="exportBtn">Export</button>
+		</div>
+	</main>
+
+	<footer class="foot">
+		<span><b>Busy Fox Marketing</b></span>
+		<span><a href="../privacy/">Privacy</a></span>
+	</footer>
+</div>
+
+<div class="mk-sheet" id="sheet" hidden><div class="mk-sheet-in" id="sheetIn" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div></div>
+<div class="mk-vids" id="vids" aria-hidden="true"></div>
+<input type="file" id="file" accept="image/*,video/*" multiple hidden>
+<div class="mk-toast" id="toast" role="status"></div>
+<script src="../assets/config.js"></script>
+<script src="make.js"></script>
+</body>
+</html>

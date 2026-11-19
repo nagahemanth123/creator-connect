@@ -84,10 +84,12 @@
 		var name = plain(nameIn.value, 40), user = handle(igIn.value);
 		err.hidden = true;
 		if (!OKH.test(user)) { fail('Please check your Instagram username. Only letters, numbers, dots and underscores.'); igIn.focus(); return; }
+		var mail = String($('email').value || '').trim().toLowerCase();
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail) || mail.length > 120) { fail('Please check your email address, so we can send you the steps.'); $('email').focus(); return; }
 		var api = window.CC && window.CC.api;
 		if (!api) { fail('Something is not set up on our side. Please reply to the message we sent you.'); return; }
 		busy = true; go.disabled = true; go.textContent = 'Sending…';
-		fetch(api + '/invite', {method: 'POST', headers: {'content-type': 'text/plain'}, body: JSON.stringify({name: name, username: user, ref: plain(q.get('ref'), 40) || who, site: $('site').value})})
+		fetch(api + '/invite', {method: 'POST', headers: {'content-type': 'text/plain'}, body: JSON.stringify({name: name, username: user, email: mail, ref: plain(q.get('ref'), 40) || who, site: $('site').value})})
 			.then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return {s: r.status, j: j}; }); })
 			.then(function (r) {
 				if (r.j && r.j.ok) {

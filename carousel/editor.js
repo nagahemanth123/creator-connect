@@ -762,19 +762,24 @@
 			});
 	}
 	function download(f) { var url = URL.createObjectURL(f.blob), a = document.createElement('a'); a.href = url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 60000); }
+	// Browsers (Safari above all) keep only the last of several downloads fired at once, so save them one by one.
+	function downloadAll(files, done) {
+		files.forEach(function (f, i) { setTimeout(function () { download(f); if (i === files.length - 1 && done) done(); }, i * 900); });
+	}
 	function saved(files) {
 		var urls = files.map(function (f) { return URL.createObjectURL(f.blob); }), list = files.map(function (f) { return new File([f.blob], f.name, {type: f.type}); });
 		var canShare = false; try { canShare = !!(navigator.canShare && navigator.share && navigator.canShare({files: list})); } catch (e) {}
 		var webm = files.some(function (f) { return f.container === 'webm'; });
-		var html = '<div class="cr-out">' + files.map(function (f, i) { return f.kind === 'video' ? '<video src="' + urls[i] + '" muted loop autoplay playsinline></video>' : '<img src="' + urls[i] + '" alt="Slide ' + (i + 1) + '">'; }).join('') + '</div><p class="cr-fine">In Instagram, pick them in this order: 1 to ' + files.length + '. No watermark, nothing added.</p>' + (webm ? '<p class="cr-warn">This browser made WebM videos, which Instagram may refuse. Chrome or Safari on your phone make MP4.</p>' : '') + (S.caption ? '<label>Foxy’s caption</label><textarea id="capOut" rows="4">' + esc(S.caption + (S.tags.length ? '\n\n' + S.tags.join(' ') : '')) + '</textarea>' : '');
+		var html = '<div class="cr-out">' + files.map(function (f, i) { return f.kind === 'video' ? '<video src="' + urls[i] + '" muted loop autoplay playsinline></video>' : '<img src="' + urls[i] + '" alt="Slide ' + (i + 1) + '">'; }).map(function (m, i) { return '<button type="button" class="cr-one" data-i="' + i + '" title="Save slide ' + (i + 1) + '" style="all:unset;cursor:pointer;display:contents">' + m + '</button>'; }).join('') + '</div><p class="cr-fine">In Instagram, pick them in this order: 1 to ' + files.length + '. No watermark, nothing added. Tap a slide to save just that one.</p>' + (webm ? '<p class="cr-warn">This browser made WebM videos, which Instagram may refuse. Chrome or Safari on your phone make MP4.</p>' : '') + (S.caption ? '<label>Foxy’s caption</label><textarea id="capOut" rows="4">' + esc(S.caption + (S.tags.length ? '\n\n' + S.tags.join(' ') : '')) + '</textarea>' : '');
 		var shut = function () { closeSheet(); urls.forEach(function (u) { URL.revokeObjectURL(u); }); };
 		var acts = [];
-		if (canShare) acts.push({t: 'Save or share all ' + files.length, fn: function () { navigator.share({files: list}).then(function () { toast('Done. Go post it!'); }, function (e) { if (e && e.name === 'AbortError') return; files.forEach(download); toast('Downloaded instead'); }); }});
-		acts.push({t: canShare ? 'Download instead' : 'Download again', cls: 'btn line', fn: function () { files.forEach(download); toast('Saved to your downloads'); }});
+		if (canShare) acts.push({t: 'Save or share all ' + files.length, fn: function () { navigator.share({files: list}).then(function () { toast('Done. Go post it!'); }, function (e) { if (e && e.name === 'AbortError') return; toast('Saving all ' + files.length + ' slides…'); downloadAll(files, function () { toast('Downloaded instead'); }); }); }});
+		acts.push({t: canShare ? 'Download instead' : 'Download again', cls: 'btn line', fn: function () { toast('Saving all ' + files.length + ' slides…'); downloadAll(files, function () { toast('Saved to your downloads'); }); }});
 		if (S.caption) acts.push({t: 'Copy caption', cls: 'btn line', fn: function () { var t = $('capOut').value; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { toast('Caption copied'); }, function () { $('capOut').select(); toast('Selected. Press copy.'); }); }});
 		acts.push({t: 'Back to my design', cls: 'linkbtn', fn: shut});
 		sheet({hand: 'ta-da', title: 'Your carousel is <em>ready</em>', html: html, close: shut, acts: acts});
-		if (!canShare) files.forEach(download);
+		document.querySelectorAll('.cr-out .cr-one').forEach(function (b) { b.addEventListener('click', function () { var i = +b.getAttribute('data-i'); download(files[i]); toast('Saved slide ' + (i + 1)); }); });
+		if (!canShare) downloadAll(files);
 	}
 	function planSheet() {
 		var d = new Date(Date.now() + 86400000); d.setHours(19, 0, 0, 0);

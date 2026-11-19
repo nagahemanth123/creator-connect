@@ -1,6 +1,6 @@
 // Busy Fox Creator Connect — shared settings for every page on work.busyfox.in/creator-connect
 window.CC = {
-  api: "https://busyfox-creator-connect.nagahemanth-nh.workers.dev",
+  api: "https://busyfox-creator-connect.busyfox.workers.dev",
   // While Meta reviews the app, each creator must accept a tester invite first. Set to false once the app is Live.
   testerStep: true,
 };

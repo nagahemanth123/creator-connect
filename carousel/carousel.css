@@ -93,3 +93,4 @@ body { background: var(--paper); color: var(--ink); background-image: linear-gra
 @media (prefers-reduced-motion: reduce) { .cr-toast { transition: none; } }
 body.cr-lock { overflow: hidden; }
 .cr-drafts { margin: 0 0 18px; }
+.cr-switches .seg[hidden] { display: none; }

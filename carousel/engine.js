@@ -190,15 +190,37 @@
 		if (l.filter && l.filter !== 'none') ctx.filter = filterFor(l.filter);
 		ctx.drawImage(im, c.x, c.y, c.w, c.h);
 		ctx.restore();
-		if (!cutOnly && src.indexOf('wash/') === 0) { ctx.save(); ctx.fillStyle = 'rgba(255,250,246,.28)'; ctx.fillRect(box.x, box.y, box.w, box.h); ctx.restore(); } // keep the wash soft
-		if (!cutOnly && src.indexOf('wash/') === 0 && opts.mode !== 'export') { // an empty spot: a soft colour wash with a small camera badge
-			var r = clamp(Math.min(box.w, box.h) * .09, 18, 46), cx = box.x + box.w / 2, cy = box.y + box.h / 2;
-			ctx.save(); ctx.globalAlpha = .9; ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+		if (!cutOnly && src.indexOf('wash/') === 0) drawSpot(ctx, l, box, opts);
+	}
+	function drawSpot(ctx, l, box, opts) { // an empty photo spot: a soft wash, a hairline inset, a quiet portrait outline and its hint
+		var m = Math.min(box.w, box.h), ins = clamp(m * .045, 8, 30);
+		ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+		ctx.fillStyle = 'rgba(255,250,246,.22)'; ctx.fillRect(box.x, box.y, box.w, box.h);
+		var g = ctx.createRadialGradient(box.x + box.w * .3, box.y + box.h * .25, 0, box.x + box.w * .3, box.y + box.h * .25, Math.max(box.w, box.h) * .9);
+		g.addColorStop(0, 'rgba(255,255,255,.28)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(box.x, box.y, box.w, box.h);
+		ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = clamp(m * .004, 1.5, 3); ctx.strokeRect(box.x + ins, box.y + ins, box.w - ins * 2, box.h - ins * 2);
+		if (opts.mode !== 'export') {
+			var cx = box.x + box.w / 2, big = m >= 240;
+			if (big) { // head and shoulders rising from the bottom edge, like a portrait waiting for her
+				var s = Math.min(box.w * .62, box.h * .58), base = box.y + box.h - ins, hr = s * .2, hy = base - s * .78;
+				ctx.fillStyle = 'rgba(255,255,255,.26)'; ctx.beginPath(); ctx.arc(cx, hy, hr, 0, TAU); ctx.fill();
+				ctx.beginPath(); ctx.moveTo(cx - s * .5, base); ctx.bezierCurveTo(cx - s * .5, hy + hr * 1.5, cx - s * .2, hy + hr * 1.25, cx, hy + hr * 1.25);
+				ctx.bezierCurveTo(cx + s * .2, hy + hr * 1.25, cx + s * .5, hy + hr * 1.5, cx + s * .5, base); ctx.closePath(); ctx.fill();
+			}
+			var r = clamp(m * .07, 16, 38), by = big ? box.y + ins + r * 1.9 : box.y + box.h / 2;
+			ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.arc(cx, by, r, 0, TAU); ctx.fill();
 			ctx.strokeStyle = 'rgba(60,40,30,.75)'; ctx.lineWidth = r * .09; ctx.lineJoin = 'round';
-			rr(ctx, cx - r * .5, cy - r * .3, r, r * .68, r * .14); ctx.stroke();
-			ctx.beginPath(); ctx.moveTo(cx - r * .18, cy - r * .3); ctx.lineTo(cx - r * .1, cy - r * .44); ctx.lineTo(cx + r * .1, cy - r * .44); ctx.lineTo(cx + r * .18, cy - r * .3); ctx.stroke();
-			ctx.beginPath(); ctx.arc(cx, cy + r * .04, r * .2, 0, TAU); ctx.stroke(); ctx.restore();
+			rr(ctx, cx - r * .5, by - r * .3, r, r * .68, r * .14); ctx.stroke();
+			ctx.beginPath(); ctx.moveTo(cx - r * .18, by - r * .3); ctx.lineTo(cx - r * .1, by - r * .44); ctx.lineTo(cx + r * .1, by - r * .44); ctx.lineTo(cx + r * .18, by - r * .3); ctx.stroke();
+			ctx.beginPath(); ctx.arc(cx, by + r * .04, r * .2, 0, TAU); ctx.stroke();
+			if (big && box.w >= 300) {
+				var fs = Math.round(clamp(m * .055, 20, 40)), tx = (l.hint && l.hint !== 'any') ? l.hint : 'your photo';
+				ctx.font = 'italic 500 ' + fs + 'px "Playfair Display", ' + FONTS.serif; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+				ctx.shadowColor = 'rgba(40,20,10,.25)'; ctx.shadowBlur = fs * .4; ctx.fillStyle = 'rgba(255,255,255,.95)';
+				ctx.fillText(tx, cx, by + r + fs * 1.1, box.w - ins * 4);
+			}
 		}
+		ctx.restore();
 	}
 	function drawPhoto(ctx, doc, l, st, opts) {
 		var w = l.w, h = l.h, fr = l.frame || 'none';
@@ -348,6 +370,28 @@
 	}
 	function drawUI(ctx, doc, l) {
 		var w = l.w, h = l.h, u = l.ui;
+		if (u === 'post') { // a feed-post card (our own drawing, no app logo): header, a photo window left for her photo, action row, caption
+			var bg = col(doc, l.bg || '#fff'), fg = col(doc, l.c || '#111'), hh = w * .15, ph = l.ph || w * 1.25, fy = -h / 2 + hh + ph;
+			ctx.fillStyle = bg; ctx.shadowColor = 'rgba(20,10,5,.28)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14; rr(ctx, -w / 2, -h / 2, w, h, w * .045); ctx.fill(); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+			var ar2 = hh * .3, ax = -w / 2 + hh * .55, ay = -h / 2 + hh / 2, gr = ctx.createLinearGradient(ax - ar2, ay + ar2, ax + ar2, ay - ar2);
+			gr.addColorStop(0, col(doc, l.ring1 || '#f9a03f')); gr.addColorStop(.5, col(doc, l.ring2 || '#e1306c')); gr.addColorStop(1, col(doc, l.ring3 || '#8a3ab9'));
+			ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(ax, ay, ar2, 0, TAU); ctx.fill(); ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(ax, ay, ar2 * .84, 0, TAU); ctx.fill();
+			ctx.fillStyle = col(doc, l.av || '#e9d6cc'); ctx.beginPath(); ctx.arc(ax, ay, ar2 * .72, 0, TAU); ctx.fill();
+			ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '700 ' + Math.round(hh * .26) + 'px ' + FONTS.ios; ctx.fillText(fit(ctx, l.t || 'your.name', w * .6), ax + ar2 * 1.5, ay - hh * .09);
+			ctx.font = '400 ' + Math.round(hh * .2) + 'px ' + FONTS.ios; ctx.globalAlpha = .7; ctx.fillText(fit(ctx, l.sub || 'Hyderabad', w * .6), ax + ar2 * 1.5, ay + hh * .17); ctx.globalAlpha = 1;
+			for (var di = -1; di <= 1; di++) { ctx.beginPath(); ctx.arc(w / 2 - hh * .45 + di * hh * .1, ay, hh * .028, 0, TAU); ctx.fill(); }
+			var ic = hh * .26, iy = fy + hh * .42, lw = ic * .11; ctx.strokeStyle = fg; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+			var ix = -w / 2 + hh * .45; // heart
+			ctx.beginPath(); ctx.moveTo(ix, iy + ic * .45); ctx.bezierCurveTo(ix - ic * .9, iy - ic * .05, ix - ic * .45, iy - ic * .7, ix, iy - ic * .25); ctx.bezierCurveTo(ix + ic * .45, iy - ic * .7, ix + ic * .9, iy - ic * .05, ix, iy + ic * .45); ctx.closePath();
+			if (l.liked !== false) { ctx.fillStyle = col(doc, l.heart || '#ff3040'); ctx.fill(); } else ctx.stroke();
+			ix += ic * 1.6; ctx.beginPath(); ctx.arc(ix, iy, ic * .48, Math.PI * .7, Math.PI * .55 + TAU * .98); ctx.lineTo(ix - ic * .45, iy + ic * .5); ctx.closePath(); ctx.stroke(); // comment
+			ix += ic * 1.5; ctx.beginPath(); ctx.moveTo(ix - ic * .5, iy - ic * .45); ctx.lineTo(ix + ic * .55, iy - ic * .45); ctx.lineTo(ix + ic * .05, iy + ic * .5); ctx.lineTo(ix - ic * .1, iy - ic * .05); ctx.closePath(); ctx.stroke(); // share
+			var bx = w / 2 - hh * .45; ctx.beginPath(); ctx.moveTo(bx - ic * .35, iy + ic * .5); ctx.lineTo(bx - ic * .35, iy - ic * .5); ctx.lineTo(bx + ic * .35, iy - ic * .5); ctx.lineTo(bx + ic * .35, iy + ic * .5); ctx.lineTo(bx, iy + ic * .2); ctx.closePath(); ctx.stroke(); // save
+			ctx.fillStyle = fg; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+			ctx.font = '600 ' + Math.round(hh * .21) + 'px ' + FONTS.ios; ctx.fillText(fit(ctx, l.likes || 'Liked by your besties and others', w - hh * .8), -w / 2 + hh * .3, iy + hh * .48);
+			ctx.font = '400 ' + Math.round(hh * .21) + 'px ' + FONTS.ios; ctx.fillText(fit(ctx, l.cap || 'new post is up, go see it', w - hh * .8), -w / 2 + hh * .3, iy + hh * .82);
+			return;
+		}
 		if (u === 'bubble') {
 			var me = l.side !== 'them', bg = col(doc, l.bg || (me ? '#1f8bff' : '#e9e9eb')), fg = col(doc, l.c || (me ? '#fff' : '#111'));
 			ctx.fillStyle = bg; rr(ctx, -w / 2, -h / 2, w, h, Math.min(h / 2, 46)); ctx.fill();

@@ -74,7 +74,7 @@
 	}
 
 	// ---------- pick screen ----------
-	var FAMS = [['all', 'All'], ['y2k', 'Y2K scrapbook'], ['seamless', 'Seamless'], ['phone', 'Phone screen'], ['telugu', 'Telugu traditional'], ['cinema', 'Cinema & songs'], ['village', 'Village & ooru'], ['festival', 'Festivals'], ['soft', 'Soft & dreamy'], ['diary', 'Diary'], ['patterns', '& Patterns']];
+	var FAMS = [['all', 'All'], ['story', 'Stories'], ['y2k', 'Y2K scrapbook'], ['seamless', 'Seamless'], ['phone', 'Phone screen'], ['telugu', 'Telugu traditional'], ['cinema', 'Cinema & songs'], ['village', 'Village & ooru'], ['festival', 'Festivals'], ['soft', 'Soft & dreamy'], ['diary', 'Diary'], ['patterns', '& Patterns']];
 	var fam = 'all';
 	function showPick() {
 		$('edit').hidden = true; $('pick').hidden = false; S.sel = null;
@@ -126,13 +126,13 @@
 		d.layers = d.layers.filter(function (x) { return x.kind === 'path' || x.kind === 'cut' || x.x - x.w / 2 < d.n * W; });
 	}
 	function hintShow() { $('hint').hidden = !!read(HINT); }
-	function slidesNote() { $('tplNote').textContent = S.doc.n + ' slides · ' + (S.doc.H === 1350 ? '4:5' : '3:4') + (S.mode === 'anim' ? ' · moving' : ''); }
+	function slidesNote() { $('tplNote').textContent = (S.doc.story ? S.doc.n + (S.doc.n > 1 ? ' stories' : ' story') + ' · 9:16' : S.doc.n + ' slides · ' + (S.doc.H === 1350 ? '4:5' : '3:4')) + (S.mode === 'anim' ? ' · moving' : ''); }
 	function variants() {
 		var v = $('variants'), list = S.tpl.variants || [];
 		v.innerHTML = list.map(function (x) { return '<button type="button" data-v="' + x.key + '" aria-pressed="' + (x.key === S.variant) + '" aria-label="' + esc(x.label) + '" title="' + esc(x.label) + '" style="background:' + (x.sw || x.c1) + '"></button>'; }).join('');
 		Array.prototype.forEach.call(v.children, function (b) { b.onclick = function () { snap(); pickTpl(S.doc.tpl, b.dataset.v, true); toast(b.title); }; });
 	}
-	function sizeButtons() { document.querySelectorAll('[data-h]').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.h === S.doc.H)); }); }
+	function sizeButtons() { document.querySelectorAll('[data-h]').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.h === S.doc.H)); }); var sg = document.querySelector('.seg[aria-label="Slide shape"]'); if (sg) sg.hidden = !!S.doc.story; } // stories are always 9:16
 	function resizeDoc(d, fromH) {
 		var k = d.H / fromH; if (k === 1) return;
 		d.layers.forEach(function (l) { l.y *= k; if (l.kind === 'photo' && l.h > fromH * .3) l.h *= k; if (l.kind === 'sticker' && l.h >= fromH * .9) l.h *= k; if (l.pts) l.pts = l.pts.map(function (p) { return [p[0], p[1] * k]; }); });
@@ -142,6 +142,7 @@
 	function layout() {
 		var st = $('stage'), inner = st.clientWidth - 28;
 		var slideW = small || inner < 700 ? inner * .86 : Math.min(400, inner / 2.4);
+		slideW = Math.min(slideW, Math.max(260, (window.innerHeight || 800) * .66) * W / S.doc.H); // a tall story still fits on the screen
 		S.scale = slideW / W; S.dpr = Math.min(2, window.devicePixelRatio || 1);
 		var w = Math.round(S.doc.n * W * S.scale), h = Math.round(S.doc.H * S.scale), pw = Math.round(w * S.dpr), ph = Math.round(h * S.dpr);
 		cv.style.width = w + 'px'; cv.style.height = h + 'px';
@@ -189,7 +190,7 @@
 	function dots() {
 		var n = S.doc.n, cur = visibleSlide();
 		$('dots').innerHTML = Array.from({length: n}, function (_, i) { return '<i class="' + (i === cur ? 'on' : '') + '"></i>'; }).join('');
-		$('slideNo').textContent = 'Slide ' + (cur + 1) + ' of ' + n;
+		$('slideNo').textContent = (S.doc.story ? 'Story ' : 'Slide ') + (cur + 1) + ' of ' + n;
 		$('prevS').disabled = cur <= 0; $('nextS').disabled = cur >= n - 1;
 	}
 	function visibleSlide() { return clamp(Math.round($('stage').scrollLeft / (W * S.scale)), 0, S.doc.n - 1); }
@@ -370,6 +371,7 @@
 		var l = selLayer(), t = [], bar = [], keep = $('tools').scrollLeft;
 		if (!l) {
 			t = [['addText', 'Add words', IC.text], ['stickers', 'Stickers', IC.stk], ['addPhoto', 'Photo spot', IC.photo], ['addSlide', 'Add slide', IC.plus], ['dropSlide', 'Remove slide', IC.minus], ['slideL', 'Move slide left', IC.left], ['slideR', 'Move slide right', IC.right]];
+			if (S.doc.story) t = t.map(function (x) { return [x[0], x[1].replace('slide', 'story')]; });
 			if (S.doc.layers.some(function (x) { return x.lib === 'nat'; })) t.push(['match', 'Match colours', IC.match, 'foxy']);
 			t.push(['reset', 'Start over', IC.reset]);
 		} else if (S.adjust) {
@@ -393,7 +395,7 @@
 		if (a === 'stickers') return stickerSheet();
 		if (a === 'addPhoto') { snap(); var p = {kind: 'photo', id: 'p' + rid(), x: cx, y: d.H / 2, w: 560, h: 700, src: null, fit: {s: 1}, frame: 'polaroid', rot: -3, hint: 'any', added: true}; d.layers.push(p); S.sel = p.id; after(); replacePhoto(p); return; }
 		if (a === 'addSlide') { if (d.n >= 10) return toast('Instagram allows 10 slides at most'); snap(); d.n++; after(); setTimeout(function () { $('stage').scrollTo({left: $('stage').scrollWidth, behavior: reduced ? 'auto' : 'smooth'}); }, 50); return; }
-		if (a === 'dropSlide') { if (d.n <= 2) return toast('A carousel needs at least 2 slides'); snap(); d.n--; d.layers = d.layers.filter(function (x) { return x.kind === 'path' || x.kind === 'cut' || x.x - x.w / 2 < d.n * W; });
+		if (a === 'dropSlide') { if (d.n <= (d.story ? 1 : 2)) return toast(d.story ? 'A story needs at least 1 frame' : 'A carousel needs at least 2 slides'); snap(); d.n--; d.layers = d.layers.filter(function (x) { return x.kind === 'path' || x.kind === 'cut' || x.x - x.w / 2 < d.n * W; });
 			d.layers.forEach(function (x) { if (x.kind === 'cut' || x.x <= d.n * W) return; var sh = x.x - d.n * W; x.x -= sh; if (x.pts) x.pts = x.pts.map(function (q) { return [q[0] - sh, q[1]]; }); }); // a piece that reached over the cut slide is pulled back, so it can still be picked
 			after(); return; }
 		if (a === 'slideL' || a === 'slideR') return moveSlide(a === 'slideL' ? -1 : 1);
@@ -466,7 +468,7 @@
 	}
 
 	// ---------- stickers ----------
-	var STK = ['camera-silver', 'camera-pink', 'cherries', 'cinnamon-roll', 'chrome-star', 'puffy-heart', 'butterfly', 'sunflower', 'hibiscus', 'cherry-blossom', 'gingham-bow', 'pink-bow', 'binder-clip', 'sticky-note', 'ticket', 'cassette', 'vinyl', 'coffee-cup', 'denim-pocket', 'torn-paper', 'newspaper', 'lace', 'spiral', 'washi', 'jasmine', 'bangles', 'bangles-red', 'bangles-yellow', 'bangles-green', 'bangles-pink', 'bangles-maroon', 'diya', 'kite', 'stamp', 'wax-seal', 'luggage-tag', 'pressed-flower', 'gold-corner', 'lotus', 'lotus-bud', 'temple-bell', 'coconut', 'veena', 'hand-mirror', 'hibiscus-red', 'mango-toran', 'kolam', 'modak', 'sugarcane', 'neem-mango', 'kalash-lotus', 'jhumka', 'parrot-green', 'ill-langa-voni', 'ill-veena-girl', 'ill-mirror-girl', 'ill-kolam-girl', 'camera-dslr', 'lantern', 'iced-latte', 'calendar', 'torn-strip', 'bunny', 'swan', 'pearls', 'white-bow', 'blue-bow', 'forget-me-not', 'rose-bouquet', 'daisy', 'gerbera', 'white-butterfly', 'peg', 'film-canister', 'sun-doodle', 'doodles-pink', 'clapboard', 'film-reel', 'ticket-pink', 'retro-tv', 'popcorn', 'microphone', 'transistor', 'vhs', 'rose-petals', 'aviators', 'kunda', 'brass-pot', 'rope-cot', 'bullock-cart', 'boat', 'palms', 'banana-meal', 'tulsi-kota', 'cycle', 'cow', 'mango-branch'];
+	var STK = ['washi-floral', 'washi-gingham', 'clear-tape', 'gold-clip', 'sparkles-gold', 'doodle-hearts', 'doodle-arrow', 'scribble-circle', 'eucalyptus', 'babys-breath', 'tulips', 'peony', 'perfume', 'lipstick', 'filter-coffee', 'chai-glass', 'envelope', 'ribbon-banner', 'speech-bubble', 'scallop-tag', 'cloud', 'auto-rickshaw', 'pink-scooty', 'location-pin', 'music-notes', 'crescent-moon', 'anklet', 'headphones', 'camera-silver', 'camera-pink', 'cherries', 'cinnamon-roll', 'chrome-star', 'puffy-heart', 'butterfly', 'sunflower', 'hibiscus', 'cherry-blossom', 'gingham-bow', 'pink-bow', 'binder-clip', 'sticky-note', 'ticket', 'cassette', 'vinyl', 'coffee-cup', 'denim-pocket', 'torn-paper', 'newspaper', 'lace', 'spiral', 'washi', 'jasmine', 'bangles', 'bangles-red', 'bangles-yellow', 'bangles-green', 'bangles-pink', 'bangles-maroon', 'diya', 'kite', 'stamp', 'wax-seal', 'luggage-tag', 'pressed-flower', 'gold-corner', 'lotus', 'lotus-bud', 'temple-bell', 'coconut', 'veena', 'hand-mirror', 'hibiscus-red', 'mango-toran', 'kolam', 'modak', 'sugarcane', 'neem-mango', 'kalash-lotus', 'jhumka', 'parrot-green', 'ill-langa-voni', 'ill-veena-girl', 'ill-mirror-girl', 'ill-kolam-girl', 'camera-dslr', 'lantern', 'iced-latte', 'calendar', 'torn-strip', 'bunny', 'swan', 'pearls', 'white-bow', 'blue-bow', 'forget-me-not', 'rose-bouquet', 'daisy', 'gerbera', 'white-butterfly', 'peg', 'film-canister', 'sun-doodle', 'doodles-pink', 'clapboard', 'film-reel', 'ticket-pink', 'retro-tv', 'popcorn', 'microphone', 'transistor', 'vhs', 'rose-petals', 'aviators', 'kunda', 'brass-pot', 'rope-cot', 'bullock-cart', 'boat', 'palms', 'banana-meal', 'tulsi-kota', 'cycle', 'cow', 'mango-branch'];
 	var UIS = [['bubble', 'Message bubble'], ['pin', 'Location pin'], ['note', 'Paper note'], ['label', 'Typed label'], ['notif', 'Notification'], ['search', 'Search bar'], ['like', 'Likes chip'], ['path', 'Flight path']];
 	function stickerSheet() {
 		var html = '<div class="cr-stk">' + STK.map(function (k) { return '<button type="button" data-k="' + k + '" aria-label="' + k.replace(/-/g, ' ') + '"><img src="a/stk/' + k + '.webp" alt="" loading="lazy"></button>'; }).join('') + '</div>';
@@ -795,7 +797,7 @@
 		var box = sheet({hand: 'sending', title: 'Adding it to your <em>plan</em>', html: '<p id="uT">Uploading slide 1 of ' + files.length + '…</p><div class="cr-prog"><i id="uB"></i></div>'});
 		var media = [], seq = Promise.resolve();
 		files.forEach(function (f, i) { seq = seq.then(function () { var t = box.querySelector('#uT'); if (t) t.textContent = 'Uploading slide ' + (i + 1) + ' of ' + files.length + '…'; return upOne(f).then(function (m) { media.push(m); var b = box.querySelector('#uB'); if (b) b.style.width = ((i + 1) / files.length * 100) + '%'; }); }); });
-		seq.then(function () { return api('/me/post', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({at: plan.at, type: 'carousel', caption: plan.caption, hook: S.tpl.name, media: media, mode: plan.mode})}); }).then(function (r) {
+		seq.then(function () { return api('/me/post', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({at: plan.at, type: S.doc.story ? 'story' : 'carousel', caption: plan.caption, hook: S.tpl.name, media: media, mode: plan.mode})}); }).then(function (r) {
 			if (!r.ok) throw new Error(r.error || 'The plan did not save.');
 			sheet({hand: 'planned', title: 'It is in your <em>content plan</em>', html: '<p>' + files.length + ' slides for ' + new Date(plan.at).toLocaleString([], {weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}) + '. ' + (plan.mode === 'auto' ? 'It posts itself at that time if your posting permission is on.' : 'You will get a reminder to post it.') + '</p>', close: closeSheet, acts: [{t: 'Open my content plan', fn: function () { location.href = '../me/#' + token; }}, {t: 'Keep editing', cls: 'btn line', fn: closeSheet}]});
 		}).catch(function (e) { sheet({hand: 'oh no', title: 'Not added <em>yet</em>', html: '<p>' + esc(e.message || 'The upload stopped.') + '</p><p class="cr-fine">Your design is still here. You can also save it to your phone and post it yourself.</p>', close: closeSheet, acts: [{t: 'Try again', fn: function () { go('plan', plan); }}, {t: 'Close', cls: 'btn line', fn: closeSheet}]}); });

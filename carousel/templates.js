@@ -266,6 +266,7 @@
 		d.vars = Object.assign({}, t.vars || {}, v || {});
 		var wash = (v && v.washes) || t.washes || WASH[t.family] || ['rose', 'sage', 'butter', 'powder'], wi = 0;
 		d.layers.forEach(function (l) { if (l.kind === 'photo' && l.src && l.src.indexOf('ph/') === 0) l.src = 'wash/' + wash[wi++ % wash.length]; });
+		if (root.CarouselDress) d = root.CarouselDress(d, t);
 		return d;
 	}
 	root.CarouselTemplates = {list: T, make: make, SAREE: SAREE, kit: {B: B, X: X, F: F, doc: doc}};

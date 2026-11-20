@@ -24,6 +24,26 @@
 		opts = opts || {}; opts.headers = Object.assign({Authorization: 'Bearer ' + O.token}, opts.headers || {}); opts.cache = 'no-store';
 		return fetch(O.api + path, opts);
 	}
+	function cards(files) { // PDFs Foxy made: open, download, share (phones share the file itself, e.g. to WhatsApp)
+		return (files || []).map(function (f, i) {
+			return '<div class="fx-file" data-f="' + i + '"><div class="fx-pdf" aria-hidden="true"><span>PDF</span></div><div class="fx-fmeta"><b>' + esc(f.title || f.name) + '</b><span>' + esc(f.name) + ' · ' + (f.pages || 1) + ' page' + (f.pages === 1 ? '' : 's') + '</span></div>' +
+				'<div class="fx-fbtn"><a href="' + esc(f.url) + '" target="_blank" rel="noopener">Open</a><a href="' + esc(f.url) + '?dl=1" download>Download</a><button type="button" class="fx-share">Share</button></div></div>';
+		}).join('');
+	}
+	function wire(root, files) {
+		root.querySelectorAll('.fx-file').forEach(function (c) {
+			var f = files[+c.dataset.f], b = c.querySelector('.fx-share');
+			b.onclick = function () {
+				var done = function (t) { b.textContent = t; setTimeout(function () { b.textContent = 'Share'; }, 1800); };
+				fetch(f.url).then(function (r) { return r.blob(); }).then(function (bl) {
+					var file = new File([bl], f.name, {type: 'application/pdf'});
+					if (navigator.canShare && navigator.canShare({files: [file]})) return navigator.share({files: [file], title: f.title});
+					if (navigator.share) return navigator.share({title: f.title, url: f.url});
+					return navigator.clipboard.writeText(f.url).then(function () { done('Link copied'); });
+				}).catch(function (e) { if (e && e.name === 'AbortError') return; navigator.clipboard && navigator.clipboard.writeText(f.url).then(function () { done('Link copied'); }); });
+			};
+		});
+	}
 	function el(h) { var d = document.createElement('div'); d.innerHTML = h.trim(); return d.firstChild; }
 
 	// ---------- "Foxy says" card ----------
@@ -43,7 +63,7 @@
 
 	// ---------- chat ----------
 	var fab, panel, log, ta, sendBtn, chips;
-	var STARTERS = ['What should I post this week?', 'Why did my reach drop?', 'What is my best time to post?', 'What should I stop doing?', 'Give me 3 reel ideas', 'నా ఆడిట్ లో ముఖ్యమైనవి ఏమిటి?'];
+	var STARTERS = ['What should I post this week?', 'Why did my reach drop?', 'What is my best time to post?', 'What should I stop doing?', 'Give me 3 reel ideas', 'Make my media kit PDF for brands', 'నా ఆడిట్ లో ముఖ్యమైనవి ఏమిటి?'];
 	function build() {
 		fab = el('<button type="button" class="fx-fab" aria-haspopup="dialog" aria-label="Ask Foxy, your assistant"><img src="' + FOX + '" alt=""><span>Ask Foxy</span></button>');
 		document.body.appendChild(fab); document.body.classList.add('fx-fab-pad');
@@ -96,8 +116,9 @@
 	function hide() { open = false; panel.hidden = true; fab.hidden = false; panel.fit(); fab.focus(); }
 	function render() {
 		var html = history.length ? '' : '<div class="fx-m fox"><p>Hi' + (O.first ? ' ' + esc(O.first) : '') + '! I’m Foxy. I know your audit, your numbers and your content plan. Ask me what to post, what is working, what to stop, or anything about growing on Instagram. Telugu or English, both fine.</p></div>';
-		html += history.map(function (m) { return m.role === 'user' ? '<div class="fx-m me">' + esc(m.text) + '</div>' : '<div class="fx-m fox' + (m.err ? ' fx-err' : '') + '">' + md(m.text) + '</div>'; }).join('');
+		html += history.map(function (m, i) { return m.role === 'user' ? '<div class="fx-m me">' + esc(m.text) + '</div>' : '<div class="fx-m fox' + (m.err ? ' fx-err' : '') + '" data-h="' + i + '">' + md(m.text) + cards(m.files) + '</div>'; }).join('');
 		log.innerHTML = html; log.scrollTop = log.scrollHeight;
+		log.querySelectorAll('[data-h]').forEach(function (b) { var m = history[+b.dataset.h]; if (m.files && m.files.length) wire(b, m.files); });
 		chips.hidden = history.length > 2;
 	}
 	function send(text) {
@@ -123,13 +144,20 @@
 					parts.forEach(function (p) {
 						var line = p.split('\n').filter(function (s) { return s.indexOf('data:') === 0; }).map(function (s) { return s.slice(5).trim(); }).join('');
 						if (!line) return; var ev; try { ev = JSON.parse(line); } catch (e) { return; }
-						if (ev.t === 'delta') { me.text += ev.text; bubble.innerHTML = md(me.text); log.scrollTop = log.scrollHeight; }
+						if (ev.t === 'delta') { me.text += ev.text; me.status = ''; }
+						if (ev.t === 'status') me.status = ev.text;
+						if (ev.t === 'file' && ev.file) { me.files = (me.files || []).filter(function (f) { return f.title !== ev.file.title; }).concat([ev.file]); me.status = ''; } // a redo replaces the earlier card
+						if (ev.t === 'delta' || ev.t === 'status' || ev.t === 'file') {
+							bubble.innerHTML = md(me.text) + cards(me.files) + (me.status ? '<p class="fx-making"><span class="fx-typing"><i></i><i></i><i></i></span> ' + esc(me.status) + '</p>' : '');
+							if (me.files) wire(bubble, me.files);
+							log.scrollTop = log.scrollHeight;
+						}
 						if (ev.t === 'error') throw new Error(ev.error || 'Foxy stopped.');
 					});
 					return pump();
 				});
 			})();
-		}).then(function () { if (!me.text) throw new Error('Foxy had nothing to say. Try asking again.'); }).catch(function (e) {
+		}).then(function () { if (!me.text && !(me.files && me.files.length)) throw new Error('Foxy had nothing to say. Try asking again.'); }).catch(function (e) {
 			me.text = e.message || 'Foxy could not answer right now.'; me.err = true;
 		}).then(function () { busy = false; sendBtn.disabled = false; render(); });
 	}

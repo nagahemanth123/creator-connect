@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="../assets/scripts.css">
 <link rel="stylesheet" href="../assets/kit.css">
 <link rel="stylesheet" href="../assets/dash.css">
-<link rel="stylesheet" href="../assets/foxy-chat.css?v=20261121a">
+<link rel="stylesheet" href="../assets/foxy-chat.css?v=20261122a">
 <link rel="stylesheet" href="../assets/party.css">
 <link rel="stylesheet" href="../assets/watermark.css">
 <script>if (/[?&]still\b/.test(location.search)) document.documentElement.classList.add("still");</script>
@@ -128,6 +128,11 @@
 @media (max-width: 700px) { .hello .fun-doodles { display: none; } } /* on a phone the card takes the corner beside the logo where the doodles used to sit */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--cocoa); color: var(--cream); padding: 12px 20px; border-radius: 999px; font-size: 14.5px; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 95; max-width: calc(100vw - 32px); }
 .toast.on { opacity: 1; }
+/* "Open in the FoxCut app": only on iPhone and iPad, never inside the app itself */
+.app-go { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; min-height: 44px; padding: 8px 16px; border-radius: 999px; background: var(--card); color: var(--ink); font: 600 14px/1.2 var(--sans); text-decoration: none; box-shadow: inset 0 0 0 1.5px var(--line); }
+.app-go:hover, .app-go:focus-visible { box-shadow: inset 0 0 0 1.5px var(--cherry); }
+.app-go[hidden] { display: none; }
+.app-go svg { width: 18px; height: 18px; fill: none; stroke: var(--cherry); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* while the page is loading the footer waits out of sight, so it does not jump down when the page appears */
 .wrap:has(#page[hidden]):has(#err[hidden]) .foot { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
@@ -143,7 +148,7 @@
 	<main class="page" id="page" hidden>
 		<section class="hello">
 			<div class="pic" id="pic"></div>
-			<div><p class="hand">your dashboard</p><h1><span class="hi">Hi,</span> <em id="hiName">there</em></h1><p id="handle"></p></div>
+			<div><p class="hand">your dashboard</p><h1><span class="hi">Hi,</span> <em id="hiName">there</em></h1><p id="handle"></p><a class="app-go" id="appGo" href="#" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>Open in the FoxCut app</a></div>
 		</section>
 
 		<section class="pt" id="party" aria-label="Your Instagram anniversary" hidden></section>
@@ -237,7 +242,7 @@
 <script src="../assets/kit.js"></script>
 <script src="../assets/party.js"></script>
 <script src="../assets/dash.js"></script>
-<script src="../assets/foxy-chat.js?v=20261121a"></script>
+<script src="../assets/foxy-chat.js?v=20261122a"></script>
 <script src="../assets/track.js" data-kind="me"></script>
 <script>
 (function () {
@@ -304,6 +309,8 @@
 		$('page').hidden = false;
 		var mkGo = $('mkGo'); if (mkGo) { mkGo.href = '../make/?v=20261119c#' + token; mkGo.hidden = false; } var crGo = $('crGo'); if (crGo) { crGo.href = '../carousel/?v=20261119c#' + token; crGo.hidden = false; } if (window.FoxyChat) { var ts = $('todaySec'); FoxyChat.init({api: cc.api, token: token, first: p.first || '', mount: ts ? ts.parentNode : null}); } // Foxy: tips card + chat // the story and collage maker opens with her key, like this page
 		// her first name as the worker cleaned it (set by the team, from her report, or from her own name when it is plain letters); never the decorated Instagram name
+		var appGo = $('appGo'), ua = navigator.userAgent || ''; // the FoxCut iPhone app signs her in with this same key
+		if (appGo && !/FoxCutApp/.test(ua) && (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1))) { appGo.href = 'foxcut://creator?token=' + encodeURIComponent(token); appGo.hidden = false; }
 		$('hiName').textContent = p.first || 'there';
 		if (p.first) document.title = p.first + '’s dashboard | Busy Fox';
 		$('handle').innerHTML = '<a href="https://www.instagram.com/' + esc(p.username) + '/" target="_blank" rel="noopener">@' + esc(p.username) + '</a>' + (p.connected_at ? '<span>connected ' + new Date(p.connected_at).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) + '</span>' : '');

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Connecting LinkedIn | Busy Fox</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F7E6E3">
+<link rel="icon" type="image/png" href="../../assets/fox.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Caveat:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../assets/cc.css">
+<style>
+.view { padding-block: 16px 72px; }
+.center { max-width: 640px; margin: 40px auto 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.spin { width: 54px; height: 54px; border-radius: 50%; border: 3px solid var(--pink-soft); border-top-color: var(--cherry); animation: spin .9s linear infinite; margin-top: 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s; } }
+.face { width: 112px; height: 112px; border-radius: 50%; overflow: hidden; background: var(--pink-soft); display: grid; place-items: center; font: italic 500 46px/1 var(--serif); color: var(--cherry); box-shadow: var(--lift); }
+.face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<header class="head">
+		<a class="logo" href="../../" aria-label="Busy Fox"><span class="mast">Busy<em>Fox</em></span></a>
+	</header>
+	<main class="view">
+		<section id="v-working" class="center" style="padding:0">
+			<p class="hand">almost there…</p>
+			<h1>Connecting your <em>LinkedIn</em></h1>
+			<div class="spin" aria-hidden="true"></div>
+			<p class="lede">This takes a few seconds. Please keep this page open.</p>
+		</section>
+		<section id="v-error" class="center" style="padding:0" hidden>
+			<p class="hand" id="err-kick">oops</p>
+			<h1 id="err-title">That didn't <em>work</em></h1>
+			<p class="lede" id="err-text">Something went wrong while connecting.</p>
+			<p class="fine">Reply to the Busy Fox message that sent you this link and we'll send a fresh one.</p>
+		</section>
+		<section id="v-done" class="center" style="padding:0" hidden>
+			<div class="face" id="face">B</div>
+			<p class="hand">you're in!</p>
+			<h1 id="hello">LinkedIn is <em>connected.</em></h1>
+			<p class="lede">Busy Fox can now share the posts we plan together to your profile.</p>
+			<p class="fine" id="until"></p>
+		</section>
+	</main>
+</div>
+<script src="../../assets/config.js"></script>
+<script>
+(function () {
+	var cc = window.CC || {};
+	var $ = function (id) { return document.getElementById(id); };
+	function show(id) { ['v-working', 'v-error', 'v-done'].forEach(function (v) { $(v).hidden = v !== id; }); }
+	function fail(kick, title, text) { $('err-kick').textContent = kick; $('err-title').innerHTML = title; $('err-text').textContent = text; document.title = 'Not connected | Busy Fox'; show('v-error'); }
+	function done(d) {
+		var first = (d.name || '').split(' ')[0];
+		if (first) $('hello').innerHTML = 'You’re connected, <em></em>';
+		if (first) $('hello').querySelector('em').textContent = first + '.';
+		if (d.picture) { var img = new Image(); img.alt = ''; img.src = d.picture; $('face').textContent = ''; $('face').appendChild(img); }
+		else if (first) $('face').textContent = first[0];
+		if (d.expires_at) $('until').textContent = 'LinkedIn asks us to check in every two months. We’ll send a fresh link before ' + new Date(d.expires_at).toLocaleDateString(undefined, {day: 'numeric', month: 'long'}) + '.';
+		document.title = 'Connected | Busy Fox';
+		show('v-done');
+	}
+	var q = new URLSearchParams(location.search);
+	if (q.get('error')) { fail('no worries', 'Not <em>connected</em>', q.get('error') === 'user_cancelled_authorize' || q.get('error') === 'user_cancelled_login' ? 'You closed the LinkedIn screen before allowing access.' : (q.get('error_description') || 'LinkedIn couldn’t finish the connection.')); return; }
+	var code = q.get('code'), state = q.get('state');
+	if (!code) {
+		var kept = JSON.parse(sessionStorage.getItem('li_result') || 'null');
+		if (kept) { done(kept); return; }
+		fail('hmm', 'Nothing to <em>connect</em>', 'Please start from the Busy Fox link you were sent.');
+		return;
+	}
+	history.replaceState(null, '', location.pathname);
+	fetch(cc.api + '/li/callback', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({code: code, state: state})})
+		.then(function (r) { return r.json(); })
+		.then(function (d) {
+			if (d.ok) { sessionStorage.setItem('li_result', JSON.stringify(d)); done(d); return; }
+			fail('oops', 'That didn’t <em>work</em>', d.error || 'LinkedIn couldn’t finish the connection.');
+		})
+		.catch(function () { fail('offline?', 'No <em>connection</em>', 'Check your internet and try again.'); });
+})();
+</script>
+</body>
+</html>
